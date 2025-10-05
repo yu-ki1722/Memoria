@@ -73,20 +73,23 @@ export default function Map() {
   const handleSaveMemory = async (emotion: string, text: string) => {
     if (!newPosition) return;
 
-    const { data, error } = await supabase.from("memories").insert([
-      {
-        emotion: emotion,
-        text: text,
-        latitude: newPosition.lat,
-        longitude: newPosition.lng,
-      },
-    ]);
+    const { data, error } = await supabase
+      .from("memories")
+      .insert([
+        {
+          emotion: emotion,
+          text: text,
+          latitude: newPosition.lat,
+          longitude: newPosition.lng,
+        },
+      ])
+      .select();
 
     if (error) {
       alert("エラーが発生しました：" + error.message);
-    } else {
+    } else if (data) {
       alert("思い出を記録しました！");
-      console.log("保存されたデータ:", data);
+      setMemories([...memories, data[0]]);
       setNewPosition(null);
     }
   };
