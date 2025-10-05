@@ -12,6 +12,7 @@ import "leaflet/dist/leaflet.css";
 import L, { LeafletMouseEvent } from "leaflet";
 import MemoryForm from "../MemoryForm";
 import { supabase } from "@/lib/supabaseClient";
+import styles from "./Map.module.css";
 
 // Leafletのデフォルトアイコンが正しく表示されない問題の修正
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -94,6 +95,22 @@ export default function Map() {
     }
   };
 
+  const handleDeleteMemory = async (id: number) => {
+    // 確認ダイアログを表示
+    if (!window.confirm("この思い出を本当に削除しますか？")) {
+      return;
+    }
+
+    const { error } = await supabase.from("memories").delete().eq("id", id);
+
+    if (error) {
+      alert("削除中にエラーが発生しました：" + error.message);
+    } else {
+      alert("思い出を削除しました。");
+      setMemories(memories.filter((memory) => memory.id !== id));
+    }
+  };
+
   return (
     <MapContainer
       center={initialPosition}
@@ -110,9 +127,15 @@ export default function Map() {
       {memories.map((memory) => (
         <Marker key={memory.id} position={[memory.latitude, memory.longitude]}>
           <Popup>
-            <div className="memory-popup">
-              <span className="emotion">{memory.emotion}</span>
+            <div className={styles.memoryPopup}>
+              <span className={styles.emotion}>{memory.emotion}</span>
               <p>{memory.text}</p>
+              <button
+                onClick={() => handleDeleteMemory(memory.id)}
+                className={styles.deleteButton}
+              >
+                削除
+              </button>
             </div>
           </Popup>
         </Marker>
