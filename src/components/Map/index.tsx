@@ -23,6 +23,14 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
 });
 
+type Memory = {
+  id: number;
+  emotion: string;
+  text: string;
+  latitude: number;
+  longitude: number;
+};
+
 function LocationMarker({
   setNewPosition,
 }: {
@@ -41,6 +49,20 @@ export default function Map() {
   const initialPosition: [number, number] = [35.6895, 139.6917];
   const [newPosition, setNewPosition] = useState<L.LatLng | null>(null);
   const markerRef = useRef<L.Marker>(null);
+
+  const [memories, setMemories] = useState<Memory[]>([]);
+
+  useEffect(() => {
+    const fetchMemories = async () => {
+      const { data, error } = await supabase.from("memories").select("*");
+      if (error) {
+        console.error("Error fetching memories:", error);
+      } else {
+        setMemories(data);
+      }
+    };
+    fetchMemories();
+  }, []);
 
   useEffect(() => {
     if (markerRef.current) {
@@ -82,8 +104,19 @@ export default function Map() {
 
       <LocationMarker setNewPosition={setNewPosition} />
 
+      {memories.map((memory) => (
+        <Marker key={memory.id} position={[memory.latitude, memory.longitude]}>
+          <Popup>
+            <div className="memory-popup">
+              <span className="emotion">{memory.emotion}</span>
+              <p>{memory.text}</p>
+            </div>
+          </Popup>
+        </Marker>
+      ))}
+
       {newPosition && (
-        <Marker position={newPosition}>
+        <Marker position={newPosition} ref={markerRef}>
           <Popup>
             <MemoryForm onSave={handleSaveMemory} />
           </Popup>
