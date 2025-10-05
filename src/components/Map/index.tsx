@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -11,6 +11,7 @@ import {
 import "leaflet/dist/leaflet.css";
 import L, { LeafletMouseEvent } from "leaflet";
 import MemoryForm from "../MemoryForm";
+import { supabase } from "@/lib/supabaseClient";
 
 // Leafletのデフォルトアイコンが正しく表示されない問題の修正
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -22,7 +23,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
 });
 
-// マップクリックを検知
 function LocationMarker({
   setNewPosition,
 }: {
@@ -30,7 +30,6 @@ function LocationMarker({
 }) {
   useMapEvents({
     click(e: LeafletMouseEvent) {
-      // クリック位置の座標をセット
       setNewPosition(e.latlng);
     },
   });
@@ -40,9 +39,35 @@ function LocationMarker({
 
 export default function Map() {
   const initialPosition: [number, number] = [35.6895, 139.6917];
-
-  // 新しいピンの位置を保持
   const [newPosition, setNewPosition] = useState<L.LatLng | null>(null);
+  const markerRef = useRef<L.Marker>(null);
+
+  useEffect(() => {
+    if (markerRef.current) {
+      markerRef.current.openPopup();
+    }
+  }, [newPosition]);
+
+  const handleSaveMemory = async (emotion: string, text: string) => {
+    if (!newPosition) return;
+
+    const { data, error } = await supabase.from("memories").insert([
+      {
+        emotion: emotion,
+        text: text,
+        latitude: newPosition.lat,
+        longitude: newPosition.lng,
+      },
+    ]);
+
+    if (error) {
+      alert("エラーが発生しました：" + error.message);
+    } else {
+      alert("思い出を記録しました！");
+      console.log("保存されたデータ:", data);
+      setNewPosition(null);
+    }
+  };
 
   return (
     <MapContainer
@@ -55,14 +80,12 @@ export default function Map() {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
-      {/* マップクリック検知コンポーネントを呼び出し */}
       <LocationMarker setNewPosition={setNewPosition} />
 
-      {/* 新しいピンの位置が存在した場合、その場所にマーカーを表示 */}
       {newPosition && (
         <Marker position={newPosition}>
           <Popup>
-            <MemoryForm />
+            <MemoryForm onSave={handleSaveMemory} />
           </Popup>
         </Marker>
       )}

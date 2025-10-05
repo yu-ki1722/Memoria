@@ -5,17 +5,22 @@ import styles from "./MemoryForm.module.css";
 
 const emotions = ["😊", "😂", "😍", "😢", "😮", "🤔"];
 
-export default function MemoryForm() {
+type MemoryFormProps = {
+  onSave: (emotion: string, text: string) => void;
+};
+
+export default function MemoryForm({ onSave }: MemoryFormProps) {
   const [selectedEmotion, setSelectedEmotion] = useState<string | null>(null);
   const [text, setText] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: データをSupabaseに保存する処理をここに実装する
-    console.log({
-      emotion: selectedEmotion,
-      text: text,
-    });
+    if (!selectedEmotion) {
+      alert("感情を選んでください。");
+      return;
+    }
+
+    onSave(selectedEmotion, text);
   };
 
   return (
