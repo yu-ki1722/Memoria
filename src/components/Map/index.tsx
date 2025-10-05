@@ -10,6 +10,7 @@ import {
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L, { LeafletMouseEvent } from "leaflet";
+import MemoryForm from "../MemoryForm";
 
 // Leafletのデフォルトアイコンが正しく表示されない問題の修正
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -60,7 +61,9 @@ export default function Map() {
       {/* 新しいピンの位置が存在した場合、その場所にマーカーを表示 */}
       {newPosition && (
         <Marker position={newPosition}>
-          <Popup>新しい思い出の場所</Popup>
+          <Popup>
+            <MemoryForm />
+          </Popup>
         </Marker>
       )}
     </MapContainer>

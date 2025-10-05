@@ -1,0 +1,58 @@
+.memoryFormContainer {
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.memoryFormContainer p {
+  margin: 0;
+  font-weight: bold;
+  text-align: center;
+}
+.emotionSelector {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+}
+.emotionButton {
+  background: #f0f0f0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  font-size: 24px;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease-in-out;
+}
+.emotionButton:hover {
+  transform: scale(1.1);
+}
+.emotionButton.selected {
+  border-color: #3b82f6;
+  background-color: #dbeafe;
+}
+.memoryFormContainer textarea {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  resize: vertical;
+  box-sizing: border-box;
+}
+.submitButton {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  background-color: #3b82f6;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.submitButton:hover {
+  background-color: #2563eb;
+}
