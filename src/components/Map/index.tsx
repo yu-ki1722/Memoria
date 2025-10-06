@@ -13,6 +13,7 @@ import L, { LeafletMouseEvent } from "leaflet";
 import MemoryForm from "../MemoryForm";
 import { supabase } from "@/lib/supabaseClient";
 import styles from "./Map.module.css";
+import MapSearch from "../MapSearch";
 
 // Leafletのデフォルトアイコンが正しく表示されない問題の修正
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -141,6 +142,7 @@ export default function Map() {
       zoom={13}
       style={{ height: "100vh", width: "100wh" }}
     >
+      <MapSearch />
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
