@@ -53,6 +53,8 @@ export default function Map() {
 
   const [memories, setMemories] = useState<Memory[]>([]);
 
+  const [editingMemory, setEditingMemory] = useState<number | null>(null);
+
   useEffect(() => {
     const fetchMemories = async () => {
       const { data, error } = await supabase.from("memories").select("*");
@@ -111,6 +113,28 @@ export default function Map() {
     }
   };
 
+  const handleUpdateMemory = async (
+    id: number,
+    emotion: string,
+    text: string
+  ) => {
+    const { data, error } = await supabase
+      .from("memories")
+      .update({ text: text, emotion: emotion })
+      .eq("id", id)
+      .select();
+
+    if (error) {
+      alert("更新中にエラーが発生しました：" + error.message);
+    } else {
+      alert("思い出を更新しました。");
+      setMemories(
+        memories.map((memory) => (memory.id === id ? data[0] : memory))
+      );
+      setEditingMemory(null);
+    }
+  };
+
   return (
     <MapContainer
       center={initialPosition}
@@ -127,16 +151,52 @@ export default function Map() {
       {memories.map((memory) => (
         <Marker key={memory.id} position={[memory.latitude, memory.longitude]}>
           <Popup>
-            <div className={styles.memoryPopup}>
-              <span className={styles.emotion}>{memory.emotion}</span>
-              <p>{memory.text}</p>
-              <button
-                onClick={() => handleDeleteMemory(memory.id)}
-                className={styles.deleteButton}
-              >
-                削除
-              </button>
-            </div>
+            {editingMemory === memory.id ? (
+              <div>
+                <MemoryForm
+                  onSave={(emotion, text) =>
+                    handleUpdateMemory(memory.id, emotion, text)
+                  }
+                  buttonText="更新"
+                  initialEmotion={memory.emotion}
+                  initialText={memory.text}
+                />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingMemory(null);
+                  }}
+                  className={styles.cancelButton}
+                >
+                  キャンセル
+                </button>
+              </div>
+            ) : (
+              <div className={styles.memoryPopup}>
+                <span className={styles.emotion}>{memory.emotion}</span>
+                <p>{memory.text}</p>
+                <div className={styles.buttonGroup}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingMemory(memory.id);
+                    }}
+                    className={styles.editButton}
+                  >
+                    編集
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteMemory(memory.id);
+                    }}
+                    className={styles.deleteButton}
+                  >
+                    削除
+                  </button>
+                </div>
+              </div>
+            )}
           </Popup>
         </Marker>
       ))}
@@ -144,7 +204,7 @@ export default function Map() {
       {newPosition && (
         <Marker position={newPosition} ref={markerRef}>
           <Popup>
-            <MemoryForm onSave={handleSaveMemory} />
+            <MemoryForm onSave={handleSaveMemory} buttonText="記録する" />
           </Popup>
         </Marker>
       )}

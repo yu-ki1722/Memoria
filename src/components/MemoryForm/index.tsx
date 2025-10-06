@@ -7,11 +7,21 @@ const emotions = ["😊", "😂", "😍", "😢", "😮", "🤔"];
 
 type MemoryFormProps = {
   onSave: (emotion: string, text: string) => void;
+  buttonText: string;
+  initialEmotion?: string | null;
+  initialText?: string;
 };
 
-export default function MemoryForm({ onSave }: MemoryFormProps) {
-  const [selectedEmotion, setSelectedEmotion] = useState<string | null>(null);
-  const [text, setText] = useState("");
+export default function MemoryForm({
+  onSave,
+  buttonText,
+  initialEmotion,
+  initialText,
+}: MemoryFormProps) {
+  const [selectedEmotion, setSelectedEmotion] = useState<string | null>(
+    initialEmotion || null
+  );
+  const [text, setText] = useState(initialText || "");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,8 +58,13 @@ export default function MemoryForm({ onSave }: MemoryFormProps) {
           rows={4}
           required
         />
-        <button type="submit" className={styles.submitButton}>
-          記録する
+        <button
+          type="submit"
+          className={
+            buttonText === "更新" ? styles.updateButton : styles.submitButton
+          }
+        >
+          {buttonText}
         </button>
       </form>
     </div>
