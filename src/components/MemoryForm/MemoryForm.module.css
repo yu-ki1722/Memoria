@@ -56,3 +56,19 @@
 .submitButton:hover {
   background-color: #2563eb;
 }
+
+.updateButton {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  background-color: #10b981;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.updateButton:hover {
+  background-color: #059669;
+}
