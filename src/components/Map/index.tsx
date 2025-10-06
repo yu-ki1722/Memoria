@@ -152,14 +152,25 @@ export default function Map() {
         <Marker key={memory.id} position={[memory.latitude, memory.longitude]}>
           <Popup>
             {editingMemory === memory.id ? (
-              <MemoryForm
-                onSave={(emotion, text) =>
-                  handleUpdateMemory(memory.id, emotion, text)
-                }
-                buttonText="更新"
-                initialEmotion={memory.emotion}
-                initialText={memory.text}
-              />
+              <div>
+                <MemoryForm
+                  onSave={(emotion, text) =>
+                    handleUpdateMemory(memory.id, emotion, text)
+                  }
+                  buttonText="更新"
+                  initialEmotion={memory.emotion}
+                  initialText={memory.text}
+                />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingMemory(null);
+                  }}
+                  className={styles.cancelButton}
+                >
+                  キャンセル
+                </button>
+              </div>
             ) : (
               <div className={styles.memoryPopup}>
                 <span className={styles.emotion}>{memory.emotion}</span>
