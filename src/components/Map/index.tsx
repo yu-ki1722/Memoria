@@ -24,6 +24,14 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
 });
 
+const getEmotionIcon = (emotion: string) => {
+  return L.divIcon({
+    html: `<span style="font-size: 24px;">${emotion}</span>`,
+    className: styles.emotionIcon,
+    iconAnchor: [15, 15],
+  });
+};
+
 type Memory = {
   id: number;
   emotion: string;
@@ -98,7 +106,6 @@ export default function Map() {
   };
 
   const handleDeleteMemory = async (id: number) => {
-    // 確認ダイアログを表示
     if (!window.confirm("この思い出を本当に削除しますか？")) {
       return;
     }
@@ -149,7 +156,11 @@ export default function Map() {
       <LocationMarker setNewPosition={setNewPosition} />
 
       {memories.map((memory) => (
-        <Marker key={memory.id} position={[memory.latitude, memory.longitude]}>
+        <Marker
+          key={memory.id}
+          position={[memory.latitude, memory.longitude]}
+          icon={getEmotionIcon(memory.emotion)}
+        >
           <Popup>
             {editingMemory === memory.id ? (
               <div>
