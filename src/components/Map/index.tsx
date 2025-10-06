@@ -53,6 +53,10 @@ export default function Map() {
 
   const [memories, setMemories] = useState<Memory[]>([]);
 
+  const [editingMemory, setEditingMemory] = useState<number | null>(null);
+
+  const [editText, setEditText] = useState("");
+
   useEffect(() => {
     const fetchMemories = async () => {
       const { data, error } = await supabase.from("memories").select("*");
@@ -111,6 +115,29 @@ export default function Map() {
     }
   };
 
+  const handleUpdateMemory = async (id: number) => {
+    const { data, error } = await supabase
+      .from("memories")
+      .update({ text: editText })
+      .eq("id", id)
+      .select();
+
+    if (error) {
+      alert("更新中にエラーが発生しました：" + error.message);
+    } else {
+      alert("思い出を更新しました。");
+      setMemories(
+        memories.map((memory) => (memory.id === id ? data[0] : memory))
+      );
+      setEditingMemory(null);
+    }
+  };
+
+  const handleStartEditing = (memory: Memory) => {
+    setEditingMemory(memory.id);
+    setEditText(memory.text);
+  };
+
   return (
     <MapContainer
       center={initialPosition}
@@ -127,16 +154,51 @@ export default function Map() {
       {memories.map((memory) => (
         <Marker key={memory.id} position={[memory.latitude, memory.longitude]}>
           <Popup>
-            <div className={styles.memoryPopup}>
-              <span className={styles.emotion}>{memory.emotion}</span>
-              <p>{memory.text}</p>
-              <button
-                onClick={() => handleDeleteMemory(memory.id)}
-                className={styles.deleteButton}
-              >
-                削除
-              </button>
-            </div>
+            {editingMemory === memory.id ? (
+              <div className={styles.memoryPopup}>
+                <span className={styles.emotion}>{memory.emotion}</span>
+                <textarea
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  rows={4}
+                  className={styles.editTextarea}
+                />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleUpdateMemory(memory.id);
+                  }}
+                  className={styles.updateButton}
+                >
+                  更新
+                </button>
+              </div>
+            ) : (
+              <div className={styles.memoryPopup}>
+                <span className={styles.emotion}>{memory.emotion}</span>
+                <p>{memory.text}</p>
+                <div className={styles.buttonGroup}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleStartEditing(memory);
+                    }}
+                    className={styles.editButton}
+                  >
+                    編集
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteMemory(memory.id);
+                    }}
+                    className={styles.deleteButton}
+                  >
+                    削除
+                  </button>
+                </div>
+              </div>
+            )}
           </Popup>
         </Marker>
       ))}
