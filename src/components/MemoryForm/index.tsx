@@ -10,6 +10,7 @@ type MemoryFormProps = {
   buttonText: string;
   initialEmotion?: string | null;
   initialText?: string;
+  onCancel?: () => void;
 };
 
 export default function MemoryForm({
