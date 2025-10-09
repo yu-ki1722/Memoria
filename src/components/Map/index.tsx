@@ -17,6 +17,7 @@ import styles from "./Map.module.css";
 import Header from "../Header";
 import MapSearch from "../MapSearch";
 import CurrentLocation from "../CurrentLocation";
+import Image from "next/image";
 
 // Leafletアイコン修正
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -267,10 +268,12 @@ export default function Map({ session }: { session: Session }) {
               ) : (
                 <div className={styles.memoryPopup}>
                   {memory.image_url && (
-                    <img
+                    <Image
                       src={memory.image_url}
                       alt={memory.text}
                       className={styles.popupImage}
+                      width={150}
+                      height={120}
                     />
                   )}
                   <span className={styles.emotion}>{memory.emotion}</span>
