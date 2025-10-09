@@ -135,6 +135,23 @@ export default function Map({ session }: { session: Session }) {
   };
 
   const handleDeleteMemory = async (id: number) => {
+    if (!window.confirm("この思い出を本当に削除しますか？")) {
+      return;
+    }
+
+    const memoryToDelete = memories.find((memory) => memory.id === id);
+
+    if (memoryToDelete && memoryToDelete.image_url) {
+      const filePath = memoryToDelete.image_url.split("/").slice(-2).join("/");
+      const { error: deleteError } = await supabase.storage
+        .from("memory-images")
+        .remove([filePath]);
+
+      if (deleteError) {
+        alert("画像の削除に失敗しました: " + deleteError.message);
+      }
+    }
+
     const { error } = await supabase.from("memories").delete().eq("id", id);
     if (error) {
       alert("削除中にエラーが発生しました：" + error.message);
