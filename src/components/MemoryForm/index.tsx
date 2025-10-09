@@ -108,7 +108,10 @@ export default function MemoryForm({
               />
               <button
                 type="button"
-                onClick={handleClearImage}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleClearImage();
+                }}
                 className={styles.clearImageButton}
               >
                 ×
