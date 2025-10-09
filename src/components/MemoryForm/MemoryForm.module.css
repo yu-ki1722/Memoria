@@ -1,3 +1,4 @@
+/* src/components/MemoryForm/MemoryForm.module.css */
 .memoryFormContainer {
   width: 200px;
   display: flex;
@@ -42,33 +43,99 @@
   resize: vertical;
   box-sizing: border-box;
 }
-.submitButton {
+.buttonGroup {
+  display: flex;
+  gap: 8px;
   width: 100%;
+}
+.submitButton,
+.updateButton,
+.cancelButton {
+  flex-grow: 1;
   padding: 10px;
-  border: none;
   border-radius: 6px;
-  background-color: #3b82f6;
-  color: white;
   font-weight: bold;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  border: none;
+}
+.submitButton {
+  background-color: #3b82f6;
+  color: white;
 }
 .submitButton:hover {
   background-color: #2563eb;
 }
-
 .updateButton {
-  width: 100%;
-  padding: 10px;
-  border: none;
-  border-radius: 6px;
   background-color: #10b981;
   color: white;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
 }
-
 .updateButton:hover {
   background-color: #059669;
+}
+.cancelButton {
+  border: 1px solid #ccc;
+  background-color: #ffffff;
+  color: #333;
+}
+.cancelButton:hover {
+  background-color: #f0f0f0;
+}
+
+.imageUploadContainer {
+  margin-top: 10px;
+  border: 1px dashed #ccc;
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+  position: relative;
+}
+.fileInput {
+  display: none;
+}
+.fileInputLabel {
+  display: inline-block;
+  background-color: #f0f0f0;
+  color: #333;
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+.fileInputLabel:hover {
+  background-color: #e0e0e0;
+}
+.imagePreviewWrapper {
+  margin-top: 10px;
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+.imagePreview {
+  max-width: 100px;
+  max-height: 100px;
+  border-radius: 5px;
+  object-fit: cover;
+  border: 1px solid #ddd;
+}
+.clearImageButton {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: #ff4d4f;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+.clearImageButton:hover {
+  background-color: #ff7875;
 }
