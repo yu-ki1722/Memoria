@@ -19,6 +19,7 @@ import MapSearch from "../MapSearch";
 import CurrentLocation from "../CurrentLocation";
 import Image from "next/image";
 import Button from "../Button";
+import RealtimeLocationMarker from "../RealtimeLocationMarker";
 
 // Leafletアイコン修正
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -241,6 +242,7 @@ export default function Map({ session }: { session: Session }) {
       >
         <MapSearch />
         <CurrentLocation />
+        <RealtimeLocationMarker />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
