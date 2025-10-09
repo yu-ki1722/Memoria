@@ -8,6 +8,7 @@ import {
   Marker,
   Popup,
   useMapEvents,
+  useMap,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L, { LeafletMouseEvent } from "leaflet";
@@ -19,6 +20,7 @@ import MapSearch from "../MapSearch";
 import CurrentLocation from "../CurrentLocation";
 import Image from "next/image";
 import Button from "../Button";
+import RealtimeLocationMarker from "../RealtimeLocationMarker";
 
 // Leafletアイコン修正
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -58,6 +60,18 @@ function LocationMarker({
       }
     },
   });
+  return null;
+}
+
+function InitialLocation() {
+  const map = useMap();
+
+  useEffect(() => {
+    map.locate().on("locationfound", (e) => {
+      map.flyTo(e.latlng, 16);
+    });
+  }, [map]);
+
   return null;
 }
 
@@ -241,6 +255,8 @@ export default function Map({ session }: { session: Session }) {
       >
         <MapSearch />
         <CurrentLocation />
+        <RealtimeLocationMarker />
+        <InitialLocation />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
