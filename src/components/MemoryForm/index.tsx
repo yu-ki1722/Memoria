@@ -6,7 +6,12 @@ import styles from "./MemoryForm.module.css";
 const emotions = ["😊", "😂", "😍", "😢", "😮", "🤔"];
 
 type MemoryFormProps = {
-  onSave: (emotion: string, text: string, imageFile: File | null) => void;
+  onSave: (
+    emotion: string,
+    text: string,
+    imageFile: File | null,
+    imageWasCleared: boolean
+  ) => void;
   buttonText: string;
   initialEmotion?: string | null;
   initialText?: string;
@@ -32,7 +37,10 @@ export default function MemoryForm({
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [imageWasCleared, setImageWasCleared] = useState(false);
+
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setImageWasCleared(false);
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setImageFile(file);
@@ -46,11 +54,12 @@ export default function MemoryForm({
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+    setImageWasCleared(true);
   };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    onSave(selectedEmotion, text, imageFile);
+    onSave(selectedEmotion, text, imageFile, imageWasCleared);
   };
 
   return (

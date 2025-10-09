@@ -165,11 +165,53 @@ export default function Map({ session }: { session: Session }) {
     id: number,
     emotion: string,
     text: string,
-    imageFile: File | null
+    imageFile: File | null,
+    imageWasCleared: boolean
   ) => {
+    const originalMemory = memories.find((m) => m.id === id);
+    if (!originalMemory) return;
+
+    let finalImageUrl: string | null = originalMemory.image_url;
+
+    if (imageFile) {
+      if (originalMemory.image_url) {
+        const oldFilePath = originalMemory.image_url
+          .split("/")
+          .slice(-2)
+          .join("/");
+        await supabase.storage.from("memory-images").remove([oldFilePath]);
+      }
+
+      const sanitizeFileName = (fileName: string) =>
+        fileName.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9.\-_]/g, "");
+      let finalName = sanitizeFileName(imageFile.name);
+      if (finalName.startsWith(".")) finalName = `file${finalName}`;
+      const newFilePath = `${session.user.id}/${Date.now()}-${finalName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("memory-images")
+        .upload(newFilePath, imageFile);
+
+      if (uploadError) {
+        return alert("新しい画像のアップロードに失敗: " + uploadError.message);
+      }
+
+      const { data: urlData } = supabase.storage
+        .from("memory-images")
+        .getPublicUrl(newFilePath);
+      finalImageUrl = urlData.publicUrl;
+    } else if (imageWasCleared && originalMemory.image_url) {
+      const oldFilePath = originalMemory.image_url
+        .split("/")
+        .slice(-2)
+        .join("/");
+      await supabase.storage.from("memory-images").remove([oldFilePath]);
+      finalImageUrl = null;
+    }
+
     const { data, error } = await supabase
       .from("memories")
-      .update({ text: text, emotion: emotion })
+      .update({ text: text, emotion: emotion, image_url: finalImageUrl })
       .eq("id", id)
       .select()
       .single();
@@ -207,8 +249,14 @@ export default function Map({ session }: { session: Session }) {
             <Popup>
               {editingMemory === memory.id ? (
                 <MemoryForm
-                  onSave={(emotion, text, imageFile) =>
-                    handleUpdateMemory(memory.id, emotion, text, imageFile)
+                  onSave={(emotion, text, imageFile, imageWasCleared) =>
+                    handleUpdateMemory(
+                      memory.id,
+                      emotion,
+                      text,
+                      imageFile,
+                      imageWasCleared
+                    )
                   }
                   buttonText="更新"
                   initialEmotion={memory.emotion}
