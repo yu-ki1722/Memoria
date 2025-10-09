@@ -2,28 +2,37 @@
 
 import { useMap } from "react-leaflet";
 import styles from "./CurrentLocation.module.css";
+import { useEffect, useRef } from "react";
+import L from "leaflet";
 
 export default function CurrentLocation() {
   const map = useMap();
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const handleGetCurrentLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          map.flyTo([latitude, longitude], 15);
-        },
-        () => {
-          alert("現在地の取得に失敗しました。");
-        }
-      );
-    } else {
-      alert("お使いのブラウザは現在地取得機能に対応していません。");
+  useEffect(() => {
+    const button = buttonRef.current;
+    if (button) {
+      L.DomEvent.on(button, "mousedown dblclick", L.DomEvent.stopPropagation);
     }
+  }, []);
+
+  const handleClick = () => {
+    map
+      .locate()
+      .on("locationfound", (e) => {
+        map.flyTo(e.latlng, 16);
+      })
+      .on("locationerror", () => {
+        alert("現在地の取得に失敗しました。");
+      });
   };
 
   return (
-    <button onClick={handleGetCurrentLocation} className={styles.button}>
+    <button
+      ref={buttonRef}
+      onClick={handleClick}
+      className={`${styles.button} leaflet-control`}
+    >
       <svg
         className={styles.icon}
         xmlns="http://www.w3.org/2000/svg"

@@ -48,6 +48,10 @@ function LocationMarker({
 }) {
   useMapEvents({
     click(e: LeafletMouseEvent) {
+      if ((e.originalEvent.target as HTMLElement).closest(".leaflet-control")) {
+        return;
+      }
+
       if (session) {
         setNewPosition(e.latlng);
       }
