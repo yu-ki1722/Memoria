@@ -2,6 +2,7 @@
 
 import { useState, useRef, ChangeEvent, FormEvent } from "react";
 import styles from "./MemoryForm.module.css";
+import Button from "../Button";
 
 const emotions = ["😊", "😂", "😍", "😢", "😮", "🤔"];
 
@@ -121,22 +122,13 @@ export default function MemoryForm({
         </div>
         <div className={styles.buttonGroup}>
           {onCancel && (
-            <button
-              type="button"
-              className={styles.cancelButton}
-              onClick={onCancel}
-            >
+            <Button onClick={onCancel} variant="secondary">
               キャンセル
-            </button>
+            </Button>
           )}
-          <button
-            type="submit"
-            className={
-              buttonText === "更新" ? styles.updateButton : styles.submitButton
-            }
-          >
+          <Button type="submit" variant="primary">
             {buttonText}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

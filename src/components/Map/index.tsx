@@ -18,6 +18,7 @@ import Header from "../Header";
 import MapSearch from "../MapSearch";
 import CurrentLocation from "../CurrentLocation";
 import Image from "next/image";
+import Button from "../Button";
 
 // Leafletアイコン修正
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -48,6 +49,10 @@ function LocationMarker({
 }) {
   useMapEvents({
     click(e: LeafletMouseEvent) {
+      if ((e.originalEvent.target as HTMLElement).closest(".leaflet-control")) {
+        return;
+      }
+
       if (session) {
         setNewPosition(e.latlng);
       }
@@ -280,24 +285,24 @@ export default function Map({ session }: { session: Session }) {
                   <p>{memory.text}</p>
                   {session.user.id === memory.user_id && (
                     <div className={styles.buttonGroup}>
-                      <button
+                      <Button
                         onClick={(e) => {
                           e.stopPropagation();
                           setEditingMemory(memory.id);
                         }}
-                        className={styles.editButton}
+                        variant="primary"
                       >
                         編集
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteMemory(memory.id);
                         }}
-                        className={styles.deleteButton}
+                        variant="danger"
                       >
                         削除
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </div>
