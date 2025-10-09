@@ -14,11 +14,11 @@ import L, { LeafletMouseEvent } from "leaflet";
 import MemoryForm from "../MemoryForm";
 import { supabase } from "@/lib/supabaseClient";
 import styles from "./Map.module.css";
+import Header from "../Header";
 import MapSearch from "../MapSearch";
 import CurrentLocation from "../CurrentLocation";
-import Header from "../Header";
 
-// Leafletのデフォルトアイコンが正しく表示されない問題の修正
+// Leafletアイコン修正
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -35,6 +35,7 @@ type Memory = {
   latitude: number;
   longitude: number;
   user_id: string;
+  image_url: string | null;
 };
 
 function LocationMarker({
@@ -51,7 +52,6 @@ function LocationMarker({
       }
     },
   });
-
   return null;
 }
 
@@ -64,90 +64,105 @@ export default function Map({ session }: { session: Session }) {
 
   useEffect(() => {
     const fetchMemories = async () => {
-      const user = session.user;
       const { data, error } = await supabase
         .from("memories")
         .select("*")
-        .eq("user_id", user.id);
-
-      if (error) {
-        console.error("Error fetching memories:", error);
-      } else {
-        setMemories(data);
-      }
+        .eq("user_id", session.user.id);
+      if (error) console.error("Error fetching memories:", error);
+      else if (data) setMemories(data);
     };
-
-    if (session) {
-      fetchMemories();
-    }
+    if (session) fetchMemories();
   }, [session]);
 
   useEffect(() => {
-    if (markerRef.current) {
+    if (newPosition && markerRef.current) {
       markerRef.current.openPopup();
     }
   }, [newPosition]);
 
-  const handleSaveMemory = async (emotion: string, text: string) => {
-    if (!newPosition) return;
-    const user = session.user;
+  const handleSaveMemory = async (
+    emotion: string,
+    text: string,
+    imageFile: File | null
+  ) => {
+    if (!newPosition || !session) return;
+    let imageUrl: string | undefined = undefined;
+
+    if (imageFile) {
+      const sanitizeFileName = (fileName: string) =>
+        fileName.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9.\-_]/g, "");
+      let finalName = sanitizeFileName(imageFile.name);
+      if (finalName.startsWith(".")) finalName = `file${finalName}`;
+      const filePath = `${session.user.id}/${Date.now()}-${finalName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("memory-images")
+        .upload(filePath, imageFile);
+      if (uploadError) {
+        alert("画像アップロード失敗: " + uploadError.message);
+        return;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from("memory-images")
+        .getPublicUrl(filePath);
+      imageUrl = urlData.publicUrl;
+    }
 
     const { data, error } = await supabase
       .from("memories")
       .insert([
         {
-          emotion: emotion,
-          text: text,
+          emotion,
+          text,
+          user_id: session.user.id,
+          image_url: imageUrl,
           latitude: newPosition.lat,
           longitude: newPosition.lng,
-          user_id: user.id,
         },
       ])
-      .select();
+      .select()
+      .single();
 
     if (error) {
-      alert("エラーが発生しました：" + error.message);
+      console.error(error);
+      alert("保存失敗: " + error.message);
     } else if (data) {
-      alert("思い出を記録しました！");
-      setMemories([...memories, data[0]]);
+      setMemories([...memories, data]);
       setNewPosition(null);
+      alert("思い出を記録しました！");
     }
   };
 
   const handleDeleteMemory = async (id: number) => {
-    if (!window.confirm("この思い出を本当に削除しますか？")) {
-      return;
-    }
-
     const { error } = await supabase.from("memories").delete().eq("id", id);
-
     if (error) {
       alert("削除中にエラーが発生しました：" + error.message);
     } else {
-      alert("思い出を削除しました。");
       setMemories(memories.filter((memory) => memory.id !== id));
+      alert("思い出を削除しました。");
     }
   };
 
   const handleUpdateMemory = async (
     id: number,
     emotion: string,
-    text: string
+    text: string,
+    imageFile: File | null
   ) => {
     const { data, error } = await supabase
       .from("memories")
       .update({ text: text, emotion: emotion })
       .eq("id", id)
-      .select();
+      .select()
+      .single();
 
     if (error) {
       alert("更新中にエラーが発生しました：" + error.message);
     } else if (data) {
-      alert("思い出を更新しました。");
-      setMemories(
-        memories.map((memory) => (memory.id === id ? data[0] : memory))
-      );
+      setMemories(memories.map((m) => (m.id === id ? data : m)));
       setEditingMemory(null);
+      alert("思い出を更新しました。");
     }
   };
 
@@ -157,7 +172,7 @@ export default function Map({ session }: { session: Session }) {
       <MapContainer
         center={initialPosition}
         zoom={13}
-        style={{ height: "100vh", width: "100wh" }}
+        style={{ height: "100vh" }}
       >
         <MapSearch />
         <CurrentLocation />
@@ -166,6 +181,7 @@ export default function Map({ session }: { session: Session }) {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <LocationMarker session={session} setNewPosition={setNewPosition} />
+
         {memories.map((memory) => (
           <Marker
             key={memory.id}
@@ -173,19 +189,25 @@ export default function Map({ session }: { session: Session }) {
           >
             <Popup>
               {editingMemory === memory.id ? (
-                <div className={styles.memoryPopup}>
-                  <MemoryForm
-                    onSave={(emotion, text) =>
-                      handleUpdateMemory(memory.id, emotion, text)
-                    }
-                    buttonText="更新"
-                    initialEmotion={memory.emotion}
-                    initialText={memory.text}
-                    onCancel={() => setEditingMemory(null)}
-                  />
-                </div>
+                <MemoryForm
+                  onSave={(emotion, text, imageFile) =>
+                    handleUpdateMemory(memory.id, emotion, text, imageFile)
+                  }
+                  buttonText="更新"
+                  initialEmotion={memory.emotion}
+                  initialText={memory.text}
+                  initialImageUrl={memory.image_url}
+                  onCancel={() => setEditingMemory(null)}
+                />
               ) : (
                 <div className={styles.memoryPopup}>
+                  {memory.image_url && (
+                    <img
+                      src={memory.image_url}
+                      alt={memory.text}
+                      className={styles.popupImage}
+                    />
+                  )}
                   <span className={styles.emotion}>{memory.emotion}</span>
                   <p>{memory.text}</p>
                   {session.user.id === memory.user_id && (
