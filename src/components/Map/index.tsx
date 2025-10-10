@@ -11,6 +11,7 @@ import styles from "./Map.module.css";
 import Header from "../Header";
 import MemoryForm from "../MemoryForm";
 import Button from "../Button";
+import GeocoderControl from "../GeocoderControl";
 
 type Memory = {
   id: number;
@@ -192,6 +193,10 @@ export default function MapWrapper({ session }: { session: Session }) {
         mapStyle="mapbox://styles/mapbox/streets-v12"
         onClick={handleMapClick}
       >
+        <GeocoderControl
+          mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN!}
+          position="bottom-right"
+        />
         {memories.map((memory) => (
           <Marker
             key={`memory-${memory.id}`}
