@@ -1,97 +1,36 @@
 .memoryPopup {
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 8px;
-  width: 150px;
+  min-width: 150px;
+  color: #333;
+}
+
+.popupImage {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 4px;
 }
 
 .emotion {
-  font-size: 36px;
-}
-
-.memoryPopup p {
-  margin: 0;
-  text-align: center;
-  word-wrap: break-word;
-}
-
-.deleteButton {
-  flex-grow: 1;
-  width: 50%;
-  padding: 6px;
-  border: none;
-  border-radius: 6px;
-  background-color: #ef4444;
-  color: white;
   font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.deleteButton:hover {
-  background-color: #dc2626;
-}
-
-.editButton {
-  flex-grow: 1;
-  width: 50%;
-  padding: 6px;
-  border: none;
-  border-radius: 6px;
-  background-color: #3b82f6;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-.editButton:hover {
-  background-color: #2563eb;
-}
-
-.editTextarea {
-  width: 100%;
-  padding: 8px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  resize: vertical;
-  box-sizing: border-box;
-}
-
-.updateButton {
-  width: 100%;
-  padding: 6px;
-  border: none;
-  border-radius: 6px;
-  background-color: #10b981;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-.updateButton:hover {
-  background-color: #059669;
+  font-size: 1.1em;
 }
 
 .buttonGroup {
   display: flex;
   gap: 8px;
-  width: 100%;
+  margin-top: 8px;
 }
 
-.cancelButton {
-  width: 100%;
-  padding: 6px;
-  margin-top: 4px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  background-color: #ffffff;
-  color: #333;
-  font-weight: bold;
+.memoryMarker {
+  font-size: 24px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transform: translate(-50%, -100%);
+  transition: transform 0.1s ease-in-out;
 }
 
-.cancelButton:hover {
-  background-color: #f0f0f0;
+.memoryMarker:hover {
+  transform: translate(-50%, -100%) scale(1.2);
 }
