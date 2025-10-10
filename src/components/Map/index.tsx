@@ -61,8 +61,53 @@ export default function MapWrapper({ session }: { session: Session }) {
     text: string,
     imageFile: File | null
   ) => {
-    console.log("Save function will be re-implemented here.");
-    setNewMemoryLocation(null);
+    if (!newMemoryLocation || !session) return;
+    let imageUrl: string | undefined = undefined;
+
+    if (imageFile) {
+      const sanitizeFileName = (fileName: string) =>
+        fileName.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9.\-_]/g, "");
+      let finalName = sanitizeFileName(imageFile.name);
+      if (finalName.startsWith(".")) finalName = `file${finalName}`;
+      const filePath = `${session.user.id}/${Date.now()}-${finalName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("memory-images")
+        .upload(filePath, imageFile);
+      if (uploadError) {
+        alert("画像アップロード失敗: " + uploadError.message);
+        return;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from("memory-images")
+        .getPublicUrl(filePath);
+      imageUrl = urlData.publicUrl;
+    }
+
+    const { data, error } = await supabase
+      .from("memories")
+      .insert([
+        {
+          emotion,
+          text,
+          user_id: session.user.id,
+          image_url: imageUrl,
+          latitude: newMemoryLocation.lat,
+          longitude: newMemoryLocation.lng,
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      console.error(error);
+      alert("保存失敗: " + error.message);
+    } else if (data) {
+      setMemories([...memories, data]);
+      setNewMemoryLocation(null);
+      alert("思い出を記録しました！");
+    }
   };
 
   return (
@@ -85,18 +130,15 @@ export default function MapWrapper({ session }: { session: Session }) {
             longitude={memory.longitude}
             latitude={memory.latitude}
           >
-            <button
+            <div
+              className={styles.memoryMarker}
               onClick={(e) => {
                 e.stopPropagation();
                 setSelectedMemory(memory);
               }}
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                transform: "translate(-50%, -50%)",
-              }}
-            ></button>
+            >
+              📍
+            </div>
           </Marker>
         ))}
 
