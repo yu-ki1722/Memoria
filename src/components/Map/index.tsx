@@ -1,36 +1,15 @@
 "use client";
 
 import type { Session } from "@supabase/auth-helpers-nextjs";
-import { useState, useRef, useEffect } from "react";
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  Popup,
-  useMapEvents,
-  useMap,
-} from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import L, { LeafletMouseEvent } from "leaflet";
-import MemoryForm from "../MemoryForm";
+import { useState, useEffect } from "react";
+import Map, { Marker, Popup } from "react-map-gl/mapbox";
+import type { MapMouseEvent } from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
+import Image from "next/image";
 import { supabase } from "@/lib/supabaseClient";
 import styles from "./Map.module.css";
 import Header from "../Header";
-import MapSearch from "../MapSearch";
-import CurrentLocation from "../CurrentLocation";
-import Image from "next/image";
-import Button from "../Button";
-import RealtimeLocationMarker from "../RealtimeLocationMarker";
-
-// Leafletアイコン修正
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
-  iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
-});
+import MemoryForm from "../MemoryForm";
 
 type Memory = {
   id: number;
@@ -42,45 +21,13 @@ type Memory = {
   image_url: string | null;
 };
 
-function LocationMarker({
-  session,
-  setNewPosition,
-}: {
-  session: Session | null;
-  setNewPosition: (position: L.LatLng) => void;
-}) {
-  useMapEvents({
-    click(e: LeafletMouseEvent) {
-      if ((e.originalEvent.target as HTMLElement).closest(".leaflet-control")) {
-        return;
-      }
-
-      if (session) {
-        setNewPosition(e.latlng);
-      }
-    },
-  });
-  return null;
-}
-
-function InitialLocation() {
-  const map = useMap();
-
-  useEffect(() => {
-    map.locate().on("locationfound", (e) => {
-      map.flyTo(e.latlng, 16);
-    });
-  }, [map]);
-
-  return null;
-}
-
-export default function Map({ session }: { session: Session }) {
-  const initialPosition: [number, number] = [35.6895, 139.6917];
-  const [newPosition, setNewPosition] = useState<L.LatLng | null>(null);
-  const markerRef = useRef<L.Marker>(null);
+export default function MapWrapper({ session }: { session: Session }) {
   const [memories, setMemories] = useState<Memory[]>([]);
-  const [editingMemory, setEditingMemory] = useState<number | null>(null);
+  const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
+  const [newMemoryLocation, setNewMemoryLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
 
   useEffect(() => {
     const fetchMemories = async () => {
@@ -94,247 +41,99 @@ export default function Map({ session }: { session: Session }) {
     if (session) fetchMemories();
   }, [session]);
 
-  useEffect(() => {
-    if (newPosition && markerRef.current) {
-      markerRef.current.openPopup();
+  const handleMapClick = (event: MapMouseEvent) => {
+    const targetElement = event.originalEvent.target as HTMLElement;
+
+    if (
+      targetElement &&
+      targetElement.closest(".mapboxgl-marker, .mapboxgl-popup")
+    ) {
+      return;
     }
-  }, [newPosition]);
+
+    const { lng, lat } = event.lngLat;
+    setNewMemoryLocation({ lng, lat });
+    setSelectedMemory(null);
+  };
 
   const handleSaveMemory = async (
     emotion: string,
     text: string,
     imageFile: File | null
   ) => {
-    if (!newPosition || !session) return;
-    let imageUrl: string | undefined = undefined;
-
-    if (imageFile) {
-      const sanitizeFileName = (fileName: string) =>
-        fileName.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9.\-_]/g, "");
-      let finalName = sanitizeFileName(imageFile.name);
-      if (finalName.startsWith(".")) finalName = `file${finalName}`;
-      const filePath = `${session.user.id}/${Date.now()}-${finalName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("memory-images")
-        .upload(filePath, imageFile);
-      if (uploadError) {
-        alert("画像アップロード失敗: " + uploadError.message);
-        return;
-      }
-
-      const { data: urlData } = supabase.storage
-        .from("memory-images")
-        .getPublicUrl(filePath);
-      imageUrl = urlData.publicUrl;
-    }
-
-    const { data, error } = await supabase
-      .from("memories")
-      .insert([
-        {
-          emotion,
-          text,
-          user_id: session.user.id,
-          image_url: imageUrl,
-          latitude: newPosition.lat,
-          longitude: newPosition.lng,
-        },
-      ])
-      .select()
-      .single();
-
-    if (error) {
-      console.error(error);
-      alert("保存失敗: " + error.message);
-    } else if (data) {
-      setMemories([...memories, data]);
-      setNewPosition(null);
-      alert("思い出を記録しました！");
-    }
-  };
-
-  const handleDeleteMemory = async (id: number) => {
-    if (!window.confirm("この思い出を本当に削除しますか？")) {
-      return;
-    }
-
-    const memoryToDelete = memories.find((memory) => memory.id === id);
-
-    if (memoryToDelete && memoryToDelete.image_url) {
-      const filePath = memoryToDelete.image_url.split("/").slice(-2).join("/");
-      const { error: deleteError } = await supabase.storage
-        .from("memory-images")
-        .remove([filePath]);
-
-      if (deleteError) {
-        alert("画像の削除に失敗しました: " + deleteError.message);
-      }
-    }
-
-    const { error } = await supabase.from("memories").delete().eq("id", id);
-    if (error) {
-      alert("削除中にエラーが発生しました：" + error.message);
-    } else {
-      setMemories(memories.filter((memory) => memory.id !== id));
-      alert("思い出を削除しました。");
-    }
-  };
-
-  const handleUpdateMemory = async (
-    id: number,
-    emotion: string,
-    text: string,
-    imageFile: File | null,
-    imageWasCleared: boolean
-  ) => {
-    const originalMemory = memories.find((m) => m.id === id);
-    if (!originalMemory) return;
-
-    let finalImageUrl: string | null = originalMemory.image_url;
-
-    if (imageFile) {
-      if (originalMemory.image_url) {
-        const oldFilePath = originalMemory.image_url
-          .split("/")
-          .slice(-2)
-          .join("/");
-        await supabase.storage.from("memory-images").remove([oldFilePath]);
-      }
-
-      const sanitizeFileName = (fileName: string) =>
-        fileName.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9.\-_]/g, "");
-      let finalName = sanitizeFileName(imageFile.name);
-      if (finalName.startsWith(".")) finalName = `file${finalName}`;
-      const newFilePath = `${session.user.id}/${Date.now()}-${finalName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("memory-images")
-        .upload(newFilePath, imageFile);
-
-      if (uploadError) {
-        return alert("新しい画像のアップロードに失敗: " + uploadError.message);
-      }
-
-      const { data: urlData } = supabase.storage
-        .from("memory-images")
-        .getPublicUrl(newFilePath);
-      finalImageUrl = urlData.publicUrl;
-    } else if (imageWasCleared && originalMemory.image_url) {
-      const oldFilePath = originalMemory.image_url
-        .split("/")
-        .slice(-2)
-        .join("/");
-      await supabase.storage.from("memory-images").remove([oldFilePath]);
-      finalImageUrl = null;
-    }
-
-    const { data, error } = await supabase
-      .from("memories")
-      .update({ text: text, emotion: emotion, image_url: finalImageUrl })
-      .eq("id", id)
-      .select()
-      .single();
-
-    if (error) {
-      alert("更新中にエラーが発生しました：" + error.message);
-    } else if (data) {
-      setMemories(memories.map((m) => (m.id === id ? data : m)));
-      setEditingMemory(null);
-      alert("思い出を更新しました。");
-    }
+    console.log("Save function will be re-implemented here.");
+    setNewMemoryLocation(null);
   };
 
   return (
     <>
       <Header session={session} />
-      <MapContainer
-        center={initialPosition}
-        zoom={13}
-        style={{ height: "100vh" }}
+      <Map
+        mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
+        initialViewState={{
+          longitude: 139.6917,
+          latitude: 35.6895,
+          zoom: 12,
+        }}
+        style={{ width: "100vw", height: "100vh" }}
+        mapStyle="mapbox://styles/mapbox/streets-v12"
+        onClick={handleMapClick}
       >
-        <MapSearch />
-        <CurrentLocation />
-        <RealtimeLocationMarker />
-        <InitialLocation />
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        <LocationMarker session={session} setNewPosition={setNewPosition} />
-
         {memories.map((memory) => (
           <Marker
             key={memory.id}
-            position={[memory.latitude, memory.longitude]}
+            longitude={memory.longitude}
+            latitude={memory.latitude}
           >
-            <Popup>
-              {editingMemory === memory.id ? (
-                <MemoryForm
-                  onSave={(emotion, text, imageFile, imageWasCleared) =>
-                    handleUpdateMemory(
-                      memory.id,
-                      emotion,
-                      text,
-                      imageFile,
-                      imageWasCleared
-                    )
-                  }
-                  buttonText="更新"
-                  initialEmotion={memory.emotion}
-                  initialText={memory.text}
-                  initialImageUrl={memory.image_url}
-                  onCancel={() => setEditingMemory(null)}
-                />
-              ) : (
-                <div className={styles.memoryPopup}>
-                  {memory.image_url && (
-                    <Image
-                      src={memory.image_url}
-                      alt={memory.text}
-                      className={styles.popupImage}
-                      width={150}
-                      height={120}
-                    />
-                  )}
-                  <span className={styles.emotion}>{memory.emotion}</span>
-                  <p>{memory.text}</p>
-                  {session.user.id === memory.user_id && (
-                    <div className={styles.buttonGroup}>
-                      <Button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingMemory(memory.id);
-                        }}
-                        variant="primary"
-                      >
-                        編集
-                      </Button>
-                      <Button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteMemory(memory.id);
-                        }}
-                        variant="danger"
-                      >
-                        削除
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </Popup>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedMemory(memory);
+              }}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                transform: "translate(-50%, -50%)",
+              }}
+            ></button>
           </Marker>
         ))}
 
-        {newPosition && (
-          <Marker position={newPosition} ref={markerRef}>
-            <Popup>
-              <MemoryForm onSave={handleSaveMemory} buttonText="記録する" />
-            </Popup>
-          </Marker>
+        {selectedMemory && (
+          <Popup
+            longitude={selectedMemory.longitude}
+            latitude={selectedMemory.latitude}
+            onClose={() => setSelectedMemory(null)}
+            anchor="top"
+          >
+            <div className={styles.memoryPopup}>
+              {selectedMemory.image_url && (
+                <Image
+                  src={selectedMemory.image_url}
+                  alt={selectedMemory.text}
+                  className={styles.popupImage}
+                  width={150}
+                  height={120}
+                />
+              )}
+              <span className={styles.emotion}>{selectedMemory.emotion}</span>
+              <p>{selectedMemory.text}</p>
+            </div>
+          </Popup>
         )}
-      </MapContainer>
+
+        {newMemoryLocation && (
+          <Popup
+            longitude={newMemoryLocation.lng}
+            latitude={newMemoryLocation.lat}
+            onClose={() => setNewMemoryLocation(null)}
+            anchor="bottom"
+          >
+            <MemoryForm onSave={handleSaveMemory} buttonText="記録する" />
+          </Popup>
+        )}
+      </Map>
     </>
   );
 }
