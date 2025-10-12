@@ -39,6 +39,7 @@ export default function MapWrapper({ session }: { session: Session }) {
     longitude: number;
     zoom: number;
   } | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
   const mapRef = useRef<MapRef>(null);
 
   useEffect(() => {
@@ -213,10 +214,13 @@ export default function MapWrapper({ session }: { session: Session }) {
     <>
       <Header session={session} />
       <div style={{ position: "relative", width: "100vw", height: "100vh" }}>
+        {isLocating && (
+          <div className={styles.locatingOverlay}>
+            <p>現在地を取得中...</p>
+          </div>
+        )}
         {!initialView ? (
-          <p style={{ textAlign: "center", marginTop: "50vh" }}>
-            現在地を取得中...
-          </p>
+          <p className={styles.locatingOverlay}>現在地を取得中...</p>
         ) : (
           <Map
             mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
@@ -331,7 +335,7 @@ export default function MapWrapper({ session }: { session: Session }) {
             )}
           </Map>
         )}
-        <CurrentLocationButton mapRef={mapRef} />
+        <CurrentLocationButton mapRef={mapRef} setIsLocating={setIsLocating} />
       </div>
     </>
   );
