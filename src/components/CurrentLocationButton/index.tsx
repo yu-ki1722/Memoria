@@ -1,16 +1,24 @@
 "use client";
 
 import type { MapRef } from "react-map-gl/mapbox";
-import React from "react";
+import React, { useState } from "react";
 import styles from "./CurrentLocationButton.module.css";
 
 type Props = {
   mapRef: React.RefObject<MapRef>;
+  setIsLocating: (isLocating: boolean) => void;
 };
 
-export default function CurrentLocationButton({ mapRef }: Props) {
+export default function CurrentLocationButton({
+  mapRef,
+  setIsLocating,
+}: Props) {
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleGetCurrentLocation = (e: React.MouseEvent) => {
     e.stopPropagation();
+    setIsLoading(true);
+    setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
@@ -19,15 +27,23 @@ export default function CurrentLocationButton({ mapRef }: Props) {
           zoom: 15,
           speed: 1.5,
         });
+        setIsLoading(false);
+        setIsLocating(false);
       },
       () => {
         alert("現在地の取得に失敗しました。");
+        setIsLoading(false);
+        setIsLocating(false);
       }
     );
   };
 
   return (
-    <button onClick={handleGetCurrentLocation} className={styles.button}>
+    <button
+      onClick={handleGetCurrentLocation}
+      className={`${styles.button} ${isLoading ? styles.loading : ""}`}
+      disabled={isLoading}
+    >
       <svg
         className={styles.icon}
         xmlns="http://www.w3.org/2000/svg"
