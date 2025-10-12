@@ -34,7 +34,33 @@ export default function MapWrapper({ session }: { session: Session }) {
     lng: number;
   } | null>(null);
   const [editingMemory, setEditingMemory] = useState<number | null>(null);
+  const [initialView, setInitialView] = useState<{
+    latitude: number;
+    longitude: number;
+    zoom: number;
+  } | null>(null);
   const mapRef = useRef<MapRef>(null);
+
+  useEffect(() => {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setInitialView({
+          latitude,
+          longitude,
+          zoom: 15,
+        });
+      },
+      () => {
+        console.warn("現在地取得に失敗しました。デフォルト位置を使用します。");
+        setInitialView({
+          latitude: 35.6895,
+          longitude: 139.6917,
+          zoom: 12,
+        });
+      }
+    );
+  }, []);
 
   useEffect(() => {
     const fetchMemories = async () => {
@@ -187,118 +213,124 @@ export default function MapWrapper({ session }: { session: Session }) {
     <>
       <Header session={session} />
       <div style={{ position: "relative", width: "100vw", height: "100vh" }}>
-        <Map
-          mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
-          ref={mapRef}
-          initialViewState={{
-            longitude: 139.6917,
-            latitude: 35.6895,
-            zoom: 12,
-          }}
-          style={{ width: "100%", height: "100%" }}
-          mapStyle="mapbox://styles/mapbox/streets-v12"
-          onClick={handleMapClick}
-        >
-          <GeocoderControl
-            mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN!}
-            position="bottom-left"
-          />
-          <RealtimeLocationMarker />
-          {memories.map((memory) => (
-            <Marker
-              key={`memory-${memory.id}`}
-              longitude={memory.longitude}
-              latitude={memory.latitude}
-              onClick={(e) => {
-                e.originalEvent.stopPropagation();
-                setEditingMemory(null);
-                setSelectedMemory(memory);
-              }}
+        {!initialView ? (
+          <p style={{ textAlign: "center", marginTop: "50vh" }}>
+            現在地を取得中...
+          </p>
+        ) : (
+          <Map
+            mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
+            ref={mapRef}
+            initialViewState={initialView}
+            style={{ width: "100%", height: "100%" }}
+            mapStyle="mapbox://styles/mapbox/streets-v12"
+            onClick={handleMapClick}
+          >
+            <GeocoderControl
+              mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN!}
+              position="bottom-left"
             />
-          ))}
+            <RealtimeLocationMarker />
+            {memories.map((memory) => (
+              <Marker
+                key={`memory-${memory.id}`}
+                longitude={memory.longitude}
+                latitude={memory.latitude}
+                onClick={(e) => {
+                  e.originalEvent.stopPropagation();
+                  setEditingMemory(null);
+                  setSelectedMemory(memory);
+                }}
+              />
+            ))}
 
-          {selectedMemory && !editingMemory && (
-            <Popup
-              longitude={selectedMemory.longitude}
-              latitude={selectedMemory.latitude}
-              onClose={() => setSelectedMemory(null)}
-              anchor="bottom"
-            >
-              <div className={styles.memoryPopup}>
-                {selectedMemory.image_url && (
-                  <Image
-                    src={selectedMemory.image_url}
-                    alt={selectedMemory.text}
-                    className={styles.popupImage}
-                    width={150}
-                    height={120}
-                  />
-                )}
-                <span className={styles.emotion}>{selectedMemory.emotion}</span>
-                <p>{selectedMemory.text}</p>
-                <div className={styles.buttonGroup}>
-                  <Button
-                    variant="primary"
-                    onClick={() => {
-                      setEditingMemory(selectedMemory.id);
-                      setSelectedMemory(null);
-                    }}
-                  >
-                    編集
-                  </Button>
-                  <Button
-                    variant="danger"
-                    onClick={() => handleDeleteMemory(selectedMemory.id)}
-                  >
-                    削除
-                  </Button>
+            {selectedMemory && !editingMemory && (
+              <Popup
+                longitude={selectedMemory.longitude}
+                latitude={selectedMemory.latitude}
+                onClose={() => setSelectedMemory(null)}
+                anchor="bottom"
+              >
+                <div className={styles.memoryPopup}>
+                  {selectedMemory.image_url && (
+                    <Image
+                      src={selectedMemory.image_url}
+                      alt={selectedMemory.text}
+                      className={styles.popupImage}
+                      width={150}
+                      height={120}
+                    />
+                  )}
+                  <span className={styles.emotion}>
+                    {selectedMemory.emotion}
+                  </span>
+                  <p>{selectedMemory.text}</p>
+                  <div className={styles.buttonGroup}>
+                    <Button
+                      variant="primary"
+                      onClick={() => {
+                        setEditingMemory(selectedMemory.id);
+                        setSelectedMemory(null);
+                      }}
+                    >
+                      編集
+                    </Button>
+                    <Button
+                      variant="danger"
+                      onClick={() => handleDeleteMemory(selectedMemory.id)}
+                    >
+                      削除
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </Popup>
-          )}
+              </Popup>
+            )}
 
-          {editingMemory &&
-            (() => {
-              const memoryToEdit = memories.find((m) => m.id === editingMemory);
-              if (!memoryToEdit) return null;
-              return (
-                <Popup
-                  longitude={memoryToEdit.longitude}
-                  latitude={memoryToEdit.latitude}
-                  onClose={() => setEditingMemory(null)}
-                  anchor="bottom"
-                >
-                  <MemoryForm
-                    onSave={(emotion, text, imageFile, imageWasCleared) =>
-                      handleUpdateMemory(
-                        memoryToEdit.id,
-                        emotion,
-                        text,
-                        imageFile,
-                        imageWasCleared
-                      )
-                    }
-                    buttonText="更新"
-                    initialEmotion={memoryToEdit.emotion}
-                    initialText={memoryToEdit.text}
-                    initialImageUrl={memoryToEdit.image_url}
-                    onCancel={() => setEditingMemory(null)}
-                  />
-                </Popup>
-              );
-            })()}
+            {editingMemory &&
+              (() => {
+                const memoryToEdit = memories.find(
+                  (m) => m.id === editingMemory
+                );
+                if (!memoryToEdit) return null;
+                return (
+                  <Popup
+                    longitude={memoryToEdit.longitude}
+                    latitude={memoryToEdit.latitude}
+                    onClose={() => setEditingMemory(null)}
+                    anchor="bottom"
+                  >
+                    <MemoryForm
+                      onSave={(emotion, text, imageFile, imageWasCleared) =>
+                        handleUpdateMemory(
+                          memoryToEdit.id,
+                          emotion,
+                          text,
+                          imageFile,
+                          imageWasCleared
+                        )
+                      }
+                      buttonText="更新"
+                      initialEmotion={memoryToEdit.emotion}
+                      initialText={memoryToEdit.text}
+                      initialImageUrl={memoryToEdit.image_url}
+                      onCancel={() => setEditingMemory(null)}
+                    />
+                  </Popup>
+                );
+              })()}
 
-          {newMemoryLocation && (
-            <Popup
-              longitude={newMemoryLocation.lng}
-              latitude={newMemoryLocation.lat}
-              onClose={() => setNewMemoryLocation(null)}
-              anchor="bottom"
-            >
-              <MemoryForm onSave={handleSaveMemory} buttonText="記録する" />
-            </Popup>
-          )}
-        </Map>
+            {newMemoryLocation && (
+              <Popup
+                longitude={newMemoryLocation.lng}
+                latitude={newMemoryLocation.lat}
+                onClose={() => setNewMemoryLocation(null)}
+                anchor="bottom"
+              >
+                <MemoryForm onSave={handleSaveMemory} buttonText="記録する" />
+              </Popup>
+            )}
+          </Map>
+        )}
         <CurrentLocationButton mapRef={mapRef} />
       </div>
     </>
