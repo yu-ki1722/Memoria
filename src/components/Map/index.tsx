@@ -13,6 +13,7 @@ import MemoryForm from "../MemoryForm";
 import Button from "../Button";
 import GeocoderControl from "../GeocoderControl";
 import CurrentLocationButton from "../CurrentLocationButton";
+import RealtimeLocationMarker from "../RealtimeLocationMarker";
 
 type Memory = {
   id: number;
@@ -202,6 +203,7 @@ export default function MapWrapper({ session }: { session: Session }) {
             mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN!}
             position="bottom-left"
           />
+          <RealtimeLocationMarker />
           {memories.map((memory) => (
             <Marker
               key={`memory-${memory.id}`}
