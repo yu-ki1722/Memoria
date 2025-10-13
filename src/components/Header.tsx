@@ -2,7 +2,6 @@
 
 import { supabase } from "@/lib/supabaseClient";
 import { Session } from "@supabase/auth-helpers-nextjs";
-import styles from "./Header.module.css";
 import { useRouter } from "next/navigation";
 
 type HeaderProps = {
@@ -18,11 +17,14 @@ export default function Header({ session }: HeaderProps) {
   };
 
   return (
-    <header className={styles.header}>
-      <h1 className={styles.title}>Memoria</h1>
+    <header className="absolute top-0 left-0 w-full z-10 flex justify-between items-center p-4 bg-white/80 backdrop-blur-sm shadow-sm">
+      <h1 className="text-2xl font-bold text-gray-800">Memoria</h1>
       <nav>
         {session && (
-          <button onClick={handleLogout} className={styles.button}>
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition-colors"
+          >
             ログアウト
           </button>
         )}
