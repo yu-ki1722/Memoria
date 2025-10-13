@@ -2,7 +2,7 @@
 
 import type { MapRef } from "react-map-gl/mapbox";
 import React, { useState } from "react";
-import styles from "./CurrentLocationButton.module.css";
+import clsx from "clsx";
 
 type Props = {
   mapRef: React.RefObject<MapRef>;
@@ -41,11 +41,14 @@ export default function CurrentLocationButton({
   return (
     <button
       onClick={handleGetCurrentLocation}
-      className={`${styles.button} ${isLoading ? styles.loading : ""}`}
+      className={clsx(
+        "absolute bottom-5 right-5 z-10 w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors disabled:opacity-50",
+        isLoading && "animate-customPulse"
+      )}
       disabled={isLoading}
     >
       <svg
-        className={styles.icon}
+        className="w-5 h-5 text-gray-700"
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
         fill="currentColor"
