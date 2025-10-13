@@ -215,12 +215,14 @@ export default function MapWrapper({ session }: { session: Session }) {
       <Header session={session} />
       <div style={{ position: "relative", width: "100vw", height: "100vh" }}>
         {isLocating && (
-          <div className={styles.locatingOverlay}>
+          <div className="absolute top-0 left-0 w-full h-full z-[1001] flex justify-center items-center bg-black/50 text-white text-lg font-bold">
             <p>現在地を取得中...</p>
           </div>
         )}
         {!initialView ? (
-          <p className={styles.locatingOverlay}>現在地を取得中...</p>
+          <p className="absolute top-0 left-0 w-full h-full z-[1001] flex justify-center items-center bg-black/50 text-white text-lg font-bold">
+            現在地を取得中...
+          </p>
         ) : (
           <Map
             mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
@@ -254,22 +256,23 @@ export default function MapWrapper({ session }: { session: Session }) {
                 latitude={selectedMemory.latitude}
                 onClose={() => setSelectedMemory(null)}
                 anchor="bottom"
+                className="mapboxgl-popup-content-wrapper"
               >
-                <div className={styles.memoryPopup}>
+                <div className="w-52 flex flex-col gap-2 p-2">
                   {selectedMemory.image_url && (
                     <Image
                       src={selectedMemory.image_url}
                       alt={selectedMemory.text}
-                      className={styles.popupImage}
-                      width={150}
-                      height={120}
+                      width={200}
+                      height={150}
+                      className="rounded-md object-cover w-full"
                     />
                   )}
-                  <span className={styles.emotion}>
+                  <div className="text-2xl font-bold text-center">
                     {selectedMemory.emotion}
-                  </span>
-                  <p>{selectedMemory.text}</p>
-                  <div className={styles.buttonGroup}>
+                  </div>
+                  <p className="text-gray-700 text-sm">{selectedMemory.text}</p>
+                  <div className="flex gap-2 mt-2">
                     <Button
                       variant="primary"
                       onClick={() => {

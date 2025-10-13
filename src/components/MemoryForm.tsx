@@ -36,9 +36,8 @@ export default function MemoryForm({
   const [imageUrlPreview, setImageUrlPreview] = useState(
     initialImageUrl || null
   );
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const [imageWasCleared, setImageWasCleared] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     setImageWasCleared(false);
@@ -73,7 +72,7 @@ export default function MemoryForm({
             type="button"
             className={`w-10 h-10 rounded-full text-2xl flex items-center justify-center transition-all duration-200 ${
               selectedEmotion === emotion
-                ? "bg-blue-200 border-2 border-blue-500"
+                ? "bg-blue-200 border-2 border-blue-500 scale-110"
                 : "bg-gray-200 border-2 border-transparent hover:scale-110"
             }`}
             onClick={() => setSelectedEmotion(emotion)}
@@ -89,7 +88,7 @@ export default function MemoryForm({
           placeholder="思い出を書き留めよう..."
           rows={4}
           required
-          className="w-full p-2 border border-gray-300 rounded-md resize-vertical"
+          className="w-full p-2 border border-gray-300 rounded-md resize-vertical focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
         />
         <div className="mt-2 border border-dashed border-gray-300 p-3 rounded-lg text-center relative">
           <input
@@ -102,7 +101,7 @@ export default function MemoryForm({
           />
           <label
             htmlFor="imageUpload"
-            className="text-sm font-semibold text-gray-600 cursor-pointer hover:text-blue-500"
+            className="text-sm font-semibold text-gray-600 cursor-pointer hover:text-blue-500 transition-colors"
           >
             画像を選択
           </label>
@@ -118,14 +117,14 @@ export default function MemoryForm({
               <button
                 type="button"
                 onClick={handleClearImage}
-                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center shadow-md hover:bg-red-600"
+                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center shadow-md hover:bg-red-600 transition-transform hover:scale-110"
               >
                 ×
               </button>
             </div>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 mt-2">
           {onCancel && (
             <Button onClick={onCancel} variant="secondary" type="button">
               キャンセル
