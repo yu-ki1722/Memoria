@@ -14,6 +14,7 @@ import Button from "../Button";
 import GeocoderControl from "../GeocoderControl";
 import CurrentLocationButton from "../CurrentLocationButton";
 import RealtimeLocationMarker from "../RealtimeLocationMarker";
+import MemoryPinIcon from "../MemoryPinIcon";
 
 const emotionStyles = {
   "😊": { bg: "bg-emotion-happy", shadow: "shadow-glow-happy" },
@@ -23,6 +24,15 @@ const emotionStyles = {
   "😮": { bg: "bg-emotion-surprise", shadow: "shadow-glow-surprise" },
   "🤔": { bg: "bg-emotion-thinking", shadow: "shadow-glow-thinking" },
 } as const;
+
+const emotionGradientColors = {
+  "😊": { start: "#FFD18E", end: "#FFA07A" },
+  "😂": { start: "#ffff7aff", end: "#efffb6ff" },
+  "😍": { start: "#FFB6C1", end: "#FF69B4" },
+  "😢": { start: "#ADD8E6", end: "#87CEFA" },
+  "😮": { start: "#afeeb0ff", end: "#7fff88ff" },
+  "🤔": { start: "#D8BFD8", end: "#BA55D3" },
+};
 
 type Emotion = keyof typeof emotionStyles;
 
@@ -248,18 +258,34 @@ export default function MapWrapper({ session }: { session: Session }) {
               position="bottom-left"
             />
             <RealtimeLocationMarker />
-            {memories.map((memory) => (
-              <Marker
-                key={`memory-${memory.id}`}
-                longitude={memory.longitude}
-                latitude={memory.latitude}
-                onClick={(e) => {
-                  e.originalEvent.stopPropagation();
-                  setEditingMemory(null);
-                  setSelectedMemory(memory);
-                }}
-              />
-            ))}
+            {memories.map((memory) => {
+              const colors = emotionGradientColors[
+                memory.emotion as Emotion
+              ] || { start: "#CCCCCC", end: "#999999" };
+
+              return (
+                <Marker
+                  key={`memory-${memory.id}`}
+                  longitude={memory.longitude}
+                  latitude={memory.latitude}
+                  anchor="bottom"
+                >
+                  <div
+                    className="w-10 h-10 cursor-pointer transition-transform hover:scale-110"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingMemory(null);
+                      setSelectedMemory(memory);
+                    }}
+                  >
+                    <MemoryPinIcon
+                      startColor={colors.start}
+                      endColor={colors.end}
+                    />
+                  </div>
+                </Marker>
+              );
+            })}
 
             {selectedMemory && !editingMemory && (
               <Popup
