@@ -81,7 +81,7 @@ export default function MemoryForm({
       className={`w-64 flex flex-col gap-4 p-4 rounded-lg animate-softAppear ${bgClass} ${shadowClass} transition-all duration-300`}
     >
       <p className="font-bold text-center text-gray-700">どんな気持ち？</p>
-      <div className="flex justify-around flex-wrap gap-2">
+      <div className="grid grid-cols-3 gap-2 justify-items-center">
         {emotions.map((emotion) => {
           const isSelected = selectedEmotion === emotion;
           const borderColorClass = emotionStyles[emotion].border;
