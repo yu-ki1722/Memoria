@@ -30,6 +30,14 @@ module.exports = {
           surprise: "#eff9f0ff",
           thinking: "#f3eff5ff",
         },
+        "emotion-border": {
+          happy: "#FC8C37",
+          laugh: "#e7ed34ff",
+          love: "#FA3F84",
+          sad: "#365EFD",
+          surprise: "#36ee55ff",
+          thinking: "#F037CE",
+        },
       },
       boxShadow: {
         "glow-happy": "0 0 50px rgba(252, 140, 55, 0.4)", // ぼかしを大きく、透明度を少し上げる

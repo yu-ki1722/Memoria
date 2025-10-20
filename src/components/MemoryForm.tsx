@@ -5,12 +5,12 @@ import Button from "./Button";
 import Image from "next/image";
 
 const emotionStyles = {
-  "😊": { key: "happy" },
-  "😂": { key: "laugh" },
-  "😍": { key: "love" },
-  "😢": { key: "sad" },
-  "😮": { key: "surprise" },
-  "🤔": { key: "thinking" },
+  "😊": { key: "happy", border: "border-emotion-border-happy" },
+  "😂": { key: "laugh", border: "border-emotion-border-laugh" },
+  "😍": { key: "love", border: "border-emotion-border-love" },
+  "😢": { key: "sad", border: "border-emotion-border-sad" },
+  "😮": { key: "surprise", border: "border-emotion-border-surprise" },
+  "🤔": { key: "thinking", border: "border-emotion-border-thinking" },
 } as const;
 
 type Emotion = keyof typeof emotionStyles;
@@ -82,20 +82,25 @@ export default function MemoryForm({
     >
       <p className="font-bold text-center text-gray-700">どんな気持ち？</p>
       <div className="flex justify-around flex-wrap gap-2">
-        {emotions.map((emotion) => (
-          <button
-            key={emotion}
-            type="button"
-            className={`w-11 h-11 rounded-full text-2xl flex items-center justify-center transition-all duration-200 transform ${
-              selectedEmotion === emotion
-                ? "bg-white/80 border-2 border-blue-500 shadow-lg scale-110"
-                : "bg-white/50 border-2 border-transparent hover:scale-110"
-            }`}
-            onClick={() => setSelectedEmotion(emotion)}
-          >
-            {emotion}
-          </button>
-        ))}
+        {emotions.map((emotion) => {
+          const isSelected = selectedEmotion === emotion;
+          const borderColorClass = emotionStyles[emotion].border;
+
+          return (
+            <button
+              key={emotion}
+              type="button"
+              className={`w-11 h-11 rounded-full text-2xl flex items-center justify-center transition-all duration-200 transform ${
+                isSelected
+                  ? `bg-white/80 border-2 ${borderColorClass} scale-110`
+                  : "bg-white/50 border-2 border-transparent hover:scale-110"
+              }`}
+              onClick={() => setSelectedEmotion(emotion)}
+            >
+              {emotion}
+            </button>
+          );
+        })}
       </div>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <textarea
