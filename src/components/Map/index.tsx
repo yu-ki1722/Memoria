@@ -256,9 +256,9 @@ export default function MapWrapper({ session }: { session: Session }) {
                 latitude={selectedMemory.latitude}
                 onClose={() => setSelectedMemory(null)}
                 anchor="bottom"
-                className="mapboxgl-popup-content-wrapper"
+                className="memoria-popup"
               >
-                <div className="w-52 flex flex-col gap-2 p-2">
+                <div className="w-56 flex flex-col gap-2 p-4 bg-white rounded-lg shadow-lg animate-softAppear">
                   {selectedMemory.image_url && (
                     <Image
                       src={selectedMemory.image_url}
