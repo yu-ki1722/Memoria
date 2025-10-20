@@ -38,8 +38,8 @@ export default function MemoryForm({
   initialImageUrl,
   onCancel,
 }: MemoryFormProps) {
-  const [selectedEmotion, setSelectedEmotion] = useState<Emotion>(
-    (initialEmotion as Emotion) || emotions[0]
+  const [selectedEmotion, setSelectedEmotion] = useState<Emotion | null>(
+    (initialEmotion as Emotion) || null
   );
   const [text, setText] = useState(initialText || "");
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -69,16 +69,25 @@ export default function MemoryForm({
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
+    if (!selectedEmotion) {
+      alert("感情を選んでください。");
+      return;
+    }
     onSave(selectedEmotion, text, imageFile, imageWasCleared);
   };
 
-  const styleKey = emotionStyles[selectedEmotion].key;
-  const bgClass = `bg-emotion-${styleKey}`;
-  const shadowClass = `shadow-glow-${styleKey}`;
+  const styleKey = selectedEmotion ? emotionStyles[selectedEmotion].key : null;
 
   return (
     <div
-      className={`w-64 flex flex-col gap-4 p-4 rounded-lg animate-softAppear ${bgClass} ${shadowClass} transition-all duration-300`}
+      className={`
+        w-64 flex flex-col gap-4 p-4 rounded-lg animate-softAppear transition-all duration-300
+        ${
+          styleKey
+            ? `bg-emotion-${styleKey} shadow-glow-${styleKey}`
+            : "bg-gray-100 shadow-lg"
+        }
+      `}
     >
       <p className="font-bold text-center text-gray-700">どんな気持ち？</p>
       <div className="grid grid-cols-3 gap-2 justify-items-center">
