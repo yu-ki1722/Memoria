@@ -329,6 +329,8 @@ export default function MapWrapper({ session }: { session: Session }) {
                     latitude={memoryToEdit.latitude}
                     onClose={() => setEditingMemory(null)}
                     anchor="bottom"
+                    className="memoria-popup"
+                    data-emotion={memoryToEdit.emotion}
                   >
                     <MemoryForm
                       onSave={(emotion, text, imageFile, imageWasCleared) =>
@@ -356,6 +358,7 @@ export default function MapWrapper({ session }: { session: Session }) {
                 latitude={newMemoryLocation.lat}
                 onClose={() => setNewMemoryLocation(null)}
                 anchor="bottom"
+                className="memoria-popup"
               >
                 <MemoryForm onSave={handleSaveMemory} buttonText="記録する" />
               </Popup>

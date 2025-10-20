@@ -4,7 +4,17 @@ import { useState, useRef, ChangeEvent, FormEvent } from "react";
 import Button from "./Button";
 import Image from "next/image";
 
-const emotions = ["😊", "😂", "😍", "😢", "😮", "🤔"];
+const emotionStyles = {
+  "😊": { key: "happy" },
+  "😂": { key: "laugh" },
+  "😍": { key: "love" },
+  "😢": { key: "sad" },
+  "😮": { key: "surprise" },
+  "🤔": { key: "thinking" },
+} as const;
+
+type Emotion = keyof typeof emotionStyles;
+const emotions = Object.keys(emotionStyles) as Emotion[];
 
 type MemoryFormProps = {
   onSave: (
@@ -28,8 +38,8 @@ export default function MemoryForm({
   initialImageUrl,
   onCancel,
 }: MemoryFormProps) {
-  const [selectedEmotion, setSelectedEmotion] = useState(
-    initialEmotion || emotions[0]
+  const [selectedEmotion, setSelectedEmotion] = useState<Emotion>(
+    (initialEmotion as Emotion) || emotions[0]
   );
   const [text, setText] = useState(initialText || "");
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -62,18 +72,24 @@ export default function MemoryForm({
     onSave(selectedEmotion, text, imageFile, imageWasCleared);
   };
 
+  const styleKey = emotionStyles[selectedEmotion].key;
+  const bgClass = `bg-emotion-${styleKey}`;
+  const shadowClass = `shadow-glow-${styleKey}`;
+
   return (
-    <div className="w-52 flex flex-col gap-3">
+    <div
+      className={`w-64 flex flex-col gap-4 p-4 rounded-lg animate-softAppear ${bgClass} ${shadowClass} transition-all duration-300`}
+    >
       <p className="font-bold text-center text-gray-700">どんな気持ち？</p>
-      <div className="flex justify-around flex-wrap">
+      <div className="flex justify-around flex-wrap gap-2">
         {emotions.map((emotion) => (
           <button
             key={emotion}
             type="button"
-            className={`w-10 h-10 rounded-full text-2xl flex items-center justify-center transition-all duration-200 ${
+            className={`w-11 h-11 rounded-full text-2xl flex items-center justify-center transition-all duration-200 transform ${
               selectedEmotion === emotion
-                ? "bg-blue-200 border-2 border-blue-500 scale-110"
-                : "bg-gray-200 border-2 border-transparent hover:scale-110"
+                ? "bg-white/80 border-2 border-blue-500 shadow-lg scale-110"
+                : "bg-white/50 border-2 border-transparent hover:scale-110"
             }`}
             onClick={() => setSelectedEmotion(emotion)}
           >
@@ -81,16 +97,17 @@ export default function MemoryForm({
           </button>
         ))}
       </div>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="思い出を書き留めよう..."
           rows={4}
           required
-          className="w-full p-2 border border-gray-300 rounded-md resize-vertical focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+          className="w-full p-3 bg-white/70 backdrop-blur-sm border border-white/30 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-shadow shadow-sm focus:shadow-soft-glow"
         />
-        <div className="mt-2 border border-dashed border-gray-300 p-3 rounded-lg text-center relative">
+
+        <div className="text-center">
           <input
             type="file"
             accept="image/*"
@@ -99,32 +116,34 @@ export default function MemoryForm({
             className="hidden"
             id="imageUpload"
           />
-          <label
-            htmlFor="imageUpload"
-            className="text-sm font-semibold text-gray-600 cursor-pointer hover:text-blue-500 transition-colors"
-          >
-            画像を選択
-          </label>
-          {imageUrlPreview && (
-            <div className="mt-3 relative inline-block">
+          {imageUrlPreview ? (
+            <div className="relative inline-block group">
               <Image
                 src={imageUrlPreview}
                 alt="Preview"
-                width={80}
-                height={80}
-                className="rounded-md object-cover border border-gray-200"
+                width={100}
+                height={100}
+                className="rounded-lg object-cover border-2 border-white/50 shadow-soft-glow"
               />
               <button
                 type="button"
                 onClick={handleClearImage}
-                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center shadow-md hover:bg-red-600 transition-transform hover:scale-110"
+                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center shadow-md transition-transform transform scale-0 group-hover:scale-100"
               >
                 ×
               </button>
             </div>
+          ) : (
+            <label
+              htmlFor="imageUpload"
+              className="text-sm font-semibold text-gray-600 cursor-pointer hover:text-blue-500"
+            >
+              画像を添付
+            </label>
           )}
         </div>
-        <div className="flex gap-2 mt-2">
+
+        <div className="flex gap-3">
           {onCancel && (
             <Button onClick={onCancel} variant="secondary" type="button">
               キャンセル
