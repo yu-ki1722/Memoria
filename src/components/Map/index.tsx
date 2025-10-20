@@ -15,6 +15,17 @@ import GeocoderControl from "../GeocoderControl";
 import CurrentLocationButton from "../CurrentLocationButton";
 import RealtimeLocationMarker from "../RealtimeLocationMarker";
 
+const emotionStyles = {
+  "😊": { bg: "bg-emotion-happy", shadow: "shadow-glow-happy" },
+  "😂": { bg: "bg-emotion-laugh", shadow: "shadow-glow-laugh" },
+  "😍": { bg: "bg-emotion-love", shadow: "shadow-glow-love" },
+  "😢": { bg: "bg-emotion-sad", shadow: "shadow-glow-sad" },
+  "😮": { bg: "bg-emotion-surprise", shadow: "shadow-glow-surprise" },
+  "🤔": { bg: "bg-emotion-thinking", shadow: "shadow-glow-thinking" },
+} as const;
+
+type Emotion = keyof typeof emotionStyles;
+
 type Memory = {
   id: number;
   emotion: string;
@@ -258,38 +269,51 @@ export default function MapWrapper({ session }: { session: Session }) {
                 anchor="bottom"
                 className="memoria-popup"
               >
-                <div className="w-56 flex flex-col gap-2 p-4 bg-white rounded-lg shadow-lg animate-softAppear">
-                  {selectedMemory.image_url && (
-                    <Image
-                      src={selectedMemory.image_url}
-                      alt={selectedMemory.text}
-                      width={200}
-                      height={150}
-                      className="rounded-md object-cover w-full"
-                    />
-                  )}
-                  <div className="text-2xl font-bold text-center">
-                    {selectedMemory.emotion}
-                  </div>
-                  <p className="text-gray-700 text-sm">{selectedMemory.text}</p>
-                  <div className="flex gap-2 mt-2">
-                    <Button
-                      variant="primary"
-                      onClick={() => {
-                        setEditingMemory(selectedMemory.id);
-                        setSelectedMemory(null);
-                      }}
+                {(() => {
+                  const emotionKey = selectedMemory.emotion as Emotion;
+                  const bgClass = emotionStyles[emotionKey]?.bg || "bg-white";
+                  const shadowClass =
+                    emotionStyles[emotionKey]?.shadow || "shadow-lg";
+
+                  return (
+                    <div
+                      className={`w-56 flex flex-col gap-2 p-4 rounded-lg animate-softAppear ${bgClass} ${shadowClass}`}
                     >
-                      編集
-                    </Button>
-                    <Button
-                      variant="danger"
-                      onClick={() => handleDeleteMemory(selectedMemory.id)}
-                    >
-                      削除
-                    </Button>
-                  </div>
-                </div>
+                      {selectedMemory.image_url && (
+                        <Image
+                          src={selectedMemory.image_url}
+                          alt={selectedMemory.text}
+                          width={200}
+                          height={150}
+                          className="rounded-md object-cover w-full"
+                        />
+                      )}
+                      <div className="text-2xl font-bold text-center text-gray-800">
+                        {selectedMemory.emotion}
+                      </div>
+                      <p className="text-gray-700 text-sm">
+                        {selectedMemory.text}
+                      </p>
+                      <div className="flex gap-2 mt-2">
+                        <Button
+                          variant="primary"
+                          onClick={() => {
+                            setEditingMemory(selectedMemory.id);
+                            setSelectedMemory(null);
+                          }}
+                        >
+                          編集
+                        </Button>
+                        <Button
+                          variant="danger"
+                          onClick={() => handleDeleteMemory(selectedMemory.id)}
+                        >
+                          削除
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })()}
               </Popup>
             )}
 
