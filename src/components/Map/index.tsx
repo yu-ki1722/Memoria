@@ -386,7 +386,7 @@ export default function MapWrapper({ session }: { session: Session }) {
                 latitude={newMemoryLocation.lat}
                 onClose={() => setNewMemoryLocation(null)}
                 anchor="bottom"
-                className="memoria-popup"
+                className="memoria-popup new-memory-popup"
               >
                 <MemoryForm onSave={handleSaveMemory} buttonText="記録する" />
               </Popup>

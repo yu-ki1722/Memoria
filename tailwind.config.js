@@ -19,7 +19,7 @@ module.exports = {
       },
       animation: {
         customPulse: "customPulse 1.5s infinite",
-        softAppear: "softAppear 0.3s ease-out forwards",
+        softAppear: "softAppear 0.5s ease-out forwards",
       },
       colors: {
         emotion: {
