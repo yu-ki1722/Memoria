@@ -297,14 +297,19 @@ export default function MapWrapper({ session }: { session: Session }) {
               >
                 {(() => {
                   const emotionKey = selectedMemory.emotion as Emotion;
-                  const bgClass = emotionStyles[emotionKey]?.bg || "bg-white";
-                  const shadowClass =
-                    emotionStyles[emotionKey]?.shadow || "shadow-lg";
-
+                  const style = emotionStyles[emotionKey] || null;
                   return (
                     <div
-                      className={`w-56 flex flex-col gap-2 p-4 rounded-lg animate-softAppear ${bgClass} ${shadowClass}`}
+                      className={`w-56 flex flex-col gap-2 rounded-lg animate-softAppear ${style.bg} ${style.shadow} p-4 pt-8 mt-4`}
                     >
+                      <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                        <div
+                          className={`w-12 h-12 rounded-full text-3xl flex items-center justify-center ${style.bg} ${style.shadow}`}
+                        >
+                          {selectedMemory.emotion}
+                        </div>
+                      </div>
+
                       {selectedMemory.image_url && (
                         <Image
                           src={selectedMemory.image_url}
@@ -314,9 +319,6 @@ export default function MapWrapper({ session }: { session: Session }) {
                           className="rounded-md object-cover w-full"
                         />
                       )}
-                      <div className="text-2xl font-bold text-center text-gray-800">
-                        {selectedMemory.emotion}
-                      </div>
                       <p className="text-gray-700 text-sm">
                         {selectedMemory.text}
                       </p>
