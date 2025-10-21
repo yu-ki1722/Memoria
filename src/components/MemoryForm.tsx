@@ -112,15 +112,6 @@ export default function MemoryForm({
         })}
       </div>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="思い出を書き留めよう..."
-          rows={4}
-          required
-          className="w-full p-3 bg-white/70 backdrop-blur-sm border border-white/30 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-shadow shadow-sm focus:shadow-soft-glow"
-        />
-
         <div className="text-center">
           <input
             type="file"
@@ -150,12 +141,37 @@ export default function MemoryForm({
           ) : (
             <label
               htmlFor="imageUpload"
-              className="text-sm font-semibold text-gray-600 cursor-pointer hover:text-blue-500"
+              className="w-full flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-white/50 transition-colors"
             >
-              画像を添付
+              <svg
+                className="w-8 h-8 text-gray-400 mb-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                />
+              </svg>
+              <span className="text-sm font-semibold text-gray-600">
+                思い出を追加
+              </span>
             </label>
           )}
         </div>
+
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="思い出を書き留めよう..."
+          rows={4}
+          required
+          className="w-full p-3 bg-white/70 backdrop-blur-sm border border-white/30 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-shadow shadow-sm focus:shadow-soft-glow"
+        />
 
         <div className="flex gap-3">
           {onCancel && (
