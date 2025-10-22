@@ -401,6 +401,7 @@ export default function MapWrapper({ session }: { session: Session }) {
 
             {newMemoryLocation && (
               <Popup
+                key={`${newMemoryLocation.lat}-${newMemoryLocation.lng}`}
                 longitude={newMemoryLocation.lng}
                 latitude={newMemoryLocation.lat}
                 onClose={() => setNewMemoryLocation(null)}
