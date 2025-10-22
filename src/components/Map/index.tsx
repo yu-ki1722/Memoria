@@ -298,9 +298,10 @@ export default function MapWrapper({ session }: { session: Session }) {
                 {(() => {
                   const emotionKey = selectedMemory.emotion as Emotion;
                   const style = emotionStyles[emotionKey] || null;
+
                   return (
                     <div
-                      className={`w-56 flex flex-col gap-2 rounded-lg animate-softAppear ${style.bg} ${style.shadow} p-4 pt-8 mt-4`}
+                      className={`w-56 flex flex-col gap-2 rounded-lg animate-softAppear ${style.bg} ${style.shadow} p-4 pt-8 mt-4 relative`}
                     >
                       <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
                         <div
@@ -319,25 +320,43 @@ export default function MapWrapper({ session }: { session: Session }) {
                           className="rounded-md object-cover w-full"
                         />
                       )}
-                      <p className="text-gray-700 text-sm">
+                      <p className="text-gray-700 text-sm pb-8">
                         {selectedMemory.text}
                       </p>
-                      <div className="flex gap-2 mt-2">
-                        <Button
-                          variant="primary"
-                          onClick={() => {
+                      <div className="absolute bottom-3 right-3 flex gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setEditingMemory(selectedMemory.id);
                             setSelectedMemory(null);
                           }}
+                          className="memoria-icon-button memoria-edit-button"
+                          title="思い出を書き換える"
                         >
-                          編集
-                        </Button>
-                        <Button
-                          variant="danger"
-                          onClick={() => handleDeleteMemory(selectedMemory.id)}
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                          >
+                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteMemory(selectedMemory.id);
+                          }}
+                          className="memoria-icon-button memoria-delete-button"
+                          title="思い出を削除"
                         >
-                          削除
-                        </Button>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                          >
+                            <path d="M9 1.75C9 1.336 9.336 1 9.75 1h4.5C14.664 1 15 1.336 15 1.75V3h5.25c.414 0 .75.336.75.75v1.5c0 .414-.336.75-.75.75H3.75a.75.75 0 0 1-.75-.75V3.75c0-.414.336-.75.75-.75H9V1.75zM4.5 7.5v12.75C4.5 21.216 5.284 22 6.25 22h11.5c.966 0 1.75-.784 1.75-1.75V7.5H4.5zM10 10.5a.75.75 0 0 0-1.5 0v7.5a.75.75 0 0 0 1.5 0v-7.5zm5.5 0a.75.75 0 0 0-1.5 0v7.5a.75.75 0 0 0 1.5 0v-7.5z" />
+                          </svg>
+                        </button>
                       </div>
                     </div>
                   );
@@ -357,7 +376,7 @@ export default function MapWrapper({ session }: { session: Session }) {
                     latitude={memoryToEdit.latitude}
                     onClose={() => setEditingMemory(null)}
                     anchor="bottom"
-                    className="memoria-popup"
+                    className="memoria-popup new-memory-popup"
                     data-emotion={memoryToEdit.emotion}
                   >
                     <MemoryForm
