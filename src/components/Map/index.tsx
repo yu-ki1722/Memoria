@@ -290,6 +290,7 @@ export default function MapWrapper({ session }: { session: Session }) {
 
             {selectedMemory && !editingMemory && (
               <Popup
+                key={selectedMemory.id}
                 longitude={selectedMemory.longitude}
                 latitude={selectedMemory.latitude}
                 onClose={() => setSelectedMemory(null)}
