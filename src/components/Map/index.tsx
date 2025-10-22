@@ -95,6 +95,39 @@ export default function MapWrapper({ session }: { session: Session }) {
     if (session) fetchMemories();
   }, [session]);
 
+  useEffect(() => {
+    if (newMemoryLocation) {
+      mapRef.current?.flyTo({
+        center: [newMemoryLocation.lng, newMemoryLocation.lat],
+        zoom: 15,
+        padding: { top: 400, bottom: 0, left: 0, right: 0 },
+      });
+    }
+  }, [newMemoryLocation]);
+
+  useEffect(() => {
+    if (selectedMemory) {
+      mapRef.current?.flyTo({
+        center: [selectedMemory.longitude, selectedMemory.latitude],
+        zoom: 15,
+        padding: { top: 100, bottom: 0, left: 0, right: 0 },
+      });
+    }
+  }, [selectedMemory]);
+
+  useEffect(() => {
+    if (editingMemory) {
+      const memoryToEdit = memories.find((m) => m.id === editingMemory);
+      if (memoryToEdit) {
+        mapRef.current?.flyTo({
+          center: [memoryToEdit.longitude, memoryToEdit.latitude],
+          zoom: 15,
+          padding: { top: 400, bottom: 0, left: 0, right: 0 },
+        });
+      }
+    }
+  }, [editingMemory, memories]);
+
   const handleMapClick = (event: MapMouseEvent) => {
     const targetElement = event.originalEvent.target as HTMLElement;
     if (
