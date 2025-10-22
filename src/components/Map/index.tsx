@@ -276,6 +276,7 @@ export default function MapWrapper({ session }: { session: Session }) {
                       e.stopPropagation();
                       setEditingMemory(null);
                       setSelectedMemory(memory);
+                      setNewMemoryLocation(null);
                     }}
                   >
                     <MemoryPinIcon
