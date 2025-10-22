@@ -136,6 +136,9 @@ export default function MapWrapper({ session }: { session: Session }) {
     ) {
       return;
     }
+    if (selectedMemory || editingMemory || newMemoryLocation) {
+      return;
+    }
     const { lng, lat } = event.lngLat;
     setNewMemoryLocation({ lng, lat });
     setSelectedMemory(null);
