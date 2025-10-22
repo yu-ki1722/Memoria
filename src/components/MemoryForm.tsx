@@ -4,7 +4,17 @@ import { useState, useRef, ChangeEvent, FormEvent } from "react";
 import Button from "./Button";
 import Image from "next/image";
 
-const emotions = ["😊", "😂", "😍", "😢", "😮", "🤔"];
+const emotionStyles = {
+  "😊": { key: "happy", border: "border-emotion-border-happy" },
+  "😂": { key: "laugh", border: "border-emotion-border-laugh" },
+  "😍": { key: "love", border: "border-emotion-border-love" },
+  "😢": { key: "sad", border: "border-emotion-border-sad" },
+  "😮": { key: "surprise", border: "border-emotion-border-surprise" },
+  "🤔": { key: "thinking", border: "border-emotion-border-thinking" },
+} as const;
+
+type Emotion = keyof typeof emotionStyles;
+const emotions = Object.keys(emotionStyles) as Emotion[];
 
 type MemoryFormProps = {
   onSave: (
@@ -28,8 +38,8 @@ export default function MemoryForm({
   initialImageUrl,
   onCancel,
 }: MemoryFormProps) {
-  const [selectedEmotion, setSelectedEmotion] = useState(
-    initialEmotion || emotions[0]
+  const [selectedEmotion, setSelectedEmotion] = useState<Emotion | null>(
+    (initialEmotion as Emotion) || null
   );
   const [text, setText] = useState(initialText || "");
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -59,38 +69,50 @@ export default function MemoryForm({
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
+    if (!selectedEmotion) {
+      alert("感情を選んでください。");
+      return;
+    }
     onSave(selectedEmotion, text, imageFile, imageWasCleared);
   };
 
+  const styleKey = selectedEmotion ? emotionStyles[selectedEmotion].key : null;
+
   return (
-    <div className="w-52 flex flex-col gap-3">
+    <div
+      className={`
+        w-64 flex flex-col gap-4 p-4 rounded-lg animate-softAppear transition-all duration-300
+        ${
+          styleKey
+            ? `bg-emotion-${styleKey} shadow-glow-${styleKey}`
+            : "bg-gray-100 shadow-lg"
+        }
+      `}
+    >
       <p className="font-bold text-center text-gray-700">どんな気持ち？</p>
-      <div className="flex justify-around flex-wrap">
-        {emotions.map((emotion) => (
-          <button
-            key={emotion}
-            type="button"
-            className={`w-10 h-10 rounded-full text-2xl flex items-center justify-center transition-all duration-200 ${
-              selectedEmotion === emotion
-                ? "bg-blue-200 border-2 border-blue-500 scale-110"
-                : "bg-gray-200 border-2 border-transparent hover:scale-110"
-            }`}
-            onClick={() => setSelectedEmotion(emotion)}
-          >
-            {emotion}
-          </button>
-        ))}
+      <div className="grid grid-cols-3 gap-2 justify-items-center">
+        {emotions.map((emotion) => {
+          const isSelected = selectedEmotion === emotion;
+          const borderColorClass = emotionStyles[emotion].border;
+
+          return (
+            <button
+              key={emotion}
+              type="button"
+              className={`w-11 h-11 rounded-full text-2xl flex items-center justify-center transition-all duration-200 transform ${
+                isSelected
+                  ? `bg-white/80 border-2 ${borderColorClass} scale-110`
+                  : "bg-white/50 border-2 border-transparent hover:scale-110"
+              }`}
+              onClick={() => setSelectedEmotion(emotion)}
+            >
+              {emotion}
+            </button>
+          );
+        })}
       </div>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="思い出を書き留めよう..."
-          rows={4}
-          required
-          className="w-full p-2 border border-gray-300 rounded-md resize-vertical focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-        />
-        <div className="mt-2 border border-dashed border-gray-300 p-3 rounded-lg text-center relative">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div className="text-center">
           <input
             type="file"
             accept="image/*"
@@ -99,32 +121,59 @@ export default function MemoryForm({
             className="hidden"
             id="imageUpload"
           />
-          <label
-            htmlFor="imageUpload"
-            className="text-sm font-semibold text-gray-600 cursor-pointer hover:text-blue-500 transition-colors"
-          >
-            画像を選択
-          </label>
-          {imageUrlPreview && (
-            <div className="mt-3 relative inline-block">
+          {imageUrlPreview ? (
+            <div className="relative inline-block group">
               <Image
                 src={imageUrlPreview}
                 alt="Preview"
-                width={80}
-                height={80}
-                className="rounded-md object-cover border border-gray-200"
+                width={100}
+                height={100}
+                className="rounded-lg object-cover border-2 border-white/50 shadow-soft-glow"
               />
               <button
                 type="button"
                 onClick={handleClearImage}
-                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center shadow-md hover:bg-red-600 transition-transform hover:scale-110"
+                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center shadow-md transition-transform transform scale-0 group-hover:scale-100"
               >
                 ×
               </button>
             </div>
+          ) : (
+            <label
+              htmlFor="imageUpload"
+              className="w-full flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-white/50 transition-colors"
+            >
+              <svg
+                className="w-8 h-8 text-gray-400 mb-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                />
+              </svg>
+              <span className="text-sm font-semibold text-gray-600">
+                思い出を追加
+              </span>
+            </label>
           )}
         </div>
-        <div className="flex gap-2 mt-2">
+
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="思い出を書き留めよう..."
+          rows={4}
+          required
+          className="w-full p-3 bg-white/70 backdrop-blur-sm border border-white/30 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-shadow shadow-sm focus:shadow-soft-glow"
+        />
+
+        <div className="flex gap-3">
           {onCancel && (
             <Button onClick={onCancel} variant="secondary" type="button">
               キャンセル

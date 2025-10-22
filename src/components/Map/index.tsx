@@ -14,6 +14,27 @@ import Button from "../Button";
 import GeocoderControl from "../GeocoderControl";
 import CurrentLocationButton from "../CurrentLocationButton";
 import RealtimeLocationMarker from "../RealtimeLocationMarker";
+import MemoryPinIcon from "../MemoryPinIcon";
+
+const emotionStyles = {
+  "😊": { bg: "bg-emotion-happy", shadow: "shadow-glow-happy" },
+  "😂": { bg: "bg-emotion-laugh", shadow: "shadow-glow-laugh" },
+  "😍": { bg: "bg-emotion-love", shadow: "shadow-glow-love" },
+  "😢": { bg: "bg-emotion-sad", shadow: "shadow-glow-sad" },
+  "😮": { bg: "bg-emotion-surprise", shadow: "shadow-glow-surprise" },
+  "🤔": { bg: "bg-emotion-thinking", shadow: "shadow-glow-thinking" },
+} as const;
+
+const emotionGradientColors = {
+  "😊": { start: "#FFD18E", end: "#FFA07A" },
+  "😂": { start: "#ffff7aff", end: "#efffb6ff" },
+  "😍": { start: "#FFB6C1", end: "#FF69B4" },
+  "😢": { start: "#ADD8E6", end: "#87CEFA" },
+  "😮": { start: "#afeeb0ff", end: "#7fff88ff" },
+  "🤔": { start: "#D8BFD8", end: "#BA55D3" },
+};
+
+type Emotion = keyof typeof emotionStyles;
 
 type Memory = {
   id: number;
@@ -74,12 +95,48 @@ export default function MapWrapper({ session }: { session: Session }) {
     if (session) fetchMemories();
   }, [session]);
 
+  useEffect(() => {
+    if (newMemoryLocation) {
+      mapRef.current?.flyTo({
+        center: [newMemoryLocation.lng, newMemoryLocation.lat],
+        zoom: 15,
+        padding: { top: 400, bottom: 0, left: 0, right: 0 },
+      });
+    }
+  }, [newMemoryLocation]);
+
+  useEffect(() => {
+    if (selectedMemory) {
+      mapRef.current?.flyTo({
+        center: [selectedMemory.longitude, selectedMemory.latitude],
+        zoom: 15,
+        padding: { top: 100, bottom: 0, left: 0, right: 0 },
+      });
+    }
+  }, [selectedMemory]);
+
+  useEffect(() => {
+    if (editingMemory) {
+      const memoryToEdit = memories.find((m) => m.id === editingMemory);
+      if (memoryToEdit) {
+        mapRef.current?.flyTo({
+          center: [memoryToEdit.longitude, memoryToEdit.latitude],
+          zoom: 15,
+          padding: { top: 400, bottom: 0, left: 0, right: 0 },
+        });
+      }
+    }
+  }, [editingMemory, memories]);
+
   const handleMapClick = (event: MapMouseEvent) => {
     const targetElement = event.originalEvent.target as HTMLElement;
     if (
       targetElement &&
       targetElement.closest(".mapboxgl-marker, .mapboxgl-popup")
     ) {
+      return;
+    }
+    if (selectedMemory || editingMemory || newMemoryLocation) {
       return;
     }
     const { lng, lat } = event.lngLat;
@@ -237,59 +294,111 @@ export default function MapWrapper({ session }: { session: Session }) {
               position="bottom-left"
             />
             <RealtimeLocationMarker />
-            {memories.map((memory) => (
-              <Marker
-                key={`memory-${memory.id}`}
-                longitude={memory.longitude}
-                latitude={memory.latitude}
-                onClick={(e) => {
-                  e.originalEvent.stopPropagation();
-                  setEditingMemory(null);
-                  setSelectedMemory(memory);
-                }}
-              />
-            ))}
+            {memories.map((memory) => {
+              const colors = emotionGradientColors[
+                memory.emotion as Emotion
+              ] || { start: "#CCCCCC", end: "#999999" };
+
+              return (
+                <Marker
+                  key={`memory-${memory.id}`}
+                  longitude={memory.longitude}
+                  latitude={memory.latitude}
+                  anchor="bottom"
+                >
+                  <div
+                    className="w-10 h-10 cursor-pointer transition-transform hover:scale-110"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingMemory(null);
+                      setSelectedMemory(memory);
+                      setNewMemoryLocation(null);
+                    }}
+                  >
+                    <MemoryPinIcon
+                      startColor={colors.start}
+                      endColor={colors.end}
+                    />
+                  </div>
+                </Marker>
+              );
+            })}
 
             {selectedMemory && !editingMemory && (
               <Popup
+                key={selectedMemory.id}
                 longitude={selectedMemory.longitude}
                 latitude={selectedMemory.latitude}
                 onClose={() => setSelectedMemory(null)}
                 anchor="bottom"
-                className="mapboxgl-popup-content-wrapper"
+                className="memoria-popup"
               >
-                <div className="w-52 flex flex-col gap-2 p-2">
-                  {selectedMemory.image_url && (
-                    <Image
-                      src={selectedMemory.image_url}
-                      alt={selectedMemory.text}
-                      width={200}
-                      height={150}
-                      className="rounded-md object-cover w-full"
-                    />
-                  )}
-                  <div className="text-2xl font-bold text-center">
-                    {selectedMemory.emotion}
-                  </div>
-                  <p className="text-gray-700 text-sm">{selectedMemory.text}</p>
-                  <div className="flex gap-2 mt-2">
-                    <Button
-                      variant="primary"
-                      onClick={() => {
-                        setEditingMemory(selectedMemory.id);
-                        setSelectedMemory(null);
-                      }}
+                {(() => {
+                  const emotionKey = selectedMemory.emotion as Emotion;
+                  const style = emotionStyles[emotionKey] || null;
+
+                  return (
+                    <div
+                      className={`w-56 flex flex-col gap-2 rounded-lg animate-softAppear ${style.bg} ${style.shadow} p-4 pt-8 mt-4 relative`}
                     >
-                      編集
-                    </Button>
-                    <Button
-                      variant="danger"
-                      onClick={() => handleDeleteMemory(selectedMemory.id)}
-                    >
-                      削除
-                    </Button>
-                  </div>
-                </div>
+                      <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                        <div
+                          className={`w-12 h-12 rounded-full text-3xl flex items-center justify-center ${style.bg} ${style.shadow}`}
+                        >
+                          {selectedMemory.emotion}
+                        </div>
+                      </div>
+
+                      {selectedMemory.image_url && (
+                        <Image
+                          src={selectedMemory.image_url}
+                          alt={selectedMemory.text}
+                          width={200}
+                          height={150}
+                          className="rounded-md object-cover w-full"
+                        />
+                      )}
+                      <p className="text-gray-700 text-sm pb-8">
+                        {selectedMemory.text}
+                      </p>
+                      <div className="absolute bottom-3 right-3 flex gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingMemory(selectedMemory.id);
+                            setSelectedMemory(null);
+                          }}
+                          className="memoria-icon-button memoria-edit-button"
+                          title="思い出を書き換える"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                          >
+                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteMemory(selectedMemory.id);
+                          }}
+                          className="memoria-icon-button memoria-delete-button"
+                          title="思い出を削除"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                          >
+                            <path d="M9 1.75C9 1.336 9.336 1 9.75 1h4.5C14.664 1 15 1.336 15 1.75V3h5.25c.414 0 .75.336.75.75v1.5c0 .414-.336.75-.75.75H3.75a.75.75 0 0 1-.75-.75V3.75c0-.414.336-.75.75-.75H9V1.75zM4.5 7.5v12.75C4.5 21.216 5.284 22 6.25 22h11.5c.966 0 1.75-.784 1.75-1.75V7.5H4.5zM10 10.5a.75.75 0 0 0-1.5 0v7.5a.75.75 0 0 0 1.5 0v-7.5zm5.5 0a.75.75 0 0 0-1.5 0v7.5a.75.75 0 0 0 1.5 0v-7.5z" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
               </Popup>
             )}
 
@@ -305,6 +414,8 @@ export default function MapWrapper({ session }: { session: Session }) {
                     latitude={memoryToEdit.latitude}
                     onClose={() => setEditingMemory(null)}
                     anchor="bottom"
+                    className="memoria-popup new-memory-popup"
+                    data-emotion={memoryToEdit.emotion}
                   >
                     <MemoryForm
                       onSave={(emotion, text, imageFile, imageWasCleared) =>
@@ -328,10 +439,12 @@ export default function MapWrapper({ session }: { session: Session }) {
 
             {newMemoryLocation && (
               <Popup
+                key={`${newMemoryLocation.lat}-${newMemoryLocation.lng}`}
                 longitude={newMemoryLocation.lng}
                 latitude={newMemoryLocation.lat}
                 onClose={() => setNewMemoryLocation(null)}
                 anchor="bottom"
+                className="memoria-popup new-memory-popup"
               >
                 <MemoryForm onSave={handleSaveMemory} buttonText="記録する" />
               </Popup>
