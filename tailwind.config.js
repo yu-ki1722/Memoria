@@ -30,6 +30,12 @@ module.exports = {
           surprise: "#eff9f0ff",
           thinking: "#f3eff5ff",
         },
+        memoria: {
+          primary: "#F0A079",
+          secondary: "#88C7BC",
+          text: "#2D4B53",
+          background: "#FCF8F0",
+        },
         "emotion-border": {
           happy: "#FC8C37",
           laugh: "#e7ed34ff",
@@ -40,12 +46,13 @@ module.exports = {
         },
       },
       boxShadow: {
-        "glow-happy": "0 0 50px rgba(252, 140, 55, 0.4)", // ぼかしを大きく、透明度を少し上げる
+        "glow-happy": "0 0 50px rgba(252, 140, 55, 0.4)",
         "glow-laugh": "0 0 50px rgba(247, 254, 56, 0.4)",
         "glow-love": "0 0 50px rgba(250, 63, 132, 0.4)",
         "glow-sad": "0 0 50px rgba(54, 94, 253, 0.4)",
         "glow-surprise": "0 0 50px rgba(54, 238, 60, 0.4)",
         "glow-thinking": "0 0 50px rgba(184, 55, 240, 0.4)",
+        "soft-glow": "0 0 25px rgba(240, 160, 121, 0.4)",
       },
     },
   },
