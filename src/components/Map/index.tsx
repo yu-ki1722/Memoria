@@ -286,7 +286,7 @@ export default function MapWrapper({ session }: { session: Session }) {
             ref={mapRef}
             initialViewState={initialView}
             style={{ width: "100%", height: "100%" }}
-            mapStyle="mapbox://styles/mapbox/streets-v12"
+            mapStyle="mapbox://styles/yu-ki1722/cmh2dk0dm00el01srfg7yfpkt"
             onClick={handleMapClick}
           >
             <GeocoderControl
