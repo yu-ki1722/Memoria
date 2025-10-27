@@ -291,7 +291,7 @@ export default function MapWrapper({ session }: { session: Session }) {
           >
             <GeocoderControl
               mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN!}
-              position="bottom-left"
+              position="bottom-right"
             />
             <RealtimeLocationMarker />
             {memories.map((memory) => {
