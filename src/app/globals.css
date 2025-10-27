@@ -87,3 +87,17 @@
     transform: scale(1) translateY(0);
   }
 }
+
+.mapboxgl-ctrl-bottom-right {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 5;
+}
+
+.mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-geocoder {
+  direction: rtl;
+}
+.mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-geocoder--input {
+  direction: ltr;
+}
