@@ -33,6 +33,7 @@ module.exports = {
         memoria: {
           primary: "#F0A079",
           secondary: "#88C7BC",
+          "secondary-dark": "#73a99f",
           text: "#2D4B53",
           background: "#FCF8F0",
         },
