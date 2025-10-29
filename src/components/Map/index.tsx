@@ -49,6 +49,9 @@ type ClickedPoi = {
   lng: number;
   lat: number;
   name: string;
+  address?: string;
+  rating?: number;
+  photoUrl?: string | null;
 };
 
 export default function MapWrapper({ session }: { session: Session }) {
@@ -257,25 +260,88 @@ export default function MapWrapper({ session }: { session: Session }) {
     alert("思い出を削除しました。");
   };
 
+  const fetchGooglePlaceDetails = async (
+    lat: number,
+    lng: number,
+    mapboxName: string
+  ) => {
+    const searchUrl = `/api/places?lat=${lat}&lng=${lng}&keyword=${encodeURIComponent(
+      mapboxName
+    )}`;
+
+    try {
+      const response = await fetch(searchUrl);
+      const data = await response.json();
+
+      if (data.status === "OK" && data.results.length > 0) {
+        const place = data.results[0];
+        const photoReference = place.photos?.[0]?.photo_reference;
+        const browserApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+        const photoUrl =
+          photoReference && browserApiKey
+            ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photoReference}&key=${browserApiKey}`
+            : null;
+
+        setClickedPoi({
+          lng: place.geometry.location.lng ?? lng,
+          lat: place.geometry.location.lat ?? lat,
+          name: place.name ?? mapboxName,
+          address: place.formatted_address ?? "住所情報なし",
+          rating: place.rating ?? null,
+          photoUrl,
+        });
+      } else {
+        setClickedPoi({
+          lng,
+          lat,
+          name: mapboxName,
+          address: "詳細情報なし",
+        });
+      }
+    } catch (error) {
+      console.error("APIルートの呼び出しエラー:", error);
+      setClickedPoi({
+        lng,
+        lat,
+        name: mapboxName,
+        address: "API通信エラー",
+      });
+    }
+  };
+
   const handleMapClick = (event: MapMouseEvent) => {
     const map = mapRef.current?.getMap();
     if (!map) return;
 
     const targetElement = event.originalEvent.target as HTMLElement;
-
     if (targetElement?.closest(".mapboxgl-marker, .mapboxgl-popup")) return;
 
     const features = map.queryRenderedFeatures(event.point);
     const poi = features.find((f) => f.properties && f.properties.name);
 
     if (poi && poi.properties?.name) {
-      setClickedPoi({
-        lng: event.lngLat.lng,
-        lat: event.lngLat.lat,
-        name: poi.properties.name as string,
-      });
+      const name = poi.properties.name as string;
+      const { lng, lat } = event.lngLat;
+
+      if (clickedPoi && clickedPoi.name === name) {
+        setClickedPoi(null);
+        return;
+      }
+
+      setClickedPoi(null);
+      setTimeout(() => {
+        setClickedPoi({
+          lng,
+          lat,
+          name: "検索中...",
+        });
+        fetchGooglePlaceDetails(lat, lng, name);
+      }, 0);
+
       setNewMemoryLocation(null);
       setSelectedMemory(null);
+      setEditingMemory(null);
       return;
     }
 
@@ -336,6 +402,7 @@ export default function MapWrapper({ session }: { session: Session }) {
                     className="w-10 h-10 cursor-pointer transition-transform hover:scale-110"
                     onClick={(e) => {
                       e.stopPropagation();
+                      setClickedPoi(null);
                       setEditingMemory(null);
                       setSelectedMemory(memory);
                       setNewMemoryLocation(null);
@@ -391,6 +458,7 @@ export default function MapWrapper({ session }: { session: Session }) {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
+                            setClickedPoi(null);
                             setEditingMemory(selectedMemory.id);
                             setSelectedMemory(null);
                           }}
@@ -408,6 +476,7 @@ export default function MapWrapper({ session }: { session: Session }) {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
+                            setClickedPoi(null);
                             handleDeleteMemory(selectedMemory.id);
                           }}
                           className="memoria-icon-button memoria-delete-button"
@@ -479,29 +548,57 @@ export default function MapWrapper({ session }: { session: Session }) {
               <Popup
                 longitude={clickedPoi.lng}
                 latitude={clickedPoi.lat}
-                onClose={() => setClickedPoi(null)}
+                onClose={() => {
+                  setClickedPoi(null);
+                  setNewMemoryLocation(null);
+                  setSelectedMemory(null);
+                  setEditingMemory(null);
+                }}
                 anchor="bottom"
                 className="memoria-popup"
               >
                 <div className="w-56 flex flex-col gap-2 p-4 rounded-lg bg-white shadow-lg animate-softAppear">
+                  {clickedPoi.photoUrl && (
+                    <Image
+                      src={clickedPoi.photoUrl}
+                      alt={clickedPoi.name}
+                      width={200}
+                      height={150}
+                      className="rounded-md object-cover w-full"
+                    />
+                  )}
                   <h3 className="font-bold text-memoria-text">
                     {clickedPoi.name}
                   </h3>
-                  <p className="text-sm text-gray-600">
-                    この場所に思い出を追加しますか？
-                  </p>
-                  <Button
-                    variant="primary"
-                    onClick={() => {
-                      setNewMemoryLocation({
-                        lng: clickedPoi.lng,
-                        lat: clickedPoi.lat,
-                      });
-                      setClickedPoi(null);
-                    }}
-                  >
-                    思い出を追加
-                  </Button>
+                  {clickedPoi.address && (
+                    <p className="text-sm text-gray-600">
+                      {clickedPoi.address}
+                    </p>
+                  )}
+                  {clickedPoi.rating && (
+                    <p className="text-sm font-bold text-yellow-500">
+                      {clickedPoi.rating} ★
+                    </p>
+                  )}
+                  {clickedPoi.name !== "検索中..." && (
+                    <>
+                      <p className="text-sm text-gray-600 mt-2">
+                        この場所に思い出を追加しますか？
+                      </p>
+                      <Button
+                        variant="primary"
+                        onClick={() => {
+                          setNewMemoryLocation({
+                            lng: clickedPoi.lng,
+                            lat: clickedPoi.lat,
+                          });
+                          setClickedPoi(null);
+                        }}
+                      >
+                        思い出を追加
+                      </Button>
+                    </>
+                  )}
                 </div>
               </Popup>
             )}
