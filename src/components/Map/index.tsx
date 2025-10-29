@@ -7,7 +7,6 @@ import type { MapMouseEvent } from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import Image from "next/image";
 import { supabase } from "@/lib/supabaseClient";
-import styles from "./Map.module.css";
 import Header from "../Header";
 import MemoryForm from "../MemoryForm";
 import Button from "../Button";
@@ -46,6 +45,12 @@ type Memory = {
   image_url: string | null;
 };
 
+type ClickedPoi = {
+  lng: number;
+  lat: number;
+  name: string;
+};
+
 export default function MapWrapper({ session }: { session: Session }) {
   console.log("Mapbox Token:", process.env.NEXT_PUBLIC_MAPBOX_TOKEN);
   const [memories, setMemories] = useState<Memory[]>([]);
@@ -62,6 +67,7 @@ export default function MapWrapper({ session }: { session: Session }) {
   } | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const mapRef = useRef<MapRef>(null);
+  const [clickedPoi, setClickedPoi] = useState<ClickedPoi | null>(null);
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
@@ -86,7 +92,7 @@ export default function MapWrapper({ session }: { session: Session }) {
 
   useEffect(() => {
     const fetchMemories = async () => {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("memories")
         .select("*")
         .eq("user_id", session.user.id);
@@ -127,22 +133,6 @@ export default function MapWrapper({ session }: { session: Session }) {
       }
     }
   }, [editingMemory, memories]);
-
-  const handleMapClick = (event: MapMouseEvent) => {
-    const targetElement = event.originalEvent.target as HTMLElement;
-    if (
-      targetElement &&
-      targetElement.closest(".mapboxgl-marker, .mapboxgl-popup")
-    ) {
-      return;
-    }
-    if (selectedMemory || editingMemory || newMemoryLocation) {
-      return;
-    }
-    const { lng, lat } = event.lngLat;
-    setNewMemoryLocation({ lng, lat });
-    setSelectedMemory(null);
-  };
 
   const handleSaveMemory = async (
     emotion: string,
@@ -265,6 +255,42 @@ export default function MapWrapper({ session }: { session: Session }) {
     setMemories(memories.filter((memory) => memory.id !== id));
     setSelectedMemory(null);
     alert("思い出を削除しました。");
+  };
+
+  const handleMapClick = (event: MapMouseEvent) => {
+    const map = mapRef.current?.getMap();
+    if (!map) return;
+
+    const targetElement = event.originalEvent.target as HTMLElement;
+
+    if (targetElement?.closest(".mapboxgl-marker, .mapboxgl-popup")) return;
+
+    const features = map.queryRenderedFeatures(event.point);
+    const poi = features.find((f) => f.properties && f.properties.name);
+
+    if (poi && poi.properties?.name) {
+      setClickedPoi({
+        lng: event.lngLat.lng,
+        lat: event.lngLat.lat,
+        name: poi.properties.name as string,
+      });
+      setNewMemoryLocation(null);
+      setSelectedMemory(null);
+      return;
+    }
+
+    if (clickedPoi || selectedMemory || editingMemory || newMemoryLocation) {
+      setClickedPoi(null);
+      setSelectedMemory(null);
+      setEditingMemory(null);
+      setNewMemoryLocation(null);
+      return;
+    }
+
+    const { lng, lat } = event.lngLat;
+    setNewMemoryLocation({ lng, lat });
+    setSelectedMemory(null);
+    setClickedPoi(null);
   };
 
   return (
@@ -447,6 +473,36 @@ export default function MapWrapper({ session }: { session: Session }) {
                 className="memoria-popup new-memory-popup"
               >
                 <MemoryForm onSave={handleSaveMemory} buttonText="記録する" />
+              </Popup>
+            )}
+            {clickedPoi && (
+              <Popup
+                longitude={clickedPoi.lng}
+                latitude={clickedPoi.lat}
+                onClose={() => setClickedPoi(null)}
+                anchor="bottom"
+                className="memoria-popup"
+              >
+                <div className="w-56 flex flex-col gap-2 p-4 rounded-lg bg-white shadow-lg animate-softAppear">
+                  <h3 className="font-bold text-memoria-text">
+                    {clickedPoi.name}
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    この場所に思い出を追加しますか？
+                  </p>
+                  <Button
+                    variant="primary"
+                    onClick={() => {
+                      setNewMemoryLocation({
+                        lng: clickedPoi.lng,
+                        lat: clickedPoi.lat,
+                      });
+                      setClickedPoi(null);
+                    }}
+                  >
+                    思い出を追加
+                  </Button>
+                </div>
               </Popup>
             )}
           </Map>
