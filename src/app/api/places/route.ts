@@ -7,37 +7,31 @@ export async function GET(request: Request) {
   const keyword = searchParams.get("keyword");
 
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
-
   if (!apiKey) {
-    return NextResponse.json(
-      { error: "API key is not configured" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Missing API key" }, { status: 500 });
   }
 
-  if (!lat || !lng || !keyword) {
-    return NextResponse.json(
-      { error: "Missing required parameters" },
-      { status: 400 }
-    );
-  }
-
-  const searchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(
-    keyword
-  )}&location=${lat},${lng}&radius=300&key=${apiKey}`;
+  const searchUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=100&keyword=${encodeURIComponent(
+    keyword || ""
+  )}&key=${apiKey}`;
 
   try {
-    const apiResponse = await fetch(searchUrl);
-    const data = await apiResponse.json();
+    const searchRes = await fetch(searchUrl);
+    const searchData = await searchRes.json();
 
-    console.log("Google API response:", JSON.stringify(data, null, 2));
+    if (searchData.results.length === 0) {
+      return NextResponse.json({ status: "ZERO_RESULTS", results: [] });
+    }
 
-    return NextResponse.json(data);
+    const placeId = searchData.results[0].place_id;
+
+    const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,formatted_phone_number,website,opening_hours,rating,user_ratings_total,url,photos&key=${apiKey}`;
+    const detailsRes = await fetch(detailsUrl);
+    const detailsData = await detailsRes.json();
+
+    return NextResponse.json(detailsData);
   } catch (error) {
-    console.error("Google API fetch error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch data from Google" },
-      { status: 500 }
-    );
+    console.error("Google Places error:", error);
+    return NextResponse.json({ error: "Google API error" }, { status: 500 });
   }
 }

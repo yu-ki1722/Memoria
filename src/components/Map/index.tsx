@@ -52,6 +52,11 @@ type ClickedPoi = {
   address?: string;
   rating?: number;
   photoUrl?: string | null;
+  placeId?: string;
+  phone?: string | null;
+  hours?: string[];
+  website?: string | null;
+  googleMapUrl?: string | null;
 };
 
 export default function MapWrapper({ session }: { session: Session }) {
@@ -270,43 +275,33 @@ export default function MapWrapper({ session }: { session: Session }) {
     )}`;
 
     try {
-      const response = await fetch(searchUrl);
-      const data = await response.json();
+      const res = await fetch(searchUrl);
+      const data = await res.json();
 
-      if (data.status === "OK" && data.results.length > 0) {
-        const place = data.results[0];
-        const photoReference = place.photos?.[0]?.photo_reference;
-        const browserApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-
-        const photoUrl =
-          photoReference && browserApiKey
-            ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photoReference}&key=${browserApiKey}`
-            : null;
+      if (data.status === "OK" && data.result) {
+        const place = data.result;
+        const photoRef = place.photos?.[0]?.photo_reference;
+        const photoUrl = photoRef
+          ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${photoRef}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+          : null;
 
         setClickedPoi({
-          lng: place.geometry.location.lng ?? lng,
-          lat: place.geometry.location.lat ?? lat,
+          lng,
+          lat,
           name: place.name ?? mapboxName,
           address: place.formatted_address ?? "住所情報なし",
           rating: place.rating ?? null,
           photoUrl,
+          phone: place.formatted_phone_number ?? null,
+          website: place.website ?? null,
+          hours: place.opening_hours?.weekday_text ?? [],
+          googleMapUrl: place.url ?? null,
         });
       } else {
-        setClickedPoi({
-          lng,
-          lat,
-          name: mapboxName,
-          address: "詳細情報なし",
-        });
+        setClickedPoi({ lng, lat, name: mapboxName, address: "詳細情報なし" });
       }
-    } catch (error) {
-      console.error("APIルートの呼び出しエラー:", error);
-      setClickedPoi({
-        lng,
-        lat,
-        name: mapboxName,
-        address: "API通信エラー",
-      });
+    } catch (err) {
+      console.error("Error:", err);
     }
   };
 
@@ -557,7 +552,7 @@ export default function MapWrapper({ session }: { session: Session }) {
                 anchor="bottom"
                 className="memoria-popup"
               >
-                <div className="w-56 flex flex-col gap-2 p-4 rounded-lg bg-white shadow-lg animate-softAppear">
+                <div className="w-64 flex flex-col gap-2 p-4 rounded-lg bg-white shadow-lg animate-softAppear">
                   {clickedPoi.photoUrl && (
                     <Image
                       src={clickedPoi.photoUrl}
@@ -567,20 +562,47 @@ export default function MapWrapper({ session }: { session: Session }) {
                       className="rounded-md object-cover w-full"
                     />
                   )}
-                  <h3 className="font-bold text-memoria-text">
-                    {clickedPoi.name}
-                  </h3>
-                  {clickedPoi.address && (
-                    <p className="text-sm text-gray-600">
-                      {clickedPoi.address}
-                    </p>
+                  <h3 className="font-bold text-lg">{clickedPoi.name}</h3>
+                  <p className="text-sm text-gray-600">{clickedPoi.address}</p>
+                  {clickedPoi.phone && (
+                    <p className="text-sm">📞 {clickedPoi.phone}</p>
+                  )}
+                  {clickedPoi.hours && (
+                    <details>
+                      <summary className="text-sm cursor-pointer">
+                        営業時間
+                      </summary>
+                      <ul className="text-xs text-gray-600">
+                        {clickedPoi.hours.map((h: string) => (
+                          <li key={h}>{h}</li>
+                        ))}
+                      </ul>
+                    </details>
                   )}
                   {clickedPoi.rating && (
-                    <p className="text-sm font-bold text-yellow-500">
-                      {clickedPoi.rating} ★
-                    </p>
+                    <p className="text-yellow-600">⭐ {clickedPoi.rating}</p>
                   )}
-                  {clickedPoi.name !== "検索中..." && (
+                  {clickedPoi.website && (
+                    <a
+                      href={clickedPoi.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 underline text-sm"
+                    >
+                      公式サイト
+                    </a>
+                  )}
+                  {clickedPoi.googleMapUrl && (
+                    <a
+                      href={clickedPoi.googleMapUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 font-semibold text-sm mt-2"
+                    >
+                      Googleマップで開く
+                    </a>
+                  )}
+                  {clickedPoi.name && clickedPoi.name !== "検索中..." && (
                     <>
                       <p className="text-sm text-gray-600 mt-2">
                         この場所に思い出を追加しますか？
