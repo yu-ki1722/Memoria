@@ -1,0 +1,64 @@
+{
+  "version": 8,
+  "name": "Untitled",
+  "metadata": {
+    "mapbox:autocomposite": true,
+    "mapbox:thumb": "data:image/webp;base64,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",
+    "mapbox:uiParadigm": "layers",
+    "mapbox:sdk-support": {
+      "js": "3.16.0",
+      "android": "11.16.0",
+      "ios": "11.16.0"
+    },
+    "mapbox:groups": {},
+    "mapbox:uiExpandedImports": []
+  },
+  "center": [-34, 38],
+  "zoom": 2,
+  "lights": [],
+  "terrain": null,
+  "imports": [
+    {
+      "id": "basemap",
+      "url": "mapbox://styles/mapbox/standard",
+      "config": {
+        "colorTrunks": "#d7cfc5",
+        "backgroundPointOfInterestLabels": "circle",
+        "colorRoadLabels": "#a19a93",
+        "colorPlaceLabels": "#4b423c",
+        "colorPlaceLabelHighlight": "#88c7bc",
+        "fuelingStationModePointOfInterestLabels": "default",
+        "showLandmarkIcons": false,
+        "colorGreenspace": "#eaf7ea",
+        "densityPointOfInterestLabels": 2,
+        "theme": "faded",
+        "colorModePointOfInterestLabels": "single",
+        "colorPlaceLabelSelect": "#f0a079",
+        "colorPointOfInterestLabels": "#a59b8b",
+        "font": "Noto Sans",
+        "colorRoads": "#e4ded5",
+        "showPointOfInterestLabels": true,
+        "colorBuildingSelect": "#eadcd1",
+        "colorAdminBoundaries": "#f0a079",
+        "colorWater": "#cde6f5",
+        "lightPreset": "day",
+        "colorMotorways": "#d0c4b5",
+        "showPedestrianRoads": true,
+        "showRoadLabels": true,
+        "colorBuildingHighlight": "#f7f5f2"
+      }
+    }
+  ],
+  "sources": {},
+  "sprite": "mapbox://sprites/yu-ki1722/cmh2dk0dm00el01srfg7yfpkt/b8fjw435hx85pp7j172f016pl",
+  "glyphs": "mapbox://fonts/yu-ki1722/{fontstack}/{range}.pbf",
+  "projection": { "name": "globe" },
+  "layers": [],
+  "created": "2025-10-22T19:16:50.794Z",
+  "modified": "2025-10-23T10:20:10.657Z",
+  "id": "cmh2dk0dm00el01srfg7yfpkt",
+  "owner": "yu-ki1722",
+  "visibility": "private",
+  "protected": false,
+  "draft": false
+}

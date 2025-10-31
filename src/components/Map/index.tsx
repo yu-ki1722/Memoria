@@ -7,7 +7,6 @@ import type { MapMouseEvent } from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import Image from "next/image";
 import { supabase } from "@/lib/supabaseClient";
-import styles from "./Map.module.css";
 import Header from "../Header";
 import MemoryForm from "../MemoryForm";
 import Button from "../Button";
@@ -15,6 +14,7 @@ import GeocoderControl from "../GeocoderControl";
 import CurrentLocationButton from "../CurrentLocationButton";
 import RealtimeLocationMarker from "../RealtimeLocationMarker";
 import MemoryPinIcon from "../MemoryPinIcon";
+import PlaceDetailModal from "../PlaceDetailPanel";
 
 const emotionStyles = {
   "😊": { bg: "bg-emotion-happy", shadow: "shadow-glow-happy" },
@@ -46,6 +46,20 @@ type Memory = {
   image_url: string | null;
 };
 
+type ClickedPoi = {
+  lng: number;
+  lat: number;
+  name: string;
+  address?: string;
+  rating?: number;
+  photoUrl?: string | null;
+  placeId?: string;
+  phone?: string | null;
+  hours?: string[];
+  website?: string | null;
+  googleMapUrl?: string | null;
+};
+
 export default function MapWrapper({ session }: { session: Session }) {
   console.log("Mapbox Token:", process.env.NEXT_PUBLIC_MAPBOX_TOKEN);
   const [memories, setMemories] = useState<Memory[]>([]);
@@ -62,6 +76,7 @@ export default function MapWrapper({ session }: { session: Session }) {
   } | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const mapRef = useRef<MapRef>(null);
+  const [clickedPoi, setClickedPoi] = useState<ClickedPoi | null>(null);
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
@@ -86,7 +101,7 @@ export default function MapWrapper({ session }: { session: Session }) {
 
   useEffect(() => {
     const fetchMemories = async () => {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("memories")
         .select("*")
         .eq("user_id", session.user.id);
@@ -127,22 +142,6 @@ export default function MapWrapper({ session }: { session: Session }) {
       }
     }
   }, [editingMemory, memories]);
-
-  const handleMapClick = (event: MapMouseEvent) => {
-    const targetElement = event.originalEvent.target as HTMLElement;
-    if (
-      targetElement &&
-      targetElement.closest(".mapboxgl-marker, .mapboxgl-popup")
-    ) {
-      return;
-    }
-    if (selectedMemory || editingMemory || newMemoryLocation) {
-      return;
-    }
-    const { lng, lat } = event.lngLat;
-    setNewMemoryLocation({ lng, lat });
-    setSelectedMemory(null);
-  };
 
   const handleSaveMemory = async (
     emotion: string,
@@ -267,6 +266,95 @@ export default function MapWrapper({ session }: { session: Session }) {
     alert("思い出を削除しました。");
   };
 
+  const fetchGooglePlaceDetails = async (
+    lat: number,
+    lng: number,
+    mapboxName: string
+  ) => {
+    const searchUrl = `/api/places?lat=${lat}&lng=${lng}&keyword=${encodeURIComponent(
+      mapboxName
+    )}`;
+
+    try {
+      const res = await fetch(searchUrl);
+      const data = await res.json();
+
+      if (data.status === "OK" && data.result) {
+        const place = data.result;
+        const photoRef = place.photos?.[0]?.photo_reference;
+        const photoUrl = photoRef
+          ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${photoRef}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+          : null;
+
+        setClickedPoi({
+          lng,
+          lat,
+          name: place.name ?? mapboxName,
+          address: place.formatted_address ?? "住所情報なし",
+          rating: place.rating ?? null,
+          photoUrl,
+          phone: place.formatted_phone_number ?? null,
+          website: place.website ?? null,
+          hours: place.opening_hours?.weekday_text ?? [],
+          googleMapUrl: place.url ?? null,
+        });
+      } else {
+        setClickedPoi({ lng, lat, name: mapboxName, address: "詳細情報なし" });
+      }
+    } catch (err) {
+      console.error("Error:", err);
+    }
+  };
+
+  const handleMapClick = (event: MapMouseEvent) => {
+    const map = mapRef.current?.getMap();
+    if (!map) return;
+
+    const targetElement = event.originalEvent.target as HTMLElement;
+    if (targetElement?.closest(".mapboxgl-marker, .mapboxgl-popup")) return;
+
+    const features = map.queryRenderedFeatures(event.point);
+    const poi = features.find((f) => f.properties && f.properties.name);
+
+    if (poi && poi.properties?.name) {
+      const name = poi.properties.name as string;
+      const { lng, lat } = event.lngLat;
+
+      if (clickedPoi && clickedPoi.name === name) {
+        setClickedPoi(null);
+        return;
+      }
+
+      setClickedPoi(null);
+      setTimeout(() => {
+        setClickedPoi({
+          lng,
+          lat,
+          name: "検索中...",
+        });
+        fetchGooglePlaceDetails(lat, lng, name);
+      }, 0);
+
+      setNewMemoryLocation(null);
+      setSelectedMemory(null);
+      setEditingMemory(null);
+      return;
+    }
+
+    if (clickedPoi || selectedMemory || editingMemory || newMemoryLocation) {
+      setClickedPoi(null);
+      setSelectedMemory(null);
+      setEditingMemory(null);
+      setNewMemoryLocation(null);
+      return;
+    }
+
+    const { lng, lat } = event.lngLat;
+    setNewMemoryLocation({ lng, lat });
+    setSelectedMemory(null);
+    setClickedPoi(null);
+  };
+
   return (
     <>
       <Header session={session} />
@@ -310,6 +398,7 @@ export default function MapWrapper({ session }: { session: Session }) {
                     className="w-10 h-10 cursor-pointer transition-transform hover:scale-110"
                     onClick={(e) => {
                       e.stopPropagation();
+                      setClickedPoi(null);
                       setEditingMemory(null);
                       setSelectedMemory(memory);
                       setNewMemoryLocation(null);
@@ -365,6 +454,7 @@ export default function MapWrapper({ session }: { session: Session }) {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
+                            setClickedPoi(null);
                             setEditingMemory(selectedMemory.id);
                             setSelectedMemory(null);
                           }}
@@ -382,6 +472,7 @@ export default function MapWrapper({ session }: { session: Session }) {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
+                            setClickedPoi(null);
                             handleDeleteMemory(selectedMemory.id);
                           }}
                           className="memoria-icon-button memoria-delete-button"
@@ -448,6 +539,19 @@ export default function MapWrapper({ session }: { session: Session }) {
               >
                 <MemoryForm onSave={handleSaveMemory} buttonText="記録する" />
               </Popup>
+            )}
+            {clickedPoi && (
+              <PlaceDetailModal
+                place={clickedPoi}
+                onClose={() => setClickedPoi(null)}
+                onAddMemory={() => {
+                  setNewMemoryLocation({
+                    lng: clickedPoi.lng,
+                    lat: clickedPoi.lat,
+                  });
+                  setClickedPoi(null);
+                }}
+              />
             )}
           </Map>
         )}
