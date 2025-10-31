@@ -15,6 +15,8 @@ import CurrentLocationButton from "../CurrentLocationButton";
 import RealtimeLocationMarker from "../RealtimeLocationMarker";
 import MemoryPinIcon from "../MemoryPinIcon";
 import PlaceDetailModal from "../PlaceDetailPanel";
+import SearchButton from "../SearchButton";
+import PlaceSearchModal from "../PlaceSearchModal";
 
 const emotionStyles = {
   "😊": { bg: "bg-emotion-happy", shadow: "shadow-glow-happy" },
@@ -77,6 +79,7 @@ export default function MapWrapper({ session }: { session: Session }) {
   const [isLocating, setIsLocating] = useState(false);
   const mapRef = useRef<MapRef>(null);
   const [clickedPoi, setClickedPoi] = useState<ClickedPoi | null>(null);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
@@ -358,6 +361,11 @@ export default function MapWrapper({ session }: { session: Session }) {
   return (
     <>
       <Header session={session} />
+      <SearchButton onClick={() => setIsSearchOpen(true)} />
+      <PlaceSearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+      />
       <div style={{ position: "relative", width: "100vw", height: "100vh" }}>
         {isLocating && (
           <div className="absolute top-0 left-0 w-full h-full z-[1001] flex justify-center items-center bg-black/50 text-white text-lg font-bold">
