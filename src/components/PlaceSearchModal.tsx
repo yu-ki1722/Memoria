@@ -1,13 +1,54 @@
 "use client";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X } from "lucide-react";
+import { X, Search } from "lucide-react";
 
 type Props = {
   isOpen: boolean;
   onClose: () => void;
 };
 
+type Place = {
+  place_id: string;
+  name: string;
+  formatted_address: string;
+  geometry?: {
+    location: {
+      lat: number;
+      lng: number;
+    };
+  };
+  rating?: number;
+  photos?: { photo_reference: string }[];
+};
+
 export default function PlaceSearchModal({ isOpen, onClose }: Props) {
+  const [input, setInput] = useState("");
+  const [results, setResults] = useState<Place[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const handleSearch = async () => {
+    if (!input.trim()) return;
+
+    setLoading(true);
+    const lat = 35.6812;
+    const lng = 139.7671;
+
+    try {
+      const res = await fetch(
+        `/api/searchPlaces?query=${input}&lat=${lat}&lng=${lng}`
+      );
+      const data = await res.json();
+
+      console.log("Google API 検索結果:", data);
+      setResults(data.results || []);
+    } catch (err) {
+      console.error("検索エラー:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -42,19 +83,46 @@ export default function PlaceSearchModal({ isOpen, onClose }: Props) {
               </button>
             </div>
 
-            <div className="p-4">
+            {/* 検索バー */}
+            <div className="p-4 flex gap-2 items-center border-b">
+              <Search size={20} className="text-gray-500" />
               <input
                 type="text"
                 placeholder="場所名・住所を入力"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 className="
-                  w-full px-4 py-2 border rounded-lg focus:ring-2 
-                  focus:ring-blue-400 outline-none text-sm
+                  flex-1 px-3 py-2 border rounded-lg text-sm
+                  focus:ring-2 focus:ring-blue-400 outline-none
                 "
               />
+              <button
+                onClick={handleSearch}
+                className="bg-blue-500 hover:bg-blue-600 text-white text-sm px-3 py-2 rounded-lg"
+              >
+                検索
+              </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-4 pb-6">
-              <p className="text-gray-500 text-sm">検索結果をここに表示</p>
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {loading && <p className="text-gray-500">検索中...</p>}
+              {!loading && results.length === 0 && (
+                <p className="text-gray-400 text-sm">
+                  検索結果がここに表示されます
+                </p>
+              )}
+              {results.map((place) => (
+                <div
+                  key={place.place_id}
+                  className="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                >
+                  <p className="font-medium text-sm">{place.name}</p>
+                  <p className="text-xs text-gray-500">
+                    {place.formatted_address}
+                  </p>
+                </div>
+              ))}
             </div>
           </motion.div>
         </>
