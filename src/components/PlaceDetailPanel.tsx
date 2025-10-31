@@ -30,46 +30,51 @@ export default function PlaceDetailModal({
 
       <div
         className="
-        fixed bottom-0 md:bottom-auto md:right-0
-        w-full md:w-[420px] h-[70vh] md:h-full
-        bg-white rounded-t-2xl md:rounded-none shadow-2xl
-        animate-slideUp md:animate-slideInRight
-        z-[2000] overflow-y-auto
-      "
+          fixed bottom-0 md:bottom-auto md:right-0
+          w-full md:w-[420px] h-[70vh] md:h-full
+          bg-memoria-background rounded-t-2xl md:rounded-none shadow-2xl
+          animate-slideUp md:animate-slideInRight
+          z-[2000] overflow-y-auto border-l border-black/10
+        "
       >
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-2xl font-bold text-gray-600 hover:text-gray-900"
+          className="absolute top-4 right-4 text-3xl font-light text-memoria-text/40 hover:text-memoria-primary transition-colors"
         >
-          ×
+          &times;
         </button>
 
-        <div className="p-6 mt-6 space-y-3">
+        <div className="p-6 mt-8 space-y-4">
           {place.photoUrl && (
             <Image
               src={place.photoUrl}
               alt={place.name}
               width={400}
               height={250}
-              className="rounded-lg w-full h-48 object-cover mb-3"
+              className="rounded-lg w-full h-48 object-cover mb-3 shadow-md border border-black/5"
             />
           )}
 
-          <h2 className="text-xl font-bold text-gray-900">{place.name}</h2>
-          <p className="text-gray-600 text-sm">{place.address}</p>
-          {place.phone && (
-            <p className="text-sm text-gray-700">📞 {place.phone}</p>
-          )}
-          {place.rating && (
-            <p className="text-yellow-600 font-semibold">⭐ {place.rating}</p>
-          )}
+          <h2 className="text-2xl font-bold text-memoria-text">{place.name}</h2>
+
+          <div className="space-y-2">
+            {place.address && (
+              <p className="text-memoria-text/80 text-sm">{place.address}</p>
+            )}
+            {place.phone && (
+              <p className="text-sm text-memoria-text/80">📞 {place.phone}</p>
+            )}
+            {place.rating && (
+              <p className="text-yellow-600 font-semibold">⭐ {place.rating}</p>
+            )}
+          </div>
 
           {place.hours && (
-            <details className="mt-2">
-              <summary className="text-sm cursor-pointer text-gray-800 font-semibold">
+            <details className="mt-2 text-sm">
+              <summary className="cursor-pointer text-memoria-text/80 font-semibold">
                 営業時間
               </summary>
-              <ul className="text-xs text-gray-600 mt-1">
+              <ul className="text-xs text-memoria-text/60 mt-2 pl-4 list-disc">
                 {place.hours.map((h, i) => (
                   <li key={i}>{h}</li>
                 ))}
@@ -77,15 +82,15 @@ export default function PlaceDetailModal({
             </details>
           )}
 
-          <div className="space-y-1 mt-3">
+          <div className="space-y-2 mt-4 border-t border-black/10 pt-4">
             {place.website && (
               <a
                 href={place.website}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-500 underline text-sm block"
+                className="text-memoria-secondary hover:text-memoria-secondary-dark font-semibold text-sm block transition-colors"
               >
-                公式サイト
+                公式サイト →
               </a>
             )}
             {place.googleMapUrl && (
@@ -93,20 +98,17 @@ export default function PlaceDetailModal({
                 href={place.googleMapUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 font-semibold text-sm block"
+                className="text-memoria-primary hover:text-memoria-primary-dark font-semibold text-sm block transition-colors"
               >
-                Googleマップで開く
+                Googleマップで開く →
               </a>
             )}
           </div>
 
           {place.name !== "検索中..." && (
-            <div className="mt-6">
-              <p className="text-sm text-gray-600 mb-2">
-                この場所に思い出を追加しますか？
-              </p>
+            <div className="mt-6 py-3 text-lg">
               <Button variant="primary" onClick={onAddMemory}>
-                思い出を追加
+                この場所に思い出を記録する
               </Button>
             </div>
           )}
