@@ -28,6 +28,7 @@ export default function PlaceSearchModal({
   const [results, setResults] = useState<Place[]>([]);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(
     null
   );
@@ -40,43 +41,58 @@ export default function PlaceSearchModal({
         setLocation({ lat: latitude, lng: longitude });
       },
       () => {
-        setLocation({ lat: 35.6812, lng: 139.7671 });
+        setErrorMsg("現在地の取得に失敗しました");
       }
     );
   }, [isOpen]);
 
   const handleSearch = async () => {
-    if (!location) return;
-    setLoading(true);
+    if (!location) {
+      setErrorMsg("位置情報を取得できませんでした");
+      return;
+    }
 
+    setLoading(true);
+    setErrorMsg("");
     const { lat, lng } = location;
+
+    const hasSpecificLocation = /[都道府県市区町村]/.test(input);
+
     const url = input.trim()
-      ? `/api/searchPlaces?query=${encodeURIComponent(
-          input
-        )}&lat=${lat}&lng=${lng}`
-      : `/api/searchPlaces?lat=${lat}&lng=${lng}`;
+      ? hasSpecificLocation
+        ? `/api/searchPlaces?query=${encodeURIComponent(
+            input
+          )}&lat=${lat}&lng=${lng}`
+        : `/api/searchPlaces?query=${encodeURIComponent(
+            input
+          )}&lat=${lat}&lng=${lng}&radius=2000`
+      : `/api/searchPlaces?lat=${lat}&lng=${lng}&radius=1000`;
 
     try {
       const res = await fetch(url);
       const data = await res.json();
 
-      if (data.results) {
-        const enriched: Place[] = data.results
-          .map((p: Place) => {
-            if (!p.geometry?.location) return p;
-            const dx = p.geometry.location.lat - lat;
-            const dy = p.geometry.location.lng - lng;
-            const dist = Math.sqrt(dx * dx + dy * dy) * 111000;
-            return { ...p, distance: Math.round(dist) };
-          })
-          .sort((a: Place, b: Place) => (a.distance || 0) - (b.distance || 0));
-
-        setResults(enriched);
-      } else {
+      if (data.error) throw new Error(data.error);
+      if (!data.results || data.results.length === 0) {
+        setErrorMsg("該当する施設が見つかりませんでした");
         setResults([]);
+        return;
       }
+
+      const enriched: Place[] = data.results
+        .map((p: Place) => {
+          if (!p.geometry?.location) return p;
+          const dx = p.geometry.location.lat - lat;
+          const dy = p.geometry.location.lng - lng;
+          const dist = Math.sqrt(dx * dx + dy * dy) * 111000;
+          return { ...p, distance: Math.round(dist) };
+        })
+        .sort((a: Place, b: Place) => (a.distance ?? 0) - (b.distance ?? 0));
+
+      setResults(enriched);
     } catch (err) {
       console.error("検索エラー:", err);
+      setErrorMsg("検索中にエラーが発生しました");
     } finally {
       setLoading(false);
     }
@@ -117,7 +133,7 @@ export default function PlaceSearchModal({
           >
             <div className="p-4 border-b border-black/10 flex justify-between items-center">
               <h2 className="text-lg font-semibold text-memoria-text">
-                {selectedPlace ? "場所の詳細" : "現在地付近のスポット"}
+                {selectedPlace ? "場所の詳細" : "場所検索"}
               </h2>
               <button onClick={onClose}>
                 <X
@@ -141,7 +157,7 @@ export default function PlaceSearchModal({
                       <Search size={20} className="text-memoria-text/50" />
                       <input
                         type="text"
-                        placeholder="場所名・住所を入力"
+                        placeholder="場所名・住所を入力（例：コンビニ、レストラン）"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -165,27 +181,29 @@ export default function PlaceSearchModal({
                         現在地付近の施設を取得中...
                       </p>
                     )}
-                    {results.map((place) => (
-                      <motion.div
-                        layoutId={place.place_id}
-                        key={place.place_id}
-                        className="p-3 border border-black/10 rounded-lg hover:bg-white/30 cursor-pointer"
-                        onClick={() => handleSelectPlace(place)}
-                        whileHover={{ scale: 1.02 }}
-                      >
-                        <p className="font-medium text-sm text-memoria-text">
-                          {place.name}
-                        </p>
-                        <p className="text-xs text-memoria-text/70">
-                          {place.formatted_address}
-                        </p>
-                        {place.distance && (
-                          <p className="text-xs text-memoria-text/60">
-                            約 {place.distance}m
+                    {!loading &&
+                      !errorMsg &&
+                      results.map((place) => (
+                        <motion.div
+                          layoutId={place.place_id}
+                          key={place.place_id}
+                          className="p-3 border border-black/10 rounded-lg hover:bg-white/30 cursor-pointer"
+                          onClick={() => handleSelectPlace(place)}
+                          whileHover={{ scale: 1.02 }}
+                        >
+                          <p className="font-medium text-sm text-memoria-text">
+                            {place.name}
                           </p>
-                        )}
-                      </motion.div>
-                    ))}
+                          <p className="text-xs text-memoria-text/70">
+                            {place.formatted_address}
+                          </p>
+                          {place.distance && !input.trim() && (
+                            <p className="text-xs text-memoria-text/60">
+                              約 {place.distance}m
+                            </p>
+                          )}
+                        </motion.div>
+                      ))}
                   </motion.div>
                 ) : (
                   <motion.div
