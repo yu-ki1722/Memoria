@@ -6,6 +6,7 @@ import { X, Search } from "lucide-react";
 type Props = {
   isOpen: boolean;
   onClose: () => void;
+  onSelectPlace: (place: Place) => void;
 };
 
 type Place = {
@@ -22,7 +23,11 @@ type Place = {
   photos?: { photo_reference: string }[];
 };
 
-export default function PlaceSearchModal({ isOpen, onClose }: Props) {
+export default function PlaceSearchModal({
+  isOpen,
+  onClose,
+  onSelectPlace,
+}: Props) {
   const [input, setInput] = useState("");
   const [results, setResults] = useState<Place[]>([]);
   const [loading, setLoading] = useState(false);
@@ -83,7 +88,6 @@ export default function PlaceSearchModal({ isOpen, onClose }: Props) {
               </button>
             </div>
 
-            {/* 検索バー */}
             <div className="p-4 flex gap-2 items-center border-b">
               <Search size={20} className="text-gray-500" />
               <input
@@ -116,6 +120,10 @@ export default function PlaceSearchModal({ isOpen, onClose }: Props) {
                 <div
                   key={place.place_id}
                   className="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                  onClick={() => {
+                    onSelectPlace(place);
+                    onClose();
+                  }}
                 >
                   <p className="font-medium text-sm">{place.name}</p>
                   <p className="text-xs text-gray-500">

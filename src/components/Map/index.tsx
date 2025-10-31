@@ -17,6 +17,7 @@ import MemoryPinIcon from "../MemoryPinIcon";
 import PlaceDetailModal from "../PlaceDetailPanel";
 import SearchButton from "../SearchButton";
 import PlaceSearchModal from "../PlaceSearchModal";
+import { Search } from "lucide-react";
 
 const emotionStyles = {
   "😊": { bg: "bg-emotion-happy", shadow: "shadow-glow-happy" },
@@ -62,6 +63,13 @@ type ClickedPoi = {
   googleMapUrl?: string | null;
 };
 
+type Place = {
+  place_id: string;
+  name: string;
+  formatted_address: string;
+  geometry?: { location: { lat: number; lng: number } };
+};
+
 export default function MapWrapper({ session }: { session: Session }) {
   console.log("Mapbox Token:", process.env.NEXT_PUBLIC_MAPBOX_TOKEN);
   const [memories, setMemories] = useState<Memory[]>([]);
@@ -80,6 +88,7 @@ export default function MapWrapper({ session }: { session: Session }) {
   const mapRef = useRef<MapRef>(null);
   const [clickedPoi, setClickedPoi] = useState<ClickedPoi | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
@@ -361,10 +370,29 @@ export default function MapWrapper({ session }: { session: Session }) {
   return (
     <>
       <Header session={session} />
-      <SearchButton onClick={() => setIsSearchOpen(true)} />
+      <button
+        onClick={() => setIsSearchOpen(true)}
+        className="absolute top-4 right-4 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 z-[1500]"
+      >
+        <Search size={22} className="text-gray-700" />
+      </button>
+
       <PlaceSearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
+        onSelectPlace={(place) => {
+          const lat = place.geometry?.location.lat ?? 0;
+          const lng = place.geometry?.location.lng ?? 0;
+
+          setSelectedPlace(place);
+          setIsSearchOpen(false);
+
+          mapRef.current?.flyTo({
+            center: [lng, lat],
+            zoom: 15,
+            essential: true,
+          });
+        }}
       />
       <div style={{ position: "relative", width: "100vw", height: "100vh" }}>
         {isLocating && (
@@ -560,6 +588,15 @@ export default function MapWrapper({ session }: { session: Session }) {
                   setClickedPoi(null);
                 }}
               />
+            )}
+            {selectedPlace && selectedPlace.geometry && (
+              <Marker
+                longitude={selectedPlace.geometry.location.lng}
+                latitude={selectedPlace.geometry.location.lat}
+                anchor="bottom"
+              >
+                <div className="w-10 h-10 bg-blue-500 rounded-full border-2 border-white shadow-lg" />
+              </Marker>
             )}
           </Map>
         )}
