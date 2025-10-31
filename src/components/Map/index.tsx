@@ -14,6 +14,7 @@ import GeocoderControl from "../GeocoderControl";
 import CurrentLocationButton from "../CurrentLocationButton";
 import RealtimeLocationMarker from "../RealtimeLocationMarker";
 import MemoryPinIcon from "../MemoryPinIcon";
+import PlaceDetailModal from "../PlaceDetailPanel";
 
 const emotionStyles = {
   "😊": { bg: "bg-emotion-happy", shadow: "shadow-glow-happy" },
@@ -540,89 +541,17 @@ export default function MapWrapper({ session }: { session: Session }) {
               </Popup>
             )}
             {clickedPoi && (
-              <Popup
-                longitude={clickedPoi.lng}
-                latitude={clickedPoi.lat}
-                onClose={() => {
+              <PlaceDetailModal
+                place={clickedPoi}
+                onClose={() => setClickedPoi(null)}
+                onAddMemory={() => {
+                  setNewMemoryLocation({
+                    lng: clickedPoi.lng,
+                    lat: clickedPoi.lat,
+                  });
                   setClickedPoi(null);
-                  setNewMemoryLocation(null);
-                  setSelectedMemory(null);
-                  setEditingMemory(null);
                 }}
-                anchor="bottom"
-                className="memoria-popup"
-              >
-                <div className="w-64 flex flex-col gap-2 p-4 rounded-lg bg-white shadow-lg animate-softAppear">
-                  {clickedPoi.photoUrl && (
-                    <Image
-                      src={clickedPoi.photoUrl}
-                      alt={clickedPoi.name}
-                      width={200}
-                      height={150}
-                      className="rounded-md object-cover w-full"
-                    />
-                  )}
-                  <h3 className="font-bold text-lg">{clickedPoi.name}</h3>
-                  <p className="text-sm text-gray-600">{clickedPoi.address}</p>
-                  {clickedPoi.phone && (
-                    <p className="text-sm">📞 {clickedPoi.phone}</p>
-                  )}
-                  {clickedPoi.hours && (
-                    <details>
-                      <summary className="text-sm cursor-pointer">
-                        営業時間
-                      </summary>
-                      <ul className="text-xs text-gray-600">
-                        {clickedPoi.hours.map((h: string) => (
-                          <li key={h}>{h}</li>
-                        ))}
-                      </ul>
-                    </details>
-                  )}
-                  {clickedPoi.rating && (
-                    <p className="text-yellow-600">⭐ {clickedPoi.rating}</p>
-                  )}
-                  {clickedPoi.website && (
-                    <a
-                      href={clickedPoi.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-500 underline text-sm"
-                    >
-                      公式サイト
-                    </a>
-                  )}
-                  {clickedPoi.googleMapUrl && (
-                    <a
-                      href={clickedPoi.googleMapUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 font-semibold text-sm mt-2"
-                    >
-                      Googleマップで開く
-                    </a>
-                  )}
-                  {clickedPoi.name && clickedPoi.name !== "検索中..." && (
-                    <>
-                      <p className="text-sm text-gray-600 mt-2">
-                        この場所に思い出を追加しますか？
-                      </p>
-                      <Button
-                        variant="primary"
-                        onClick={() => {
-                          setNewMemoryLocation({
-                            lng: clickedPoi.lng,
-                            lat: clickedPoi.lat,
-                          });
-                          setClickedPoi(null);
-                        }}
-                      >
-                        思い出を追加
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </Popup>
+              />
             )}
           </Map>
         )}
