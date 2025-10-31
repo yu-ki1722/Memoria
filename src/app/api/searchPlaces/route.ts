@@ -5,30 +5,18 @@ export async function GET(req: Request) {
   const query = searchParams.get("query");
   const lat = searchParams.get("lat");
   const lng = searchParams.get("lng");
+  const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
-  if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
-    return NextResponse.json(
-      { error: "Missing Google API key" },
-      { status: 500 }
-    );
+  if (!lat || !lng) {
+    return NextResponse.json({ error: "Missing location" }, { status: 400 });
   }
 
-  let url = "";
-
-  if (query && query.trim() !== "") {
-    url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(
-      query
-    )}&location=${lat},${lng}&radius=1000&language=ja&key=${
-      process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
-    }`;
-  } else if (lat && lng) {
-    url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=1000&language=ja&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`;
-  } else {
-    return NextResponse.json(
-      { error: "Missing query or location parameters" },
-      { status: 400 }
-    );
-  }
+  const url =
+    query && query.trim() !== ""
+      ? `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(
+          query
+        )}&location=${lat},${lng}&radius=1500&language=ja&key=${key}`
+      : `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=1500&type=point_of_interest&language=ja&key=${key}`;
 
   try {
     const res = await fetch(url);
@@ -37,7 +25,7 @@ export async function GET(req: Request) {
   } catch (error) {
     console.error("Google Places API error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch from Google Places API" },
+      { error: "Failed to fetch places" },
       { status: 500 }
     );
   }

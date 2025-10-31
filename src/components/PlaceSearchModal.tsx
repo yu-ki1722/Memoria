@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Search, ArrowLeft } from "lucide-react";
 
@@ -13,11 +13,10 @@ type Place = {
   place_id: string;
   name: string;
   formatted_address: string;
-  geometry?: {
-    location: { lat: number; lng: number };
-  };
+  geometry?: { location: { lat: number; lng: number } };
   rating?: number;
   photos?: { photo_reference: string }[];
+  distance?: number;
 };
 
 export default function PlaceSearchModal({
@@ -29,25 +28,64 @@ export default function PlaceSearchModal({
   const [results, setResults] = useState<Place[]>([]);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [loading, setLoading] = useState(false);
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(
+    null
+  );
+
+  useEffect(() => {
+    if (!isOpen) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setLocation({ lat: latitude, lng: longitude });
+      },
+      () => {
+        setLocation({ lat: 35.6812, lng: 139.7671 });
+      }
+    );
+  }, [isOpen]);
 
   const handleSearch = async () => {
-    if (!input.trim()) return;
+    if (!location) return;
     setLoading(true);
-    const lat = 35.6812;
-    const lng = 139.7671;
+
+    const { lat, lng } = location;
+    const url = input.trim()
+      ? `/api/searchPlaces?query=${encodeURIComponent(
+          input
+        )}&lat=${lat}&lng=${lng}`
+      : `/api/searchPlaces?lat=${lat}&lng=${lng}`;
 
     try {
-      const res = await fetch(
-        `/api/searchPlaces?query=${input}&lat=${lat}&lng=${lng}`
-      );
+      const res = await fetch(url);
       const data = await res.json();
-      setResults(data.results || []);
+
+      if (data.results) {
+        const enriched: Place[] = data.results
+          .map((p: Place) => {
+            if (!p.geometry?.location) return p;
+            const dx = p.geometry.location.lat - lat;
+            const dy = p.geometry.location.lng - lng;
+            const dist = Math.sqrt(dx * dx + dy * dy) * 111000;
+            return { ...p, distance: Math.round(dist) };
+          })
+          .sort((a: Place, b: Place) => (a.distance || 0) - (b.distance || 0));
+
+        setResults(enriched);
+      } else {
+        setResults([]);
+      }
     } catch (err) {
       console.error("検索エラー:", err);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (isOpen && location && results.length === 0) handleSearch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, location]);
 
   const handleSelectPlace = (place: Place) => {
     setSelectedPlace(place);
@@ -65,14 +103,10 @@ export default function PlaceSearchModal({
             exit={{ opacity: 0 }}
             onClick={onClose}
           />
-
           <motion.div
-            className="
-              fixed md:right-0 md:top-0 md:w-[400px] md:h-full
-              bottom-0 w-full h-[70vh]
-              bg-memoria-background rounded-t-2xl md:rounded-none shadow-xl
-              z-[2000] flex flex-col overflow-hidden border-l border-black/10
-            "
+            className="fixed md:right-0 md:top-0 md:w-[400px] md:h-full bottom-0 w-full h-[70vh]
+                       bg-memoria-background rounded-t-2xl md:rounded-none shadow-xl
+                       z-[2000] flex flex-col overflow-hidden border-l border-black/10"
             initial={{ y: "100%", opacity: 0 }}
             animate={{
               y: 0,
@@ -83,7 +117,7 @@ export default function PlaceSearchModal({
           >
             <div className="p-4 border-b border-black/10 flex justify-between items-center">
               <h2 className="text-lg font-semibold text-memoria-text">
-                {selectedPlace ? "場所の詳細" : "場所を検索"}
+                {selectedPlace ? "場所の詳細" : "現在地付近のスポット"}
               </h2>
               <button onClick={onClose}>
                 <X
@@ -128,10 +162,9 @@ export default function PlaceSearchModal({
                     )}
                     {!loading && results.length === 0 && (
                       <p className="text-memoria-text/50 text-sm">
-                        検索結果がここに表示されます
+                        現在地付近の施設を取得中...
                       </p>
                     )}
-
                     {results.map((place) => (
                       <motion.div
                         layoutId={place.place_id}
@@ -146,6 +179,11 @@ export default function PlaceSearchModal({
                         <p className="text-xs text-memoria-text/70">
                           {place.formatted_address}
                         </p>
+                        {place.distance && (
+                          <p className="text-xs text-memoria-text/60">
+                            約 {place.distance}m
+                          </p>
+                        )}
                       </motion.div>
                     ))}
                   </motion.div>
