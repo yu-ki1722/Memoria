@@ -17,7 +17,6 @@ import MemoryPinIcon from "../MemoryPinIcon";
 import PlaceDetailModal from "../PlaceDetailPanel";
 import SearchButton from "../SearchButton";
 import PlaceSearchModal from "../PlaceSearchModal";
-import { Search } from "lucide-react";
 
 const emotionStyles = {
   "😊": { bg: "bg-emotion-happy", shadow: "shadow-glow-happy" },
@@ -68,6 +67,8 @@ type Place = {
   name: string;
   formatted_address: string;
   geometry?: { location: { lat: number; lng: number } };
+  rating?: number;
+  photos?: { photo_reference: string }[];
 };
 
 export default function MapWrapper({ session }: { session: Session }) {
@@ -88,7 +89,6 @@ export default function MapWrapper({ session }: { session: Session }) {
   const mapRef = useRef<MapRef>(null);
   const [clickedPoi, setClickedPoi] = useState<ClickedPoi | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
@@ -318,6 +318,38 @@ export default function MapWrapper({ session }: { session: Session }) {
     }
   };
 
+  const handleSelectPlace = async (place: Place) => {
+    if (!place.geometry?.location) return;
+
+    const { lat, lng } = place.geometry.location;
+    mapRef.current?.flyTo({ center: [lng, lat], zoom: 16 });
+
+    try {
+      const res = await fetch(
+        `/api/places?lat=${lat}&lng=${lng}&keyword=${encodeURIComponent(
+          place.name
+        )}`
+      );
+      const data = await res.json();
+
+      if (
+        data?.status === "OK" &&
+        Array.isArray(data.results) &&
+        data.results.length > 0
+      ) {
+        const detail = data.results[0];
+        const photoRef = detail.photos?.[0]?.photo_reference;
+        const photoUrl = photoRef
+          ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${photoRef}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+          : null;
+      } else {
+        console.warn("Google API returned no results:", data);
+      }
+    } catch (error) {
+      console.error("詳細取得エラー:", error);
+    }
+  };
+
   const handleMapClick = (event: MapMouseEvent) => {
     const map = mapRef.current?.getMap();
     if (!map) return;
@@ -370,29 +402,11 @@ export default function MapWrapper({ session }: { session: Session }) {
   return (
     <>
       <Header session={session} />
-      <button
-        onClick={() => setIsSearchOpen(true)}
-        className="absolute top-4 right-4 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 z-[1500]"
-      >
-        <Search size={22} className="text-gray-700" />
-      </button>
-
+      <SearchButton onClick={() => setIsSearchOpen(true)} />
       <PlaceSearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
-        onSelectPlace={(place) => {
-          const lat = place.geometry?.location.lat ?? 0;
-          const lng = place.geometry?.location.lng ?? 0;
-
-          setSelectedPlace(place);
-          setIsSearchOpen(false);
-
-          mapRef.current?.flyTo({
-            center: [lng, lat],
-            zoom: 15,
-            essential: true,
-          });
-        }}
+        onSelectPlace={handleSelectPlace}
       />
       <div style={{ position: "relative", width: "100vw", height: "100vh" }}>
         {isLocating && (
@@ -588,15 +602,6 @@ export default function MapWrapper({ session }: { session: Session }) {
                   setClickedPoi(null);
                 }}
               />
-            )}
-            {selectedPlace && selectedPlace.geometry && (
-              <Marker
-                longitude={selectedPlace.geometry.location.lng}
-                latitude={selectedPlace.geometry.location.lat}
-                anchor="bottom"
-              >
-                <div className="w-10 h-10 bg-blue-500 rounded-full border-2 border-white shadow-lg" />
-              </Marker>
             )}
           </Map>
         )}
