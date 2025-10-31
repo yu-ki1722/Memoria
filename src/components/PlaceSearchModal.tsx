@@ -33,19 +33,6 @@ export default function PlaceSearchModal({
     null
   );
 
-  useEffect(() => {
-    if (!isOpen) return;
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        setLocation({ lat: latitude, lng: longitude });
-      },
-      () => {
-        setErrorMsg("現在地の取得に失敗しました");
-      }
-    );
-  }, [isOpen]);
-
   const handleSearch = async () => {
     if (!location) {
       setErrorMsg("位置情報を取得できませんでした");
@@ -97,6 +84,34 @@ export default function PlaceSearchModal({
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setLocation({ lat: latitude, lng: longitude });
+      },
+      () => {
+        setErrorMsg("現在地の取得に失敗しました");
+      }
+    );
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!location) return;
+
+    const timer = setTimeout(() => {
+      if (input.trim()) {
+        handleSearch();
+      } else {
+        handleSearch();
+      }
+    }, 200);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [input, location]);
 
   useEffect(() => {
     if (isOpen && location && results.length === 0) handleSearch();
