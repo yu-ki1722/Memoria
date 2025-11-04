@@ -135,16 +135,50 @@ export default function PlaceSearchModal({
             onClick={onClose}
           />
           <motion.div
-            className="fixed md:right-0 md:top-0 md:w-[400px] md:h-full bottom-0 w-full h-[70vh]
-                       bg-memoria-background rounded-t-2xl md:rounded-none shadow-xl
-                       z-[2000] flex flex-col overflow-hidden border-l border-black/10"
-            initial={{ y: "100%", opacity: 0 }}
+            className="
+    fixed md:right-0 md:top-0 md:w-[400px] md:h-full
+    bottom-0 w-full h-[70vh]
+    bg-memoria-background rounded-t-2xl md:rounded-none shadow-xl
+    z-[2000] flex flex-col overflow-hidden border-l border-black/10
+  "
+            initial={{
+              x:
+                typeof window !== "undefined" && window.innerWidth >= 768
+                  ? "100%"
+                  : 0,
+              y:
+                typeof window !== "undefined" && window.innerWidth < 768
+                  ? "100%"
+                  : 0,
+              opacity: 0,
+            }}
             animate={{
+              x: 0,
               y: 0,
               opacity: 1,
-              transition: { type: "spring", damping: 25, stiffness: 200 },
+              transition: {
+                type: "spring",
+                damping: 25,
+                stiffness: 200,
+                duration: 0.5,
+                ease: "easeOut",
+              },
             }}
-            exit={{ y: "100%", opacity: 0 }}
+            exit={{
+              x:
+                typeof window !== "undefined" && window.innerWidth >= 768
+                  ? "100%"
+                  : 0,
+              y:
+                typeof window !== "undefined" && window.innerWidth < 768
+                  ? "100%"
+                  : 0,
+              opacity: 0,
+              transition: {
+                duration: 0.35,
+                ease: "easeInOut",
+              },
+            }}
           >
             <div className="p-4 border-b border-black/10 flex justify-between items-center">
               <h2 className="text-lg font-semibold text-memoria-text">
