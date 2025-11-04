@@ -10,7 +10,6 @@ import { supabase } from "@/lib/supabaseClient";
 import Header from "../Header";
 import MemoryForm from "../MemoryForm";
 import Button from "../Button";
-import GeocoderControl from "../GeocoderControl";
 import CurrentLocationButton from "../CurrentLocationButton";
 import RealtimeLocationMarker from "../RealtimeLocationMarker";
 import MemoryPinIcon from "../MemoryPinIcon";
@@ -60,6 +59,15 @@ type ClickedPoi = {
   hours?: string[];
   website?: string | null;
   googleMapUrl?: string | null;
+};
+
+type Place = {
+  place_id: string;
+  name: string;
+  formatted_address: string;
+  geometry?: { location: { lat: number; lng: number } };
+  rating?: number;
+  photos?: { photo_reference: string }[];
 };
 
 export default function MapWrapper({ session }: { session: Session }) {
@@ -309,6 +317,38 @@ export default function MapWrapper({ session }: { session: Session }) {
     }
   };
 
+  const handleSelectPlace = async (place: Place) => {
+    if (!place.geometry?.location) return;
+
+    const { lat, lng } = place.geometry.location;
+    mapRef.current?.flyTo({ center: [lng, lat], zoom: 16 });
+
+    try {
+      const res = await fetch(
+        `/api/places?lat=${lat}&lng=${lng}&keyword=${encodeURIComponent(
+          place.name
+        )}`
+      );
+      const data = await res.json();
+
+      if (
+        data?.status === "OK" &&
+        Array.isArray(data.results) &&
+        data.results.length > 0
+      ) {
+        const detail = data.results[0];
+        const photoRef = detail.photos?.[0]?.photo_reference;
+        const photoUrl = photoRef
+          ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${photoRef}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+          : null;
+      } else {
+        console.warn("Google API returned no results:", data);
+      }
+    } catch (error) {
+      console.error("詳細取得エラー:", error);
+    }
+  };
+
   const handleMapClick = (event: MapMouseEvent) => {
     const map = mapRef.current?.getMap();
     if (!map) return;
@@ -365,6 +405,7 @@ export default function MapWrapper({ session }: { session: Session }) {
       <PlaceSearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
+        onSelectPlace={handleSelectPlace}
       />
       <div style={{ position: "relative", width: "100vw", height: "100vh" }}>
         {isLocating && (
@@ -385,10 +426,6 @@ export default function MapWrapper({ session }: { session: Session }) {
             mapStyle="mapbox://styles/yu-ki1722/cmh2dk0dm00el01srfg7yfpkt"
             onClick={handleMapClick}
           >
-            <GeocoderControl
-              mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN!}
-              position="bottom-right"
-            />
             <RealtimeLocationMarker />
             {memories.map((memory) => {
               const colors = emotionGradientColors[
