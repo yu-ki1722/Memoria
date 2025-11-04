@@ -89,6 +89,7 @@ export default function MapWrapper({ session }: { session: Session }) {
   const mapRef = useRef<MapRef>(null);
   const [clickedPoi, setClickedPoi] = useState<ClickedPoi | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isTagInputOpen, setIsTagInputOpen] = useState(false);
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
@@ -354,6 +355,10 @@ export default function MapWrapper({ session }: { session: Session }) {
   };
 
   const handleMapClick = (event: MapMouseEvent) => {
+    if (isTagInputOpen) {
+      setIsTagInputOpen(false);
+      return;
+    }
     const map = mapRef.current?.getMap();
     if (!map) return;
 
@@ -451,6 +456,7 @@ export default function MapWrapper({ session }: { session: Session }) {
                       setEditingMemory(null);
                       setSelectedMemory(memory);
                       setNewMemoryLocation(null);
+                      setIsTagInputOpen(false);
                     }}
                   >
                     <MemoryPinIcon
@@ -579,6 +585,8 @@ export default function MapWrapper({ session }: { session: Session }) {
                       initialText={memoryToEdit.text}
                       initialImageUrl={memoryToEdit.image_url}
                       initialTags={memoryToEdit.tags}
+                      isTagInputOpen={isTagInputOpen}
+                      setIsTagInputOpen={setIsTagInputOpen}
                       onCancel={() => setEditingMemory(null)}
                     />
                   </Popup>
@@ -599,7 +607,10 @@ export default function MapWrapper({ session }: { session: Session }) {
                     handleSaveMemory(emotion, text, imageFile, tags)
                   }
                   buttonText="記録する"
-                />{" "}
+                  isTagInputOpen={isTagInputOpen}
+                  setIsTagInputOpen={setIsTagInputOpen}
+                  onCancel={() => setNewMemoryLocation(null)}
+                />
               </Popup>
             )}
             {clickedPoi && (

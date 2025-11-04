@@ -1,16 +1,9 @@
 "use client";
 
-import {
-  useState,
-  useRef,
-  ChangeEvent,
-  FormEvent,
-  KeyboardEvent,
-  useEffect,
-} from "react";
+import { useState, useRef, ChangeEvent, FormEvent, useEffect } from "react";
 import Button from "./Button";
 import Image from "next/image";
-import { X, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const emotionStyles = {
@@ -39,6 +32,8 @@ type MemoryFormProps = {
   initialImageUrl?: string | null;
   initialTags?: string[] | null;
   onCancel?: () => void;
+  isTagInputOpen: boolean;
+  setIsTagInputOpen: (isOpen: boolean) => void;
 };
 
 const defaultTags = ["日常", "旅行", "食べ物"];
@@ -51,6 +46,8 @@ export default function MemoryForm({
   initialImageUrl,
   initialTags,
   onCancel,
+  isTagInputOpen,
+  setIsTagInputOpen,
 }: MemoryFormProps) {
   const [selectedEmotion, setSelectedEmotion] = useState<Emotion | null>(
     (initialEmotion as Emotion) || null
@@ -64,7 +61,6 @@ export default function MemoryForm({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>(initialTags || []);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
-  const [showNewTagInput, setShowNewTagInput] = useState(false);
   const [newTagInput, setNewTagInput] = useState("");
 
   useEffect(() => {
@@ -114,15 +110,20 @@ export default function MemoryForm({
       setSelectedTags([...selectedTags, trimmedTag]);
     }
     setNewTagInput("");
-    setShowNewTagInput(false);
+    setIsTagInputOpen(false);
   };
 
-  const handleNewTagInputKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleAddNewTag();
-    }
-  };
+  const formRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (formRef.current && !formRef.current.contains(e.target as Node)) {
+        setIsTagInputOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const styleKey = selectedEmotion ? emotionStyles[selectedEmotion].key : null;
 
@@ -221,7 +222,8 @@ export default function MemoryForm({
           className="w-full p-3 bg-white/70 backdrop-blur-sm border border-white/30 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-shadow shadow-sm focus:shadow-soft-glow"
         />
 
-        <div>
+        <div ref={formRef}>
+          {" "}
           <label className="text-sm font-semibold text-gray-700">タグ</label>
           <div className="flex flex-wrap gap-2 mt-1">
             {availableTags.map((tag) => {
@@ -244,28 +246,19 @@ export default function MemoryForm({
                 </button>
               );
             })}
-
-            {!showNewTagInput && (
-              <button
-                type="button"
-                onClick={() => setShowNewTagInput(true)}
-                className="px-2 py-1 rounded-full text-xs font-medium bg-white/70 text-gray-700 border border-white/50 hover:bg-white/90 transition-colors duration-200 flex items-center justify-center w-7 h-7"
-              >
-                <Plus size={14} />
-              </button>
-            )}
           </div>
-
-          <AnimatePresence>
-            {showNewTagInput && (
-              <motion.div
-                initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                animate={{ opacity: 1, height: "auto", marginTop: "8px" }}
-                exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                transition={{ duration: 0.2 }}
-                className="flex gap-2"
-              >
-                <div className="flex-1 relative">
+          <div className="relative h-8 mt-2 flex items-center">
+            <AnimatePresence>
+              {isTagInputOpen && (
+                <motion.div
+                  key="tagInputForm"
+                  className="absolute left-0 top-0 h-full bg-white border border-gray-300 rounded-full flex items-center overflow-hidden"
+                  initial={{ width: 32 }}
+                  animate={{ width: 222 }}
+                  exit={{ width: 32 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
                     #
                   </span>
@@ -273,33 +266,38 @@ export default function MemoryForm({
                     type="text"
                     value={newTagInput}
                     onChange={(e) => setNewTagInput(e.target.value)}
-                    onKeyDown={handleNewTagInputKeyDown}
-                    placeholder="新しいタグ名"
-                    className="w-full p-2 pl-7 bg-white/70 backdrop-blur-sm border border-white/30 rounded-lg text-sm outline-none focus:ring-2 focus:ring-memoria-secondary"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddNewTag();
+                      }
+                    }}
+                    placeholder="新しいタグ"
+                    className="flex-1 px-3 pl-7 py-1 text-xs bg-transparent outline-none text-gray-800"
                     autoFocus
                   />
-                </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-                <button
-                  type="button"
-                  onClick={handleAddNewTag}
-                  className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg bg-memoria-secondary text-white hover:bg-memoria-secondary-dark transition-colors"
-                  title="追加"
-                >
-                  <Plus size={20} />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setShowNewTagInput(false)}
-                  className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg bg-white/70 text-gray-600 hover:bg-white/90 transition-colors"
-                  title="キャンセル"
-                >
-                  <X size={20} />
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+            <motion.button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!isTagInputOpen) setIsTagInputOpen(true);
+                else handleAddNewTag();
+              }}
+              className={`
+                      w-7 h-7 rounded-full text-xs font-medium transition-colors duration-200
+                      bg-white/70 text-gray-700 border border-white/50 hover:bg-white/90
+                      flex items-center justify-center flex-shrink-0
+                    `}
+              animate={{ x: isTagInputOpen ? 190 : 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+            >
+              <Plus size={14} />
+            </motion.button>
+          </div>
         </div>
 
         <div className="flex gap-3">
