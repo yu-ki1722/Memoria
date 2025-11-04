@@ -45,6 +45,7 @@ type Memory = {
   longitude: number;
   user_id: string;
   image_url: string | null;
+  tags: string[] | null;
 };
 
 type ClickedPoi = {
@@ -157,7 +158,8 @@ export default function MapWrapper({ session }: { session: Session }) {
   const handleSaveMemory = async (
     emotion: string,
     text: string,
-    imageFile: File | null
+    imageFile: File | null,
+    tags: string[]
   ) => {
     if (!newMemoryLocation || !session) return;
     let imageUrl: string | undefined = undefined;
@@ -191,6 +193,7 @@ export default function MapWrapper({ session }: { session: Session }) {
           image_url: imageUrl,
           latitude: newMemoryLocation.lat,
           longitude: newMemoryLocation.lng,
+          tags: tags,
         },
       ])
       .select()
@@ -208,7 +211,8 @@ export default function MapWrapper({ session }: { session: Session }) {
     emotion: string,
     text: string,
     imageFile: File | null,
-    imageWasCleared: boolean
+    imageWasCleared: boolean,
+    tags: string[]
   ) => {
     const originalMemory = memories.find((m) => m.id === id);
     if (!originalMemory) return;
@@ -248,7 +252,7 @@ export default function MapWrapper({ session }: { session: Session }) {
 
     const { data, error } = await supabase
       .from("memories")
-      .update({ text, emotion, image_url: finalImageUrl })
+      .update({ text, emotion, image_url: finalImageUrl, tags: tags })
       .eq("id", id)
       .select()
       .single();
@@ -554,19 +558,27 @@ export default function MapWrapper({ session }: { session: Session }) {
                     data-emotion={memoryToEdit.emotion}
                   >
                     <MemoryForm
-                      onSave={(emotion, text, imageFile, imageWasCleared) =>
+                      onSave={(
+                        emotion,
+                        text,
+                        imageFile,
+                        imageWasCleared,
+                        tags
+                      ) =>
                         handleUpdateMemory(
                           memoryToEdit.id,
                           emotion,
                           text,
                           imageFile,
-                          imageWasCleared
+                          imageWasCleared,
+                          tags
                         )
                       }
                       buttonText="更新"
                       initialEmotion={memoryToEdit.emotion}
                       initialText={memoryToEdit.text}
                       initialImageUrl={memoryToEdit.image_url}
+                      initialTags={memoryToEdit.tags}
                       onCancel={() => setEditingMemory(null)}
                     />
                   </Popup>
@@ -582,7 +594,12 @@ export default function MapWrapper({ session }: { session: Session }) {
                 anchor="bottom"
                 className="memoria-popup new-memory-popup"
               >
-                <MemoryForm onSave={handleSaveMemory} buttonText="記録する" />
+                <MemoryForm
+                  onSave={(emotion, text, imageFile, imageWasCleared, tags) =>
+                    handleSaveMemory(emotion, text, imageFile, tags)
+                  }
+                  buttonText="記録する"
+                />{" "}
               </Popup>
             )}
             {clickedPoi && (
