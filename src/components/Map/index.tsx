@@ -10,7 +10,6 @@ import { supabase } from "@/lib/supabaseClient";
 import Header from "../Header";
 import MemoryForm from "../MemoryForm";
 import Button from "../Button";
-import GeocoderControl from "../GeocoderControl";
 import CurrentLocationButton from "../CurrentLocationButton";
 import RealtimeLocationMarker from "../RealtimeLocationMarker";
 import MemoryPinIcon from "../MemoryPinIcon";
@@ -427,10 +426,6 @@ export default function MapWrapper({ session }: { session: Session }) {
             mapStyle="mapbox://styles/yu-ki1722/cmh2dk0dm00el01srfg7yfpkt"
             onClick={handleMapClick}
           >
-            <GeocoderControl
-              mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN!}
-              position="bottom-right"
-            />
             <RealtimeLocationMarker />
             {memories.map((memory) => {
               const colors = emotionGradientColors[
