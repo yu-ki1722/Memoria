@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { motion, AnimatePresence } from "framer-motion";
+import { Trash2 } from "lucide-react";
 
 type Tag = {
   id: number;
@@ -23,6 +24,7 @@ export default function TagManagerModal({
 }: TagManagerModalProps) {
   const [tags, setTags] = useState<Tag[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [deleteMode, setDeleteMode] = useState(false);
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
   useEffect(() => {
@@ -33,17 +35,19 @@ export default function TagManagerModal({
         .from("tags")
         .select("*")
         .order("order", { ascending: true });
-
-      if (error) {
-        console.error("タグの取得エラー:", error);
-      } else {
-        setTags(data || []);
-      }
+      if (error) console.error("タグ取得エラー:", error);
+      else setTags(data || []);
       setIsLoading(false);
     };
-
     fetchTags();
   }, [isOpen]);
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm("このタグを削除しますか？")) return;
+    const { error } = await supabase.from("tags").delete().eq("id", id);
+    if (error) console.error("削除エラー:", error);
+    else setTags(tags.filter((t) => t.id !== id));
+  };
 
   return (
     <AnimatePresence>
@@ -76,15 +80,28 @@ export default function TagManagerModal({
                 <h2 className="text-lg font-semibold text-gray-800">
                   タグ一覧
                 </h2>
-                <button
-                  onClick={onClose}
-                  className="text-gray-500 hover:text-gray-800 text-2xl leading-none"
-                >
-                  ×
-                </button>
+                <div className="flex gap-3 items-center">
+                  <button
+                    onClick={() => setDeleteMode(!deleteMode)}
+                    className={`transition ${
+                      deleteMode
+                        ? "text-red-500"
+                        : "text-gray-500 hover:text-red-500"
+                    }`}
+                    title="削除モード"
+                  >
+                    <Trash2 size={20} />
+                  </button>
+                  <button
+                    onClick={onClose}
+                    className="text-gray-500 hover:text-gray-800 text-2xl leading-none"
+                  >
+                    ×
+                  </button>
+                </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto mt-4">
+              <div className="flex-1 overflow-y-auto mt-2 pt-2 pb-6">
                 {isLoading ? (
                   <p className="text-center text-sm text-gray-500">
                     読み込み中...
@@ -94,14 +111,28 @@ export default function TagManagerModal({
                     タグがまだありません
                   </p>
                 ) : (
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-3 justify-start items-start">
                     {tags.map((tag) => (
-                      <div
-                        key={tag.id}
-                        className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium shadow-sm"
-                      >
-                        #{tag.name}
-                      </div>
+                      <motion.div key={tag.id} layout className="relative">
+                        <div className="relative px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium shadow-sm">
+                          #{tag.name}
+                          <AnimatePresence>
+                            {deleteMode && (
+                              <motion.button
+                                key="delete"
+                                onClick={() => handleDelete(tag.id)}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs shadow-md"
+                                initial={{ opacity: 0, scale: 0 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0 }}
+                                transition={{ duration: 0.2 }}
+                              >
+                                ×
+                              </motion.button>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      </motion.div>
                     ))}
                   </div>
                 )}
