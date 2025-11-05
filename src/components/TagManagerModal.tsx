@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, Star } from "lucide-react";
 
 type Tag = {
   id: number;
@@ -86,10 +86,25 @@ export default function TagManagerModal({
       console.error("追加エラー:", error);
       alert("タグの追加に失敗しました");
     } else if (data) {
-      setTags([...tags, data[0]]);
+      setTags((prev) => [...prev, data[0]]);
       setNewTag("");
     }
   };
+
+  const toggleFavorite = async (id: number, current: boolean) => {
+    const updated = tags.map((t) =>
+      t.id === id ? { ...t, is_favorite: !current } : t
+    );
+    setTags(updated);
+    const { error } = await supabase
+      .from("tags")
+      .update({ is_favorite: !current })
+      .eq("id", id);
+    if (error) console.error("お気に入り更新エラー:", error);
+  };
+
+  const favoriteTags = tags.filter((t) => t.is_favorite);
+  const otherTags = tags.filter((t) => !t.is_favorite);
 
   return (
     <AnimatePresence>
@@ -104,14 +119,11 @@ export default function TagManagerModal({
           />
 
           <motion.div
-            className={`
-              fixed z-[1004] bg-white shadow-xl rounded-t-2xl md:rounded-none md:rounded-l-2xl
-              ${
-                isMobile
-                  ? "left-0 right-0 bottom-0 h-[60%]"
-                  : "top-0 right-0 h-full w-[400px]"
-              }
-            `}
+            className={`fixed z-[1004] bg-white shadow-xl rounded-t-2xl md:rounded-none md:rounded-l-2xl ${
+              isMobile
+                ? "left-0 right-0 bottom-0 h-[60%]"
+                : "top-0 right-0 h-full w-[400px]"
+            }`}
             initial={isMobile ? { y: "100%" } : { x: "100%" }}
             animate={isMobile ? { y: 0 } : { x: 0 }}
             exit={isMobile ? { y: "100%" } : { x: "100%" }}
@@ -143,40 +155,119 @@ export default function TagManagerModal({
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto mt-2 pt-2 pb-6">
+              <div className="flex-1 overflow-y-auto mt-2 pt-2 pb-6 space-y-6">
                 {isLoading ? (
                   <p className="text-center text-sm text-gray-500">
                     読み込み中...
                   </p>
-                ) : tags.length === 0 ? (
-                  <p className="text-center text-sm text-gray-400 mt-10">
-                    タグがまだありません
-                  </p>
                 ) : (
-                  <div className="flex flex-wrap gap-3 justify-start items-start">
-                    {tags.map((tag) => (
-                      <motion.div key={tag.id} layout className="relative">
-                        <div className="relative px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium shadow-sm">
-                          #{tag.name}
-                          <AnimatePresence>
-                            {deleteMode && (
-                              <motion.button
-                                key="delete"
-                                onClick={() => handleDelete(tag.id)}
-                                className="absolute -top-2 -right-2 bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs shadow-md"
-                                initial={{ opacity: 0, scale: 0 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0 }}
-                                transition={{ duration: 0.2 }}
-                              >
-                                ×
-                              </motion.button>
-                            )}
-                          </AnimatePresence>
+                  <>
+                    <div>
+                      <h3 className="text-sm font-semibold text-yellow-600 mb-2">
+                        ★ お気に入りタグ
+                      </h3>
+                      {favoriteTags.length === 0 ? (
+                        <p className="text-xs text-gray-400 ml-1">
+                          まだお気に入りタグはありません
+                        </p>
+                      ) : (
+                        <div className="flex flex-wrap gap-3">
+                          {favoriteTags.map((tag) => (
+                            <motion.div
+                              key={tag.id}
+                              layout
+                              className="relative"
+                            >
+                              <div className="relative px-3 py-1 bg-yellow-50 text-yellow-700 rounded-full text-sm font-medium shadow-sm flex items-center gap-1 border border-yellow-200">
+                                <button
+                                  onClick={() =>
+                                    toggleFavorite(tag.id, tag.is_favorite)
+                                  }
+                                  className="text-yellow-500 hover:scale-110 transition"
+                                  title="お気に入り解除"
+                                >
+                                  <Star size={14} fill="gold" stroke="gold" />
+                                </button>
+                                #{tag.name}
+                                <AnimatePresence>
+                                  {deleteMode && (
+                                    <motion.button
+                                      key="delete"
+                                      onClick={() => handleDelete(tag.id)}
+                                      className="absolute -top-2 -right-2 bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs shadow-md"
+                                      initial={{ opacity: 0, scale: 0 }}
+                                      animate={{ opacity: 1, scale: 1 }}
+                                      exit={{ opacity: 0, scale: 0 }}
+                                      transition={{ duration: 0.2 }}
+                                    >
+                                      ×
+                                    </motion.button>
+                                  )}
+                                </AnimatePresence>
+                              </div>
+                            </motion.div>
+                          ))}
                         </div>
-                      </motion.div>
-                    ))}
-                  </div>
+                      )}
+                    </div>
+
+                    <hr className="border-gray-200" />
+
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-600 mb-2">
+                        その他のタグ
+                      </h3>
+                      {otherTags.length === 0 ? (
+                        <p className="text-xs text-gray-400 ml-1">
+                          タグがありません
+                        </p>
+                      ) : (
+                        <div className="flex flex-wrap gap-3">
+                          {otherTags.map((tag) => (
+                            <motion.div
+                              key={tag.id}
+                              layout
+                              className="relative"
+                            >
+                              <div className="relative px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium shadow-sm flex items-center gap-1">
+                                <button
+                                  onClick={() =>
+                                    toggleFavorite(tag.id, tag.is_favorite)
+                                  }
+                                  className="text-yellow-400 hover:scale-110 transition"
+                                  title="お気に入りに追加"
+                                >
+                                  <Star
+                                    size={14}
+                                    fill={
+                                      tag.is_favorite ? "gold" : "transparent"
+                                    }
+                                    stroke="gold"
+                                  />
+                                </button>
+                                #{tag.name}
+                                <AnimatePresence>
+                                  {deleteMode && (
+                                    <motion.button
+                                      key="delete"
+                                      onClick={() => handleDelete(tag.id)}
+                                      className="absolute -top-2 -right-2 bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs shadow-md"
+                                      initial={{ opacity: 0, scale: 0 }}
+                                      animate={{ opacity: 1, scale: 1 }}
+                                      exit={{ opacity: 0, scale: 0 }}
+                                      transition={{ duration: 0.2 }}
+                                    >
+                                      ×
+                                    </motion.button>
+                                  )}
+                                </AnimatePresence>
+                              </div>
+                            </motion.div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </>
                 )}
               </div>
 
