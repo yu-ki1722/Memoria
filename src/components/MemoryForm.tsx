@@ -1,8 +1,12 @@
 "use client";
 
-import { useState, useRef, ChangeEvent, FormEvent } from "react";
+import { useState, useRef, ChangeEvent, FormEvent, useEffect } from "react";
 import Button from "./Button";
 import Image from "next/image";
+import { Plus } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/lib/supabaseClient";
+import { User } from "@supabase/supabase-js";
 
 const emotionStyles = {
   "😊": { key: "happy", border: "border-emotion-border-happy" },
@@ -21,22 +25,33 @@ type MemoryFormProps = {
     emotion: string,
     text: string,
     imageFile: File | null,
-    imageWasCleared: boolean
+    imageWasCleared: boolean,
+    tags: string[]
   ) => void;
+  user: User | null;
   buttonText: string;
   initialEmotion?: string | null;
   initialText?: string;
   initialImageUrl?: string | null;
+  initialTags?: string[] | null;
   onCancel?: () => void;
+  isTagInputOpen: boolean;
+  setIsTagInputOpen: (isOpen: boolean) => void;
 };
+
+const defaultTags = ["日常", "旅行", "食べ物"];
 
 export default function MemoryForm({
   onSave,
+  user,
   buttonText,
   initialEmotion,
   initialText,
   initialImageUrl,
+  initialTags,
   onCancel,
+  isTagInputOpen,
+  setIsTagInputOpen,
 }: MemoryFormProps) {
   const [selectedEmotion, setSelectedEmotion] = useState<Emotion | null>(
     (initialEmotion as Emotion) || null
@@ -48,6 +63,39 @@ export default function MemoryForm({
   );
   const [imageWasCleared, setImageWasCleared] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedTags, setSelectedTags] = useState<string[]>(initialTags || []);
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [newTagInput, setNewTagInput] = useState("");
+
+  useEffect(() => {
+    const fetchUserTags = async () => {
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("tags")
+        .select("name")
+        .eq("user_id", user.id);
+
+      if (error) {
+        console.error("タグの読み込みに失敗:", error);
+      } else if (data) {
+        const userTags = data.map((tag) => tag.name);
+        const uniqueTags = new Set([
+          ...defaultTags,
+          ...userTags,
+          ...(initialTags || []),
+        ]);
+        setAvailableTags(Array.from(uniqueTags));
+      }
+    };
+
+    fetchUserTags();
+  }, [user, initialTags]);
+
+  useEffect(() => {
+    const uniqueTags = new Set([...defaultTags, ...(initialTags || [])]);
+    setAvailableTags(Array.from(uniqueTags));
+  }, [initialTags]);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     setImageWasCleared(false);
@@ -73,8 +121,66 @@ export default function MemoryForm({
       alert("感情を選んでください。");
       return;
     }
-    onSave(selectedEmotion, text, imageFile, imageWasCleared);
+    onSave(selectedEmotion, text, imageFile, imageWasCleared, selectedTags);
   };
+
+  const toggleTag = (tag: string) => {
+    if (selectedTags.includes(tag)) {
+      setSelectedTags(selectedTags.filter((t) => t !== tag));
+    } else {
+      setSelectedTags([...selectedTags, tag]);
+    }
+  };
+
+  const handleAddNewTag = async () => {
+    if (!user) {
+      console.warn(
+        "ユーザー情報がありません。ログインしているか確認してください。"
+      );
+      return;
+    }
+
+    const trimmedTag = newTagInput.trim();
+    if (!trimmedTag) return;
+
+    console.log("新規タグ追加:", trimmedTag);
+
+    if (availableTags.includes(trimmedTag)) {
+      console.log("すでに存在するタグです。");
+      alert("すでに存在するタグです");
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("tags")
+      .insert([{ name: trimmedTag, user_id: user.id }])
+      .select();
+
+    if (error) {
+      console.error("タグの保存に失敗:", error);
+      alert("タグの保存に失敗しました: " + error.message);
+      return;
+    }
+
+    console.log("Supabase保存成功:", data);
+
+    setAvailableTags([...availableTags, trimmedTag]);
+    setSelectedTags([...selectedTags, trimmedTag]);
+    setNewTagInput("");
+    setIsTagInputOpen(false);
+  };
+
+  const formRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (formRef.current && !formRef.current.contains(e.target as Node)) {
+        setIsTagInputOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const styleKey = selectedEmotion ? emotionStyles[selectedEmotion].key : null;
 
@@ -172,6 +278,84 @@ export default function MemoryForm({
           required
           className="w-full p-3 bg-white/70 backdrop-blur-sm border border-white/30 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-shadow shadow-sm focus:shadow-soft-glow"
         />
+
+        <div ref={formRef}>
+          {" "}
+          <label className="text-sm font-semibold text-gray-700">タグ</label>
+          <div className="flex flex-wrap gap-2 mt-1">
+            {availableTags.map((tag) => {
+              const isSelected = selectedTags.includes(tag);
+              return (
+                <button
+                  type="button"
+                  key={tag}
+                  onClick={() => toggleTag(tag)}
+                  className={`
+                    px-3 py-1 rounded-full text-xs font-medium transition-colors duration-200
+                    ${
+                      isSelected
+                        ? "bg-memoria-secondary text-white shadow-md"
+                        : "bg-white/70 text-gray-700 border border-white/50 hover:bg-white/90"
+                    }
+                  `}
+                >
+                  #{tag}
+                </button>
+              );
+            })}
+          </div>
+          <div className="relative h-8 mt-2 flex items-center">
+            <AnimatePresence>
+              {isTagInputOpen && (
+                <motion.div
+                  key="tagInputForm"
+                  className="absolute left-0 top-0 h-full bg-white border border-gray-300 rounded-full flex items-center overflow-hidden"
+                  initial={{ width: 32 }}
+                  animate={{ width: 222 }}
+                  exit={{ width: 32 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                    #
+                  </span>
+                  <input
+                    type="text"
+                    value={newTagInput}
+                    onChange={(e) => setNewTagInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddNewTag();
+                      }
+                    }}
+                    placeholder="新しいタグ"
+                    className="flex-1 px-3 pl-7 py-1 text-xs bg-transparent outline-none text-gray-800"
+                    autoFocus
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <motion.button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!isTagInputOpen) setIsTagInputOpen(true);
+                else handleAddNewTag();
+              }}
+              className={`
+                      w-7 h-7 rounded-full text-xs font-medium transition-colors duration-200
+                      bg-white/70 text-gray-700 border border-white/50 hover:bg-white/90
+                      flex items-center justify-center flex-shrink-0
+                    `}
+              animate={{ x: isTagInputOpen ? 190 : 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+            >
+              <Plus size={14} />
+            </motion.button>
+          </div>
+        </div>
 
         <div className="flex gap-3">
           {onCancel && (
