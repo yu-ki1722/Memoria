@@ -64,7 +64,9 @@ export default function MemoryForm({
   const [imageWasCleared, setImageWasCleared] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>(initialTags || []);
-  const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [availableTags, setAvailableTags] = useState<
+    { name: string; is_favorite: boolean }[]
+  >([]);
   const [newTagInput, setNewTagInput] = useState("");
 
   useEffect(() => {
@@ -73,29 +75,30 @@ export default function MemoryForm({
 
       const { data, error } = await supabase
         .from("tags")
-        .select("name")
+        .select("name, is_favorite")
         .eq("user_id", user.id);
 
       if (error) {
         console.error("タグの読み込みに失敗:", error);
       } else if (data) {
-        const userTags = data.map((tag) => tag.name);
-        const uniqueTags = new Set([
-          ...defaultTags,
-          ...userTags,
-          ...(initialTags || []),
-        ]);
-        setAvailableTags(Array.from(uniqueTags));
+        const combined = [
+          ...data.map((tag) => ({
+            name: tag.name,
+            is_favorite: tag.is_favorite,
+          })),
+          ...defaultTags.map((name) => ({ name, is_favorite: false })),
+        ];
+
+        const unique = Array.from(
+          new Map(combined.map((t) => [t.name, t])).values()
+        ).sort((a, b) => Number(b.is_favorite) - Number(a.is_favorite));
+
+        setAvailableTags(unique);
       }
     };
 
     fetchUserTags();
-  }, [user, initialTags]);
-
-  useEffect(() => {
-    const uniqueTags = new Set([...defaultTags, ...(initialTags || [])]);
-    setAvailableTags(Array.from(uniqueTags));
-  }, [initialTags]);
+  }, [user]);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     setImageWasCleared(false);
@@ -109,9 +112,7 @@ export default function MemoryForm({
   const handleClearImage = () => {
     setImageFile(null);
     setImageUrlPreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
     setImageWasCleared(true);
   };
 
@@ -125,46 +126,40 @@ export default function MemoryForm({
   };
 
   const toggleTag = (tag: string) => {
-    if (selectedTags.includes(tag)) {
-      setSelectedTags(selectedTags.filter((t) => t !== tag));
-    } else {
-      setSelectedTags([...selectedTags, tag]);
-    }
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
   };
 
   const handleAddNewTag = async () => {
     if (!user) {
-      console.warn(
-        "ユーザー情報がありません。ログインしているか確認してください。"
-      );
+      alert("ログインが必要です");
       return;
     }
 
     const trimmedTag = newTagInput.trim();
     if (!trimmedTag) return;
 
-    console.log("新規タグ追加:", trimmedTag);
-
-    if (availableTags.includes(trimmedTag)) {
-      console.log("すでに存在するタグです。");
+    const alreadyExists = availableTags.some((t) => t.name === trimmedTag);
+    if (alreadyExists) {
       alert("すでに存在するタグです");
       return;
     }
 
     const { data, error } = await supabase
       .from("tags")
-      .insert([{ name: trimmedTag, user_id: user.id }])
+      .insert([{ name: trimmedTag, user_id: user.id, is_favorite: false }])
       .select();
 
     if (error) {
-      console.error("タグの保存に失敗:", error);
-      alert("タグの保存に失敗しました: " + error.message);
+      console.error("タグの追加に失敗:", error);
       return;
     }
 
-    console.log("Supabase保存成功:", data);
-
-    setAvailableTags([...availableTags, trimmedTag]);
+    setAvailableTags([
+      ...availableTags,
+      { name: trimmedTag, is_favorite: false },
+    ]);
     setSelectedTags([...selectedTags, trimmedTag]);
     setNewTagInput("");
     setIsTagInputOpen(false);
@@ -249,20 +244,7 @@ export default function MemoryForm({
               htmlFor="imageUpload"
               className="w-full flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-white/50 transition-colors"
             >
-              <svg
-                className="w-8 h-8 text-gray-400 mb-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                />
-              </svg>
+              <Plus className="w-8 h-8 text-gray-400 mb-2" />
               <span className="text-sm font-semibold text-gray-600">
                 思い出を追加
               </span>
@@ -280,26 +262,25 @@ export default function MemoryForm({
         />
 
         <div ref={formRef}>
-          {" "}
           <label className="text-sm font-semibold text-gray-700">タグ</label>
-          <div className="flex flex-wrap gap-2 mt-1">
-            {availableTags.map((tag) => {
-              const isSelected = selectedTags.includes(tag);
+
+          <div className="flex flex-wrap gap-2 mt-1 max-h-28 overflow-y-auto pr-1">
+            {availableTags.map(({ name, is_favorite }) => {
+              const isSelected = selectedTags.includes(name);
               return (
                 <button
                   type="button"
-                  key={tag}
-                  onClick={() => toggleTag(tag)}
-                  className={`
-                    px-3 py-1 rounded-full text-xs font-medium transition-colors duration-200
-                    ${
-                      isSelected
-                        ? "bg-memoria-secondary text-white shadow-md"
-                        : "bg-white/70 text-gray-700 border border-white/50 hover:bg-white/90"
-                    }
-                  `}
+                  key={name}
+                  onClick={() => toggleTag(name)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors duration-200 border ${
+                    isSelected
+                      ? "bg-memoria-secondary text-white shadow-md"
+                      : is_favorite
+                      ? "bg-white text-gray-700 border-yellow-300"
+                      : "bg-white/70 text-gray-700 border-white/50 hover:bg-white/90"
+                  }`}
                 >
-                  #{tag}
+                  #{name}
                 </button>
               );
             })}
@@ -344,11 +325,7 @@ export default function MemoryForm({
                 if (!isTagInputOpen) setIsTagInputOpen(true);
                 else handleAddNewTag();
               }}
-              className={`
-                      w-7 h-7 rounded-full text-xs font-medium transition-colors duration-200
-                      bg-white/70 text-gray-700 border border-white/50 hover:bg-white/90
-                      flex items-center justify-center flex-shrink-0
-                    `}
+              className="w-7 h-7 rounded-full text-xs font-medium bg-white/70 text-gray-700 border border-white/50 hover:bg-white/90 flex items-center justify-center flex-shrink-0"
               animate={{ x: isTagInputOpen ? 190 : 0 }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
             >
