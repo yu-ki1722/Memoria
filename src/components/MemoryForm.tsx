@@ -326,27 +326,66 @@ export default function MemoryForm({
         <div ref={formRef}>
           <label className="text-sm font-semibold text-gray-700">タグ</label>
 
-          <div className="flex flex-wrap gap-2 mt-1 max-h-28 overflow-y-auto pr-1">
-            {availableTags.map(({ name, is_favorite }) => {
-              const isSelected = selectedTags.includes(name);
-              return (
-                <button
-                  type="button"
-                  key={name}
-                  onClick={() => toggleTag(name)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors duration-200 border ${
-                    isSelected
-                      ? "bg-memoria-secondary text-white shadow-md"
-                      : is_favorite
-                      ? "bg-white text-gray-700 border-yellow-300"
-                      : "bg-white/70 text-gray-700 border-white/50 hover:bg-white/90"
-                  }`}
-                >
-                  #{name}
-                </button>
-              );
-            })}
+          <div className="flex flex-col gap-3 mt-1 max-h-28 overflow-y-auto pr-1">
+            {availableTags.some((t) => t.is_favorite) && (
+              <div>
+                <p className="text-xs text-yellow-600 font-semibold mb-1">
+                  ★ お気に入り
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {availableTags
+                    .filter((t) => t.is_favorite)
+                    .map(({ name }) => {
+                      const isSelected = selectedTags.includes(name);
+                      return (
+                        <button
+                          type="button"
+                          key={name}
+                          onClick={() => toggleTag(name)}
+                          className={`px-3 py-1 rounded-full text-xs font-medium transition-colors duration-200 border ${
+                            isSelected
+                              ? "bg-memoria-secondary text-white shadow-md"
+                              : "bg-white text-gray-700 border-yellow-300"
+                          }`}
+                        >
+                          #{name}
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
+
+            {availableTags.some((t) => !t.is_favorite) && (
+              <div>
+                <p className="text-xs text-gray-500 font-semibold mb-1">
+                  その他
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {availableTags
+                    .filter((t) => !t.is_favorite)
+                    .map(({ name }) => {
+                      const isSelected = selectedTags.includes(name);
+                      return (
+                        <button
+                          type="button"
+                          key={name}
+                          onClick={() => toggleTag(name)}
+                          className={`px-3 py-1 rounded-full text-xs font-medium transition-colors duration-200 border ${
+                            isSelected
+                              ? "bg-memoria-secondary text-white shadow-md"
+                              : "bg-white/70 text-gray-700 border-white/50 hover:bg-white/90"
+                          }`}
+                        >
+                          #{name}
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
           </div>
+
           <div className="relative h-8 mt-2 flex items-center">
             <AnimatePresence>
               {isTagInputOpen && (
