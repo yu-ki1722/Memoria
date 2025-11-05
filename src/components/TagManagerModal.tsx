@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trash2 } from "lucide-react";
+import { Trash2, Plus } from "lucide-react";
 
 type Tag = {
   id: number;
@@ -25,6 +25,7 @@ export default function TagManagerModal({
   const [tags, setTags] = useState<Tag[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [deleteMode, setDeleteMode] = useState(false);
+  const [newTag, setNewTag] = useState("");
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
   useEffect(() => {
@@ -45,8 +46,49 @@ export default function TagManagerModal({
   const handleDelete = async (id: number) => {
     if (!window.confirm("このタグを削除しますか？")) return;
     const { error } = await supabase.from("tags").delete().eq("id", id);
-    if (error) console.error("削除エラー:", error);
-    else setTags(tags.filter((t) => t.id !== id));
+    if (error) {
+      console.error("削除エラー:", error);
+    } else {
+      setTags(tags.filter((t) => t.id !== id));
+    }
+  };
+
+  const handleAddTag = async () => {
+    const trimmed = newTag.trim();
+    if (!trimmed) return;
+    const user = (await supabase.auth.getUser()).data.user;
+    if (!user) {
+      alert("ログインが必要です");
+      return;
+    }
+
+    const isDuplicate = tags.some(
+      (t) => t.name.trim().toLowerCase() === trimmed.toLowerCase()
+    );
+    if (isDuplicate) {
+      alert("すでに存在するタグです");
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("tags")
+      .insert([
+        {
+          name: trimmed,
+          user_id: user.id,
+          is_favorite: false,
+          order: tags.length,
+        },
+      ])
+      .select();
+
+    if (error) {
+      console.error("追加エラー:", error);
+      alert("タグの追加に失敗しました");
+    } else if (data) {
+      setTags([...tags, data[0]]);
+      setNewTag("");
+    }
   };
 
   return (
@@ -136,6 +178,26 @@ export default function TagManagerModal({
                     ))}
                   </div>
                 )}
+              </div>
+
+              <div className="mt-auto pt-2 border-t flex items-center gap-2">
+                <div className="relative flex-1 flex items-center bg-gray-50 border border-gray-200 rounded-full px-3 py-1 shadow-sm">
+                  <span className="text-gray-400 mr-1">#</span>
+                  <input
+                    type="text"
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
+                    placeholder="新しいタグ"
+                    className="flex-1 bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400"
+                    onKeyDown={(e) => e.key === "Enter" && handleAddTag()}
+                  />
+                  <button
+                    onClick={handleAddTag}
+                    className="text-gray-600 hover:text-blue-500 transition"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
               </div>
             </div>
           </motion.div>
