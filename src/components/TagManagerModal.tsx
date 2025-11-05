@@ -72,10 +72,23 @@ export default function TagManagerModal({
     }
   };
 
-  const handleSortChange = (option: SortOption) => {
+  const handleSortChange = async (option: SortOption) => {
     setSortOption(option);
-    setTags((prev) => sortTags(prev, option));
-    setSortMenuOpen(false);
+    const sorted = sortTags(tags, option);
+    setTags(sorted);
+
+    // 並び順を保存
+    for (let i = 0; i < sorted.length; i++) {
+      const { error } = await supabase
+        .from("tags")
+        .update({ order: i })
+        .eq("id", sorted[i].id);
+      if (error) console.error("順序更新エラー:", error);
+    }
+
+    // 更新が完了したら再フェッチ
+    const { data } = await supabase.from("tags").select("*").order("order");
+    setTags(data || []);
   };
 
   const handleDelete = async (id: number) => {

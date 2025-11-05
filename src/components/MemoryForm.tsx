@@ -41,6 +41,14 @@ type MemoryFormProps = {
 
 const defaultTags = ["日常", "旅行", "食べ物"];
 
+type SortOption = "newest" | "oldest" | "az" | "za";
+
+type TagData = {
+  name: string;
+  is_favorite: boolean;
+  created_at?: string | null;
+};
+
 export default function MemoryForm({
   onSave,
   user,
@@ -64,45 +72,88 @@ export default function MemoryForm({
   const [imageWasCleared, setImageWasCleared] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>(initialTags || []);
-  const [availableTags, setAvailableTags] = useState<
-    { name: string; is_favorite: boolean }[]
-  >([]);
+  const [availableTags, setAvailableTags] = useState<TagData[]>([]);
   const [newTagInput, setNewTagInput] = useState("");
+  const [sortOption, setSortOption] = useState<SortOption>("newest");
 
   useEffect(() => {
     const fetchUserTags = async () => {
       if (!user) return;
 
+      const { data: pref } = await supabase
+        .from("user_preferences")
+        .select("sort_option")
+        .eq("user_id", user.id)
+        .single();
+      if (pref?.sort_option) setSortOption(pref.sort_option as SortOption);
+
       const { data, error } = await supabase
         .from("tags")
-        .select("name, is_favorite")
-        .eq("user_id", user.id);
+        .select("name, is_favorite, created_at, order")
+        .eq("user_id", user.id)
+        .order("order", { ascending: true });
 
       if (error) {
         console.error("タグの読み込みに失敗:", error);
-      } else if (data) {
-        const combined = [
-          ...data.map((tag) => ({
-            name: tag.name,
-            is_favorite: tag.is_favorite,
-          })),
-          ...defaultTags.map((name) => ({ name, is_favorite: false })),
-        ];
-
-        const unique = Array.from(
-          new Map(combined.map((t) => [t.name, t])).values()
-        ).sort((a, b) => Number(b.is_favorite) - Number(a.is_favorite));
-
-        setAvailableTags(unique);
+        return;
       }
+
+      const rows: TagData[] =
+        (data ?? []).map((tag) => ({
+          name: tag.name,
+          is_favorite: tag.is_favorite,
+          created_at: tag.created_at ?? null,
+        })) ?? [];
+
+      const defaults: TagData[] = defaultTags.map((name) => ({
+        name,
+        is_favorite: false,
+        created_at: null,
+      }));
+
+      const combined: TagData[] = [...rows, ...defaults];
+
+      const unique: TagData[] = Array.from(
+        new Map<string, TagData>(combined.map((t) => [t.name, t])).values()
+      );
+
+      setAvailableTags(unique);
     };
 
     fetchUserTags();
-  }, [user]);
+  }, [user, sortOption]);
+
+  const sortTags = (tags: TagData[], option: SortOption): TagData[] => {
+    const sorted = [...tags];
+    switch (option) {
+      case "newest":
+        sorted.sort(
+          (a, b) =>
+            new Date(b.created_at ?? 0).getTime() -
+            new Date(a.created_at ?? 0).getTime()
+        );
+        break;
+      case "oldest":
+        sorted.sort(
+          (a, b) =>
+            new Date(a.created_at ?? 0).getTime() -
+            new Date(b.created_at ?? 0).getTime()
+        );
+        break;
+      case "az":
+        sorted.sort((a, b) => a.name.localeCompare(b.name, "ja"));
+        break;
+      case "za":
+        sorted.sort((a, b) => b.name.localeCompare(a.name, "ja"));
+        break;
+    }
+
+    return sorted.sort((a, b) => Number(b.is_favorite) - Number(a.is_favorite));
+  };
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     setImageWasCleared(false);
-    if (e.target.files && e.target.files[0]) {
+    if (e.target.files?.[0]) {
       const file = e.target.files[0];
       setImageFile(file);
       setImageUrlPreview(URL.createObjectURL(file));
@@ -148,19 +199,29 @@ export default function MemoryForm({
 
     const { data, error } = await supabase
       .from("tags")
-      .insert([{ name: trimmedTag, user_id: user.id, is_favorite: false }])
-      .select();
+      .insert([
+        {
+          name: trimmedTag,
+          user_id: user.id,
+          is_favorite: false,
+        },
+      ])
+      .select("name, is_favorite, created_at")
+      .single();
 
     if (error) {
       console.error("タグの追加に失敗:", error);
       return;
     }
 
-    setAvailableTags([
-      ...availableTags,
-      { name: trimmedTag, is_favorite: false },
-    ]);
-    setSelectedTags([...selectedTags, trimmedTag]);
+    const newTagRow: TagData = {
+      name: data.name,
+      is_favorite: data.is_favorite,
+      created_at: data.created_at ?? null,
+    };
+
+    setAvailableTags(sortTags([...availableTags, newTagRow], sortOption));
+    setSelectedTags((prev) => [...prev, trimmedTag]);
     setNewTagInput("");
     setIsTagInputOpen(false);
   };
@@ -222,35 +283,36 @@ export default function MemoryForm({
             className="hidden"
             id="imageUpload"
           />
-          {imageUrlPreview ? (
-            <div className="relative inline-block group">
-              <Image
-                src={imageUrlPreview}
-                alt="Preview"
-                width={100}
-                height={100}
-                className="rounded-lg object-cover border-2 border-white/50 shadow-soft-glow"
-              />
-              <button
-                type="button"
-                onClick={handleClearImage}
-                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center shadow-md transition-transform transform scale-0 group-hover:scale-100"
-              >
-                ×
-              </button>
-            </div>
-          ) : (
-            <label
-              htmlFor="imageUpload"
-              className="w-full flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-white/50 transition-colors"
-            >
-              <Plus className="w-8 h-8 text-gray-400 mb-2" />
-              <span className="text-sm font-semibold text-gray-600">
-                思い出を追加
-              </span>
-            </label>
-          )}
         </div>
+
+        {imageUrlPreview ? (
+          <div className="relative inline-block group self-center">
+            <Image
+              src={imageUrlPreview}
+              alt="Preview"
+              width={100}
+              height={100}
+              className="rounded-lg object-cover border-2 border-white/50 shadow-soft-glow"
+            />
+            <button
+              type="button"
+              onClick={handleClearImage}
+              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center shadow-md transition-transform transform scale-0 group-hover:scale-100"
+            >
+              ×
+            </button>
+          </div>
+        ) : (
+          <label
+            htmlFor="imageUpload"
+            className="w-full flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-white/50 transition-colors"
+          >
+            <Plus className="w-8 h-8 text-gray-400 mb-2" />
+            <span className="text-sm font-semibold text-gray-600">
+              思い出を追加
+            </span>
+          </label>
+        )}
 
         <textarea
           value={text}
