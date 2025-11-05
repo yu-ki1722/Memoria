@@ -41,6 +41,14 @@ type MemoryFormProps = {
 
 const defaultTags = ["日常", "旅行", "食べ物"];
 
+type SortOption = "newest" | "oldest" | "az" | "za";
+
+type TagData = {
+  name: string;
+  is_favorite: boolean;
+  created_at?: string | null;
+};
+
 export default function MemoryForm({
   onSave,
   user,
@@ -64,42 +72,88 @@ export default function MemoryForm({
   const [imageWasCleared, setImageWasCleared] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>(initialTags || []);
-  const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [availableTags, setAvailableTags] = useState<TagData[]>([]);
   const [newTagInput, setNewTagInput] = useState("");
+  const [sortOption, setSortOption] = useState<SortOption>("newest");
 
   useEffect(() => {
     const fetchUserTags = async () => {
       if (!user) return;
 
+      const { data: pref } = await supabase
+        .from("user_preferences")
+        .select("sort_option")
+        .eq("user_id", user.id)
+        .single();
+      if (pref?.sort_option) setSortOption(pref.sort_option as SortOption);
+
       const { data, error } = await supabase
         .from("tags")
-        .select("name")
-        .eq("user_id", user.id);
+        .select("name, is_favorite, created_at, order")
+        .eq("user_id", user.id)
+        .order("order", { ascending: true });
 
       if (error) {
         console.error("タグの読み込みに失敗:", error);
-      } else if (data) {
-        const userTags = data.map((tag) => tag.name);
-        const uniqueTags = new Set([
-          ...defaultTags,
-          ...userTags,
-          ...(initialTags || []),
-        ]);
-        setAvailableTags(Array.from(uniqueTags));
+        return;
       }
+
+      const rows: TagData[] =
+        (data ?? []).map((tag) => ({
+          name: tag.name,
+          is_favorite: tag.is_favorite,
+          created_at: tag.created_at ?? null,
+        })) ?? [];
+
+      const defaults: TagData[] = defaultTags.map((name) => ({
+        name,
+        is_favorite: false,
+        created_at: null,
+      }));
+
+      const combined: TagData[] = [...rows, ...defaults];
+
+      const unique: TagData[] = Array.from(
+        new Map<string, TagData>(combined.map((t) => [t.name, t])).values()
+      );
+
+      setAvailableTags(unique);
     };
 
     fetchUserTags();
-  }, [user, initialTags]);
+  }, [user, sortOption]);
 
-  useEffect(() => {
-    const uniqueTags = new Set([...defaultTags, ...(initialTags || [])]);
-    setAvailableTags(Array.from(uniqueTags));
-  }, [initialTags]);
+  const sortTags = (tags: TagData[], option: SortOption): TagData[] => {
+    const sorted = [...tags];
+    switch (option) {
+      case "newest":
+        sorted.sort(
+          (a, b) =>
+            new Date(b.created_at ?? 0).getTime() -
+            new Date(a.created_at ?? 0).getTime()
+        );
+        break;
+      case "oldest":
+        sorted.sort(
+          (a, b) =>
+            new Date(a.created_at ?? 0).getTime() -
+            new Date(b.created_at ?? 0).getTime()
+        );
+        break;
+      case "az":
+        sorted.sort((a, b) => a.name.localeCompare(b.name, "ja"));
+        break;
+      case "za":
+        sorted.sort((a, b) => b.name.localeCompare(a.name, "ja"));
+        break;
+    }
+
+    return sorted.sort((a, b) => Number(b.is_favorite) - Number(a.is_favorite));
+  };
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     setImageWasCleared(false);
-    if (e.target.files && e.target.files[0]) {
+    if (e.target.files?.[0]) {
       const file = e.target.files[0];
       setImageFile(file);
       setImageUrlPreview(URL.createObjectURL(file));
@@ -109,9 +163,7 @@ export default function MemoryForm({
   const handleClearImage = () => {
     setImageFile(null);
     setImageUrlPreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
     setImageWasCleared(true);
   };
 
@@ -125,47 +177,51 @@ export default function MemoryForm({
   };
 
   const toggleTag = (tag: string) => {
-    if (selectedTags.includes(tag)) {
-      setSelectedTags(selectedTags.filter((t) => t !== tag));
-    } else {
-      setSelectedTags([...selectedTags, tag]);
-    }
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
   };
 
   const handleAddNewTag = async () => {
     if (!user) {
-      console.warn(
-        "ユーザー情報がありません。ログインしているか確認してください。"
-      );
+      alert("ログインが必要です");
       return;
     }
 
     const trimmedTag = newTagInput.trim();
     if (!trimmedTag) return;
 
-    console.log("新規タグ追加:", trimmedTag);
-
-    if (availableTags.includes(trimmedTag)) {
-      console.log("すでに存在するタグです。");
+    const alreadyExists = availableTags.some((t) => t.name === trimmedTag);
+    if (alreadyExists) {
       alert("すでに存在するタグです");
       return;
     }
 
     const { data, error } = await supabase
       .from("tags")
-      .insert([{ name: trimmedTag, user_id: user.id }])
-      .select();
+      .insert([
+        {
+          name: trimmedTag,
+          user_id: user.id,
+          is_favorite: false,
+        },
+      ])
+      .select("name, is_favorite, created_at")
+      .single();
 
     if (error) {
-      console.error("タグの保存に失敗:", error);
-      alert("タグの保存に失敗しました: " + error.message);
+      console.error("タグの追加に失敗:", error);
       return;
     }
 
-    console.log("Supabase保存成功:", data);
+    const newTagRow: TagData = {
+      name: data.name,
+      is_favorite: data.is_favorite,
+      created_at: data.created_at ?? null,
+    };
 
-    setAvailableTags([...availableTags, trimmedTag]);
-    setSelectedTags([...selectedTags, trimmedTag]);
+    setAvailableTags(sortTags([...availableTags, newTagRow], sortOption));
+    setSelectedTags((prev) => [...prev, trimmedTag]);
     setNewTagInput("");
     setIsTagInputOpen(false);
   };
@@ -227,48 +283,36 @@ export default function MemoryForm({
             className="hidden"
             id="imageUpload"
           />
-          {imageUrlPreview ? (
-            <div className="relative inline-block group">
-              <Image
-                src={imageUrlPreview}
-                alt="Preview"
-                width={100}
-                height={100}
-                className="rounded-lg object-cover border-2 border-white/50 shadow-soft-glow"
-              />
-              <button
-                type="button"
-                onClick={handleClearImage}
-                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center shadow-md transition-transform transform scale-0 group-hover:scale-100"
-              >
-                ×
-              </button>
-            </div>
-          ) : (
-            <label
-              htmlFor="imageUpload"
-              className="w-full flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-white/50 transition-colors"
-            >
-              <svg
-                className="w-8 h-8 text-gray-400 mb-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                />
-              </svg>
-              <span className="text-sm font-semibold text-gray-600">
-                思い出を追加
-              </span>
-            </label>
-          )}
         </div>
+
+        {imageUrlPreview ? (
+          <div className="relative inline-block group self-center">
+            <Image
+              src={imageUrlPreview}
+              alt="Preview"
+              width={100}
+              height={100}
+              className="rounded-lg object-cover border-2 border-white/50 shadow-soft-glow"
+            />
+            <button
+              type="button"
+              onClick={handleClearImage}
+              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center shadow-md transition-transform transform scale-0 group-hover:scale-100"
+            >
+              ×
+            </button>
+          </div>
+        ) : (
+          <label
+            htmlFor="imageUpload"
+            className="w-full flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-white/50 transition-colors"
+          >
+            <Plus className="w-8 h-8 text-gray-400 mb-2" />
+            <span className="text-sm font-semibold text-gray-600">
+              思い出を追加
+            </span>
+          </label>
+        )}
 
         <textarea
           value={text}
@@ -280,30 +324,68 @@ export default function MemoryForm({
         />
 
         <div ref={formRef}>
-          {" "}
           <label className="text-sm font-semibold text-gray-700">タグ</label>
-          <div className="flex flex-wrap gap-2 mt-1">
-            {availableTags.map((tag) => {
-              const isSelected = selectedTags.includes(tag);
-              return (
-                <button
-                  type="button"
-                  key={tag}
-                  onClick={() => toggleTag(tag)}
-                  className={`
-                    px-3 py-1 rounded-full text-xs font-medium transition-colors duration-200
-                    ${
-                      isSelected
-                        ? "bg-memoria-secondary text-white shadow-md"
-                        : "bg-white/70 text-gray-700 border border-white/50 hover:bg-white/90"
-                    }
-                  `}
-                >
-                  #{tag}
-                </button>
-              );
-            })}
+
+          <div className="flex flex-col gap-3 mt-1 max-h-28 overflow-y-auto pr-1">
+            {availableTags.some((t) => t.is_favorite) && (
+              <div>
+                <p className="text-xs text-yellow-600 font-semibold mb-1">
+                  ★ お気に入り
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {availableTags
+                    .filter((t) => t.is_favorite)
+                    .map(({ name }) => {
+                      const isSelected = selectedTags.includes(name);
+                      return (
+                        <button
+                          type="button"
+                          key={name}
+                          onClick={() => toggleTag(name)}
+                          className={`px-3 py-1 rounded-full text-xs font-medium transition-colors duration-200 border ${
+                            isSelected
+                              ? "bg-memoria-secondary text-white shadow-md"
+                              : "bg-white text-gray-700 border-yellow-300"
+                          }`}
+                        >
+                          #{name}
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
+
+            {availableTags.some((t) => !t.is_favorite) && (
+              <div>
+                <p className="text-xs text-gray-500 font-semibold mb-1">
+                  その他
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {availableTags
+                    .filter((t) => !t.is_favorite)
+                    .map(({ name }) => {
+                      const isSelected = selectedTags.includes(name);
+                      return (
+                        <button
+                          type="button"
+                          key={name}
+                          onClick={() => toggleTag(name)}
+                          className={`px-3 py-1 rounded-full text-xs font-medium transition-colors duration-200 border ${
+                            isSelected
+                              ? "bg-memoria-secondary text-white shadow-md"
+                              : "bg-white/70 text-gray-700 border-white/50 hover:bg-white/90"
+                          }`}
+                        >
+                          #{name}
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
           </div>
+
           <div className="relative h-8 mt-2 flex items-center">
             <AnimatePresence>
               {isTagInputOpen && (
@@ -344,11 +426,7 @@ export default function MemoryForm({
                 if (!isTagInputOpen) setIsTagInputOpen(true);
                 else handleAddNewTag();
               }}
-              className={`
-                      w-7 h-7 rounded-full text-xs font-medium transition-colors duration-200
-                      bg-white/70 text-gray-700 border border-white/50 hover:bg-white/90
-                      flex items-center justify-center flex-shrink-0
-                    `}
+              className="w-7 h-7 rounded-full text-xs font-medium bg-white/70 text-gray-700 border border-white/50 hover:bg-white/90 flex items-center justify-center flex-shrink-0"
               animate={{ x: isTagInputOpen ? 190 : 0 }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
             >
