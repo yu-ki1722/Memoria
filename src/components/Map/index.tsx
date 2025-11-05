@@ -18,6 +18,8 @@ import SearchButton from "../SearchButton";
 import PlaceSearchModal from "../PlaceSearchModal";
 import TagManagerModal from "../TagManagerModal";
 import TagManagerButton from "../TagManagerButton";
+import MemorySearchButton from "../MemorySearchButton";
+import MemorySearchModal from "../MemorySearchModal";
 
 const emotionStyles = {
   "😊": { bg: "bg-emotion-happy", shadow: "shadow-glow-happy" },
@@ -93,6 +95,7 @@ export default function MapWrapper({ session }: { session: Session }) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isTagInputOpen, setIsTagInputOpen] = useState(false);
   const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
+  const [isMemorySearchOpen, setIsMemorySearchOpen] = useState(false);
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
@@ -424,6 +427,11 @@ export default function MapWrapper({ session }: { session: Session }) {
         onClose={() => setIsTagManagerOpen(false)}
       />
       <TagManagerButton onClick={() => setIsTagManagerOpen(true)} />
+      <MemorySearchModal
+        isOpen={isMemorySearchOpen}
+        onClose={() => setIsMemorySearchOpen(false)}
+      />
+      <MemorySearchButton onClick={() => setIsMemorySearchOpen(true)} />
       <div style={{ position: "relative", width: "100vw", height: "100vh" }}>
         {isLocating && (
           <div className="absolute top-0 left-0 w-full h-full z-[1001] flex justify-center items-center bg-black/50 text-white text-lg font-bold">
