@@ -564,6 +564,7 @@ export default function MapWrapper({ session }: { session: Session }) {
                     data-emotion={memoryToEdit.emotion}
                   >
                     <MemoryForm
+                      user={session.user}
                       onSave={(
                         emotion,
                         text,
@@ -603,6 +604,7 @@ export default function MapWrapper({ session }: { session: Session }) {
                 className="memoria-popup new-memory-popup"
               >
                 <MemoryForm
+                  user={session.user}
                   onSave={(emotion, text, imageFile, imageWasCleared, tags) =>
                     handleSaveMemory(emotion, text, imageFile, tags)
                   }

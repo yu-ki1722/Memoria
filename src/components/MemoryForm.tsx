@@ -5,6 +5,8 @@ import Button from "./Button";
 import Image from "next/image";
 import { Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/lib/supabaseClient";
+import { User } from "@supabase/supabase-js";
 
 const emotionStyles = {
   "😊": { key: "happy", border: "border-emotion-border-happy" },
@@ -26,6 +28,7 @@ type MemoryFormProps = {
     imageWasCleared: boolean,
     tags: string[]
   ) => void;
+  user: User | null;
   buttonText: string;
   initialEmotion?: string | null;
   initialText?: string;
@@ -40,6 +43,7 @@ const defaultTags = ["日常", "旅行", "食べ物"];
 
 export default function MemoryForm({
   onSave,
+  user,
   buttonText,
   initialEmotion,
   initialText,
@@ -62,6 +66,31 @@ export default function MemoryForm({
   const [selectedTags, setSelectedTags] = useState<string[]>(initialTags || []);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [newTagInput, setNewTagInput] = useState("");
+
+  useEffect(() => {
+    const fetchUserTags = async () => {
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("tags")
+        .select("name")
+        .eq("user_id", user.id);
+
+      if (error) {
+        console.error("タグの読み込みに失敗:", error);
+      } else if (data) {
+        const userTags = data.map((tag) => tag.name);
+        const uniqueTags = new Set([
+          ...defaultTags,
+          ...userTags,
+          ...(initialTags || []),
+        ]);
+        setAvailableTags(Array.from(uniqueTags));
+      }
+    };
+
+    fetchUserTags();
+  }, [user, initialTags]);
 
   useEffect(() => {
     const uniqueTags = new Set([...defaultTags, ...(initialTags || [])]);
@@ -103,12 +132,40 @@ export default function MemoryForm({
     }
   };
 
-  const handleAddNewTag = () => {
-    const trimmedTag = newTagInput.trim();
-    if (trimmedTag && !availableTags.includes(trimmedTag)) {
-      setAvailableTags([...availableTags, trimmedTag]);
-      setSelectedTags([...selectedTags, trimmedTag]);
+  const handleAddNewTag = async () => {
+    if (!user) {
+      console.warn(
+        "ユーザー情報がありません。ログインしているか確認してください。"
+      );
+      return;
     }
+
+    const trimmedTag = newTagInput.trim();
+    if (!trimmedTag) return;
+
+    console.log("新規タグ追加:", trimmedTag);
+
+    if (availableTags.includes(trimmedTag)) {
+      console.log("すでに存在するタグです。");
+      alert("すでに存在するタグです");
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("tags")
+      .insert([{ name: trimmedTag, user_id: user.id }])
+      .select();
+
+    if (error) {
+      console.error("タグの保存に失敗:", error);
+      alert("タグの保存に失敗しました: " + error.message);
+      return;
+    }
+
+    console.log("Supabase保存成功:", data);
+
+    setAvailableTags([...availableTags, trimmedTag]);
+    setSelectedTags([...selectedTags, trimmedTag]);
     setNewTagInput("");
     setIsTagInputOpen(false);
   };
