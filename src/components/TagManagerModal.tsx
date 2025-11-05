@@ -34,6 +34,21 @@ export default function TagManagerModal({
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
   useEffect(() => {
+    const saved =
+      typeof window !== "undefined"
+        ? localStorage.getItem("tagSortOption")
+        : null;
+    if (
+      saved === "newest" ||
+      saved === "oldest" ||
+      saved === "az" ||
+      saved === "za"
+    ) {
+      setSortOption(saved);
+    }
+  }, []);
+
+  useEffect(() => {
     if (!isOpen) return;
     const fetchTags = async () => {
       setIsLoading(true);
@@ -47,7 +62,22 @@ export default function TagManagerModal({
       setIsLoading(false);
     };
     fetchTags();
-  }, [isOpen]);
+  }, [isOpen, sortOption]);
+
+  useEffect(() => {
+    localStorage.setItem("tagOrder", JSON.stringify(tags.map((t) => t.id)));
+  }, [tags]);
+
+  useEffect(() => {
+    const savedOrder =
+      typeof window !== "undefined" ? localStorage.getItem("tagOrder") : null;
+    if (savedOrder) {
+      const ids = JSON.parse(savedOrder) as number[];
+      setTags((prev) =>
+        [...prev].sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id))
+      );
+    }
+  }, []);
 
   const sortTags = (tags: Tag[], option: SortOption) => {
     switch (option) {
@@ -64,9 +94,9 @@ export default function TagManagerModal({
             new Date(b.created_at ?? "").getTime()
         );
       case "az":
-        return [...tags].sort((a, b) => a.name.localeCompare(b.name));
+        return [...tags].sort((a, b) => a.name.localeCompare(b.name, "ja"));
       case "za":
-        return [...tags].sort((a, b) => b.name.localeCompare(a.name));
+        return [...tags].sort((a, b) => b.name.localeCompare(a.name, "ja"));
       default:
         return tags;
     }
@@ -74,10 +104,11 @@ export default function TagManagerModal({
 
   const handleSortChange = async (option: SortOption) => {
     setSortOption(option);
+    localStorage.setItem("tagSortOption", option);
+
     const sorted = sortTags(tags, option);
     setTags(sorted);
 
-    // 並び順を保存
     for (let i = 0; i < sorted.length; i++) {
       const { error } = await supabase
         .from("tags")
@@ -85,10 +116,6 @@ export default function TagManagerModal({
         .eq("id", sorted[i].id);
       if (error) console.error("順序更新エラー:", error);
     }
-
-    // 更新が完了したら再フェッチ
-    const { data } = await supabase.from("tags").select("*").order("order");
-    setTags(data || []);
   };
 
   const handleDelete = async (id: number) => {
@@ -269,7 +296,7 @@ export default function TagManagerModal({
                     <hr className="border-gray-200" />
 
                     <TagSection
-                      title="その他のタグ"
+                      title="タグ"
                       color="gray"
                       tags={otherTags}
                       deleteMode={deleteMode}
