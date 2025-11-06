@@ -469,7 +469,7 @@ export default function MapWrapper({ session }: { session: Session }) {
 
   return (
     <>
-      <Header session={session} />
+      <Header session={session} onSearchOpen={() => setIsSearchOpen(true)} />
       <SearchButton onClick={() => setIsSearchOpen(true)} />
       <PlaceSearchModal
         isOpen={isSearchOpen}
