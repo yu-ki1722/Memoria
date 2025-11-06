@@ -489,16 +489,17 @@ export default function MapWrapper({ session }: { session: Session }) {
         }}
       />
       <MemorySearchButton onClick={() => setIsMemorySearchOpen(true)} />
-      <div style={{ position: "relative", width: "100vw", height: "100vh" }}>
+
+      <div className="relative w-full h-[calc(100vh-56px)] mt-14 md:mt-0 md:h-screen">
         {isLocating && (
-          <div className="absolute top-0 left-0 w-full h-full z-[1001] flex justify-center items-center bg-black/50 text-white text-lg font-bold">
+          <div className="absolute inset-0 z-[1001] flex justify-center items-center bg-black/50 text-white text-lg font-bold">
             <p>現在地を取得中...</p>
           </div>
         )}
         {!initialView ? (
-          <p className="absolute top-0 left-0 w-full h-full z-[1001] flex justify-center items-center bg-black/50 text-white text-lg font-bold">
+          <div className="absolute inset-0 z-[1001] flex justify-center items-center bg-black/50 text-white text-lg font-bold">
             現在地を取得中...
-          </p>
+          </div>
         ) : (
           <Map
             mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
@@ -512,7 +513,10 @@ export default function MapWrapper({ session }: { session: Session }) {
             {memories.map((memory) => {
               const colors = emotionGradientColors[
                 memory.emotion as Emotion
-              ] || { start: "#CCCCCC", end: "#999999" };
+              ] || {
+                start: "#CCCCCC",
+                end: "#999999",
+              };
 
               return (
                 <Marker
