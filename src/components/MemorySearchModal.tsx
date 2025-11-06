@@ -139,11 +139,28 @@ export default function MemorySearchModal({
       }
 
       onFilterResults(data ?? []);
-      onClose();
     } catch (err) {
       console.error("検索中にエラー:", err);
     }
   };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const delay = setTimeout(() => {
+      handleSearch();
+    }, 400);
+
+    return () => clearTimeout(delay);
+  }, [
+    query,
+    selectedEmotions,
+    selectedTags,
+    startDate,
+    endDate,
+    prefectureInput,
+    cityInput,
+    placeInput,
+  ]);
 
   const handleReset = async () => {
     setQuery("");
@@ -399,13 +416,6 @@ export default function MemorySearchModal({
 
               <div className="pt-4 border-t flex-shrink-0 mt-3 bg-white px-4 pb-4">
                 <div className="flex flex-col gap-2 w-full max-w-[360px] mx-auto">
-                  <button
-                    onClick={handleSearch}
-                    className="w-full py-2 rounded-xl bg-memoria-primary text-white font-semibold hover:bg-opacity-90 transition"
-                  >
-                    絞り込み検索
-                  </button>
-
                   <button
                     onClick={handleReset}
                     className="w-full py-2 rounded-xl bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition"
