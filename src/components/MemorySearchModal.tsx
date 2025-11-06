@@ -145,6 +145,26 @@ export default function MemorySearchModal({
     }
   };
 
+  const handleReset = async () => {
+    setQuery("");
+    setSelectedEmotions([]);
+    setSelectedTags([]);
+    setStartDate("");
+    setEndDate("");
+    setPrefectureInput("");
+    setCityInput("");
+    setPlaceInput("");
+
+    const { data, error } = await supabase.from("memories").select("*");
+    if (error) {
+      console.error("リセット時の取得エラー:", error);
+      return;
+    }
+
+    onFilterResults(data ?? []);
+    onClose();
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -377,13 +397,22 @@ export default function MemorySearchModal({
                 </div>
               </div>
 
-              <div className="border-t p-4 bg-white flex-shrink-0">
-                <button
-                  onClick={handleSearch}
-                  className="w-full py-2 rounded-xl bg-memoria-primary text-white font-semibold hover:bg-opacity-90 transition"
-                >
-                  絞り込み検索を実行
-                </button>
+              <div className="pt-4 border-t flex-shrink-0 mt-3 bg-white px-4 pb-4">
+                <div className="flex flex-col gap-2 w-full max-w-[360px] mx-auto">
+                  <button
+                    onClick={handleSearch}
+                    className="w-full py-2 rounded-xl bg-memoria-primary text-white font-semibold hover:bg-opacity-90 transition"
+                  >
+                    絞り込み検索
+                  </button>
+
+                  <button
+                    onClick={handleReset}
+                    className="w-full py-2 rounded-xl bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition"
+                  >
+                    検索をリセット
+                  </button>
+                </div>
               </div>
             </div>
           </motion.div>
