@@ -471,7 +471,10 @@ export default function MapWrapper({ session }: { session: Session }) {
   return (
     <>
       <Header session={session} onSearchOpen={() => setIsSearchOpen(true)} />
-      <SearchButton onClick={() => setIsSearchOpen(true)} />
+      <SearchButton
+        onClick={() => setIsSearchOpen(true)}
+        className="hidden md:block"
+      />
       <PlaceSearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
@@ -481,7 +484,10 @@ export default function MapWrapper({ session }: { session: Session }) {
         isOpen={isTagManagerOpen}
         onClose={() => setIsTagManagerOpen(false)}
       />
-      <TagManagerButton onClick={() => setIsTagManagerOpen(true)} />
+      <TagManagerButton
+        onClick={() => setIsTagManagerOpen(true)}
+        className="hidden md:block"
+      />
       <MemorySearchModal
         isOpen={isMemorySearchOpen}
         onClose={() => setIsMemorySearchOpen(false)}
