@@ -97,10 +97,14 @@ export default function MemorySearchModal({
 
   const handleSearch = async () => {
     try {
-      const queryBuilder = supabase.from("memories").select("*");
+      let queryBuilder = supabase.from("memories").select("*");
 
       if (selectedEmotions.length > 0) {
-        queryBuilder.in("emotion", selectedEmotions);
+        queryBuilder = queryBuilder.in("emotion", selectedEmotions);
+      }
+
+      if (selectedTags.length > 0) {
+        queryBuilder = queryBuilder.overlaps("tags", selectedTags);
       }
 
       const { data, error } = await queryBuilder;
