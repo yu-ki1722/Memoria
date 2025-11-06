@@ -8,6 +8,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import Image from "next/image";
 import { supabase } from "@/lib/supabaseClient";
 import Header from "../Header";
+import Footer from "../Footer";
 import MemoryForm from "../MemoryForm";
 import Button from "../Button";
 import CurrentLocationButton from "../CurrentLocationButton";
@@ -709,6 +710,7 @@ export default function MapWrapper({ session }: { session: Session }) {
         )}
         <CurrentLocationButton mapRef={mapRef} setIsLocating={setIsLocating} />
       </div>
+      <Footer onTagManagerOpen={() => setIsTagManagerOpen(true)} />
     </>
   );
 }
