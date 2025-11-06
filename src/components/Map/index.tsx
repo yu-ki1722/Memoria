@@ -18,6 +18,8 @@ import SearchButton from "../SearchButton";
 import PlaceSearchModal from "../PlaceSearchModal";
 import TagManagerModal from "../TagManagerModal";
 import TagManagerButton from "../TagManagerButton";
+import MemorySearchButton from "../MemorySearchButton";
+import MemorySearchModal from "../MemorySearchModal";
 
 const emotionStyles = {
   "😊": { bg: "bg-emotion-happy", shadow: "shadow-glow-happy" },
@@ -93,6 +95,10 @@ export default function MapWrapper({ session }: { session: Session }) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isTagInputOpen, setIsTagInputOpen] = useState(false);
   const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
+  const [isMemorySearchOpen, setIsMemorySearchOpen] = useState(false);
+  const [filteredMemories, setFilteredMemories] = useState<Memory[] | null>(
+    null
+  );
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
@@ -166,6 +172,30 @@ export default function MapWrapper({ session }: { session: Session }) {
     tags: string[]
   ) => {
     if (!newMemoryLocation || !session) return;
+
+    const fetchAddress = async (lat: number, lng: number) => {
+      const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${token}&language=ja`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      const context = data.features?.[0]?.context || [];
+      const prefecture =
+        context.find((c: { id: string }) => c.id.startsWith("region"))?.text ||
+        "";
+      const city =
+        context.find((c: { id: string }) => c.id.startsWith("place"))?.text ||
+        "";
+      const placeName = data.features?.[0]?.text || "";
+
+      return { prefecture, city, placeName };
+    };
+
+    const { prefecture, city, placeName } = await fetchAddress(
+      newMemoryLocation!.lat,
+      newMemoryLocation!.lng
+    );
+
     let imageUrl: string | undefined = undefined;
 
     if (imageFile) {
@@ -187,6 +217,9 @@ export default function MapWrapper({ session }: { session: Session }) {
       imageUrl = urlData.publicUrl;
     }
 
+    const finalPlaceName =
+      placeName && placeName.trim() !== "" ? placeName : null;
+
     const { data, error } = await supabase
       .from("memories")
       .insert([
@@ -195,9 +228,12 @@ export default function MapWrapper({ session }: { session: Session }) {
           text,
           user_id: session.user.id,
           image_url: imageUrl,
-          latitude: newMemoryLocation.lat,
-          longitude: newMemoryLocation.lng,
-          tags: tags,
+          latitude: newMemoryLocation!.lat,
+          longitude: newMemoryLocation!.lng,
+          tags,
+          prefecture,
+          city,
+          place_name: finalPlaceName,
         },
       ])
       .select()
@@ -410,6 +446,27 @@ export default function MapWrapper({ session }: { session: Session }) {
     setClickedPoi(null);
   };
 
+  const handleFilterResults = (filtered: Memory[]) => {
+    setFilteredMemories(filtered);
+  };
+
+  const fetchAddress = async (lat: number, lng: number) => {
+    const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${token}&language=ja`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    const context = data.features?.[0]?.context || [];
+    const prefecture =
+      context.find((c: { id: string }) => c.id.startsWith("region"))?.text ||
+      "";
+    const city =
+      context.find((c: { id: string }) => c.id.startsWith("place"))?.text || "";
+    const placeName = data.features?.[0]?.text || "";
+
+    return { prefecture, city, placeName };
+  };
+
   return (
     <>
       <Header session={session} />
@@ -424,6 +481,14 @@ export default function MapWrapper({ session }: { session: Session }) {
         onClose={() => setIsTagManagerOpen(false)}
       />
       <TagManagerButton onClick={() => setIsTagManagerOpen(true)} />
+      <MemorySearchModal
+        isOpen={isMemorySearchOpen}
+        onClose={() => setIsMemorySearchOpen(false)}
+        onFilterResults={(filtered) => {
+          setMemories(filtered);
+        }}
+      />
+      <MemorySearchButton onClick={() => setIsMemorySearchOpen(true)} />
       <div style={{ position: "relative", width: "100vw", height: "100vh" }}>
         {isLocating && (
           <div className="absolute top-0 left-0 w-full h-full z-[1001] flex justify-center items-center bg-black/50 text-white text-lg font-bold">
