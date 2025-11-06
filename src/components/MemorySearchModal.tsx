@@ -33,6 +33,8 @@ export default function MemorySearchModal({
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [favoriteTags, setFavoriteTags] = useState<string[]>([]);
   const [normalTags, setNormalTags] = useState<string[]>([]);
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -105,6 +107,13 @@ export default function MemorySearchModal({
 
       if (selectedTags.length > 0) {
         queryBuilder = queryBuilder.overlaps("tags", selectedTags);
+      }
+
+      if (startDate) {
+        queryBuilder = queryBuilder.gte("created_at", `${startDate}T00:00:00`);
+      }
+      if (endDate) {
+        queryBuilder = queryBuilder.lte("created_at", `${endDate}T23:59:59`);
       }
 
       const { data, error } = await queryBuilder;
@@ -279,11 +288,15 @@ export default function MemorySearchModal({
                   <div className="flex gap-2 items-center">
                     <input
                       type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
                       className="flex-1 rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                     />
                     <span className="text-gray-400">〜</span>
                     <input
                       type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
                       className="flex-1 rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                     />
                   </div>
