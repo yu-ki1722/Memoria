@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { Session } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 
 type HeaderProps = {
   session: Session | null;
@@ -38,6 +39,12 @@ export default function Header({ session }: HeaderProps) {
   return (
     <header className="absolute top-0 left-0 w-full z-10 flex justify-between items-center p-4 bg-memoria-background/80 backdrop-blur-sm shadow-sm">
       <h1 className="text-2xl font-bold text-memoria-text">Memoria</h1>
+      <Link
+        href="/memories"
+        className="px-3 py-1.5 bg-memoria-primary text-white rounded-full text-sm hover:bg-opacity-90 transition"
+      >
+        🗂 思い出一覧
+      </Link>
       <nav>
         {session && (
           <div className="relative" ref={menuRef}>
