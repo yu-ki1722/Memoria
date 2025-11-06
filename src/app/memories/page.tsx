@@ -6,7 +6,55 @@ import {
   createClientComponentClient,
   type Session,
 } from "@supabase/auth-helpers-nextjs";
-import { Loader2 } from "lucide-react";
+import { Loader2, ImageOff } from "lucide-react";
+import { motion, type Variants } from "framer-motion";
+
+const getEmotionColor = (emotion: string) => {
+  switch (emotion) {
+    case "😊":
+      return {
+        border: "border-[#FACC15]",
+        bg: "bg-[#FEF9C3]",
+        text: "text-[#CA8A04]",
+      };
+    case "😂":
+      return {
+        border: "border-[#FB923C]",
+        bg: "bg-[#FFF7ED]",
+        text: "text-[#C2410C]",
+      };
+    case "😍":
+      return {
+        border: "border-[#F472B6]",
+        bg: "bg-[#FDF2F8]",
+        text: "text-[#BE185D]",
+      };
+    case "😢":
+      return {
+        border: "border-[#60A5FA]",
+        bg: "bg-[#EFF6FF]",
+        text: "text-[#1D4ED8]",
+      };
+    case "😮":
+      return {
+        border: "border-[#34D399]",
+        bg: "bg-[#ECFDF5]",
+        text: "text-[#047857]",
+      };
+    case "🤔":
+      return {
+        border: "border-[#A78BFA]",
+        bg: "bg-[#F5F3FF]",
+        text: "text-[#5B21B6]",
+      };
+    default:
+      return {
+        border: "border-gray-200",
+        bg: "bg-white",
+        text: "text-gray-700",
+      };
+  }
+};
 
 type Memory = {
   id: number;
@@ -21,7 +69,7 @@ type Memory = {
 
 export default function MemoriesPage() {
   const supabase = createClientComponentClient();
-  const [session, setSession] = useState<Session | null>(null); // ✅ ← anyをSession型に変更
+  const [session, setSession] = useState<Session | null>(null);
   const [memories, setMemories] = useState<Memory[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -35,7 +83,6 @@ export default function MemoriesPage() {
 
   useEffect(() => {
     if (!session) return;
-
     const fetchMemories = async () => {
       try {
         const { data, error } = await supabase
@@ -43,86 +90,132 @@ export default function MemoriesPage() {
           .select("*")
           .eq("user_id", session.user.id)
           .order("created_at", { ascending: false });
-
-        if (error && Object.keys(error).length > 0) {
-          console.error("思い出取得エラー:", error);
-        } else if (data) {
-          setMemories(data);
-        }
+        if (!error && data) setMemories(data);
       } catch (err) {
-        console.error("通信エラー:", err);
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
-
     fetchMemories();
   }, [session, supabase]);
 
+  const containerVariants: Variants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.08, ease: "easeOut" },
+    },
+  };
+  const cardVariants: Variants = {
+    hidden: { opacity: 0, y: 40, scale: 0.9 },
+    show: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: { duration: 0.6, ease: "easeOut" },
+    },
+  };
+
   return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">思い出一覧</h1>
-          <Link href="/map">
-            <button className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition">
-              🌏 マップに戻る
-            </button>
-          </Link>
+    <main className="min-h-screen bg-[#fffdf8] p-6 relative">
+      <div className="absolute inset-0 bg-[url('/paper-texture.png')] opacity-30 pointer-events-none"></div>
+
+      <div className="max-w-7xl mx-auto relative z-10 flex gap-6">
+        <div className="w-3/4 pr-6">
+          <div className="flex justify-between items-center mb-8 px-2">
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
+              思い出一覧
+            </h1>
+            <Link href="/map">
+              <button className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition shadow">
+                🌏 マップに戻る
+              </button>
+            </Link>
+          </div>
+
+          {loading ? (
+            <div className="flex justify-center items-center h-64 text-gray-500">
+              <Loader2 className="animate-spin mr-2" />
+              読み込み中...
+            </div>
+          ) : memories.length === 0 ? (
+            <p className="text-center text-gray-500 mt-12">
+              まだ思い出がありません。
+            </p>
+          ) : (
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="show"
+              className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-6"
+            >
+              {memories.map((memory) => {
+                const colors = getEmotionColor(memory.emotion);
+                const hasImage = Boolean(memory.image_url);
+
+                return (
+                  <motion.div
+                    key={memory.id}
+                    variants={cardVariants}
+                    className={`relative transition-transform duration-300 hover:scale-[1.03]`}
+                  >
+                    <div
+                      className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-3 w-16 h-4 bg-yellow-100/70 shadow-md z-10"
+                      style={{
+                        rotate: `${(memory.id % 5) - 2}deg`,
+                        clipPath:
+                          "polygon(5% 0, 95% 0, 100% 20%, 95% 40%, 100% 60%, 95% 80%, 100% 100%, 5% 100%, 0 80%, 5% 60%, 0 40%, 5% 20%)",
+                        background:
+                          "linear-gradient(180deg, rgba(253, 230, 138, 0.8), rgba(254, 249, 195, 0.9))",
+                        boxShadow:
+                          "inset 0 1px 2px rgba(255,255,255,0.7), 0 2px 4px rgba(0,0,0,0.15)",
+                      }}
+                    ></div>
+
+                    <div
+                      className={`w-full bg-white border ${colors.border} shadow-lg hover:shadow-xl transition-shadow rounded-sm overflow-hidden`}
+                    >
+                      <div className="p-4 pb-2">
+                        {hasImage ? (
+                          <img
+                            src={memory.image_url!}
+                            alt={memory.text}
+                            className="w-full h-[200px] object-cover rounded-none"
+                          />
+                        ) : (
+                          <div
+                            className={`w-full h-[200px] flex flex-col items-center justify-center ${colors.bg} rounded-none`}
+                          >
+                            <ImageOff
+                              className={`w-12 h-12 ${colors.text} opacity-30`}
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="px-3 pb-4 bg-white flex flex-col items-center justify-center text-center">
+                        <p
+                          className={`text-lg font-[Caveat] tracking-wide ${colors.text} leading-snug text-center h-7 line-clamp-1`}
+                        >
+                          {memory.text || "（タイトルなし）"}
+                        </p>
+                        <div className="flex justify-between items-end w-full mt-2 text-sm text-gray-500">
+                          <span className="text-lg">{memory.emotion}</span>
+                          <span className="text-[11px] text-gray-400">
+                            {new Date(memory.created_at).toLocaleDateString(
+                              "ja-JP"
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          )}
         </div>
-
-        {loading ? (
-          <div className="flex justify-center items-center h-64 text-gray-500">
-            <Loader2 className="animate-spin mr-2" />
-            読み込み中...
-          </div>
-        ) : memories.length === 0 ? (
-          <p className="text-center text-gray-500 mt-12">
-            まだ思い出がありません。
-          </p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {memories.map((memory) => (
-              <div
-                key={memory.id}
-                className="bg-white rounded-xl shadow hover:shadow-lg transition cursor-pointer group overflow-hidden"
-              >
-                {memory.image_url ? (
-                  <img
-                    src={memory.image_url}
-                    alt={memory.text}
-                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                ) : (
-                  <div className="h-48 flex items-center justify-center text-5xl bg-gray-100">
-                    {memory.emotion}
-                  </div>
-                )}
-
-                <div className="p-4">
-                  <p className="font-medium text-gray-800 line-clamp-2 mb-1">
-                    {memory.text || "（本文なし）"}
-                  </p>
-
-                  <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
-                    <span>{memory.prefecture ?? ""}</span>
-                    <span>{memory.city ?? ""}</span>
-                  </div>
-
-                  {memory.facility && (
-                    <p className="text-xs text-gray-400 truncate mb-1">
-                      📍 {memory.facility}
-                    </p>
-                  )}
-
-                  <p className="text-xs text-gray-400">
-                    {new Date(memory.created_at).toLocaleDateString("ja-JP")}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </main>
   );
