@@ -96,6 +96,9 @@ export default function MapWrapper({ session }: { session: Session }) {
   const [isTagInputOpen, setIsTagInputOpen] = useState(false);
   const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
   const [isMemorySearchOpen, setIsMemorySearchOpen] = useState(false);
+  const [filteredMemories, setFilteredMemories] = useState<Memory[] | null>(
+    null
+  );
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
@@ -413,6 +416,10 @@ export default function MapWrapper({ session }: { session: Session }) {
     setClickedPoi(null);
   };
 
+  const handleFilterResults = (filtered: Memory[]) => {
+    setFilteredMemories(filtered);
+  };
+
   return (
     <>
       <Header session={session} />
@@ -430,6 +437,9 @@ export default function MapWrapper({ session }: { session: Session }) {
       <MemorySearchModal
         isOpen={isMemorySearchOpen}
         onClose={() => setIsMemorySearchOpen(false)}
+        onFilterResults={(filtered) => {
+          setMemories(filtered);
+        }}
       />
       <MemorySearchButton onClick={() => setIsMemorySearchOpen(true)} />
       <div style={{ position: "relative", width: "100vw", height: "100vh" }}>

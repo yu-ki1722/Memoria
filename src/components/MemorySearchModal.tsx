@@ -5,14 +5,27 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, Star } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 
+type Memory = {
+  id: number;
+  emotion: string;
+  text: string;
+  latitude: number;
+  longitude: number;
+  user_id: string;
+  image_url: string | null;
+  tags: string[] | null;
+};
+
 type MemorySearchModalProps = {
   isOpen: boolean;
   onClose: () => void;
+  onFilterResults: (filtered: Memory[]) => void;
 };
 
 export default function MemorySearchModal({
   isOpen,
   onClose,
+  onFilterResults,
 }: MemorySearchModalProps) {
   const [query, setQuery] = useState("");
   const [isMobile, setIsMobile] = useState(false);
@@ -80,6 +93,28 @@ export default function MemorySearchModal({
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
+  };
+
+  const handleSearch = async () => {
+    try {
+      const queryBuilder = supabase.from("memories").select("*");
+
+      if (selectedEmotions.length > 0) {
+        queryBuilder.in("emotion", selectedEmotions);
+      }
+
+      const { data, error } = await queryBuilder;
+
+      if (error) {
+        console.error("検索エラー:", error);
+        return;
+      }
+
+      onFilterResults(data ?? []);
+      onClose();
+    } catch (err) {
+      console.error("検索中にエラー:", err);
+    }
   };
 
   return (
@@ -252,13 +287,7 @@ export default function MemorySearchModal({
 
                 <div className="pt-4 border-t flex-shrink-0 mt-3 bg-white">
                   <button
-                    onClick={() =>
-                      alert(
-                        `キーワード: ${query}\n感情: ${selectedEmotions.join(
-                          ", "
-                        )}\nタグ: ${selectedTags.join(", ")}`
-                      )
-                    }
+                    onClick={handleSearch}
                     className="w-full py-2 rounded-xl bg-memoria-primary text-white font-semibold hover:bg-opacity-90 transition"
                   >
                     絞り込み検索を実行
