@@ -36,6 +36,9 @@ export default function MemorySearchModal({
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [showAllTags, setShowAllTags] = useState(false);
+  const [prefectureInput, setPrefectureInput] = useState("");
+  const [cityInput, setCityInput] = useState("");
+  const [placeInput, setPlaceInput] = useState("");
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -100,25 +103,32 @@ export default function MemorySearchModal({
 
   const handleSearch = async () => {
     try {
-      let queryBuilder = supabase.from("memories").select("*");
+      const queryBuilder = supabase.from("memories").select("*");
 
       if (selectedEmotions.length > 0) {
-        queryBuilder = queryBuilder.in("emotion", selectedEmotions);
+        queryBuilder.in("emotion", selectedEmotions);
       }
 
       if (selectedTags.length > 0) {
-        queryBuilder = queryBuilder.overlaps("tags", selectedTags);
+        queryBuilder.overlaps("tags", selectedTags);
       }
 
-      if (startDate) {
-        queryBuilder = queryBuilder.gte("created_at", `${startDate}T00:00:00`);
-      }
-      if (endDate) {
-        queryBuilder = queryBuilder.lte("created_at", `${endDate}T23:59:59`);
+      if (startDate && endDate) {
+        queryBuilder.gte("created_at", startDate).lte("created_at", endDate);
       }
 
-      if (query.trim()) {
-        queryBuilder = queryBuilder.ilike("text", `%${query.trim()}%`);
+      if (query.trim() !== "") {
+        queryBuilder.ilike("text", `%${query.trim()}%`);
+      }
+
+      if (prefectureInput.trim() !== "") {
+        queryBuilder.ilike("prefecture", `%${prefectureInput.trim()}%`);
+      }
+      if (cityInput.trim() !== "") {
+        queryBuilder.ilike("city", `%${cityInput.trim()}%`);
+      }
+      if (placeInput.trim() !== "") {
+        queryBuilder.ilike("place_name", `%${placeInput.trim()}%`);
       }
 
       const { data, error } = await queryBuilder;
@@ -331,6 +341,8 @@ export default function MemorySearchModal({
                       </label>
                       <input
                         type="text"
+                        value={prefectureInput}
+                        onChange={(e) => setPrefectureInput(e.target.value)}
                         placeholder="例: 東京都"
                         className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                       />
@@ -342,6 +354,8 @@ export default function MemorySearchModal({
                       </label>
                       <input
                         type="text"
+                        value={cityInput}
+                        onChange={(e) => setCityInput(e.target.value)}
                         placeholder="例: 渋谷区"
                         className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                       />
@@ -353,6 +367,8 @@ export default function MemorySearchModal({
                       </label>
                       <input
                         type="text"
+                        value={placeInput}
+                        onChange={(e) => setPlaceInput(e.target.value)}
                         placeholder="例: 東京タワー"
                         className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                       />
