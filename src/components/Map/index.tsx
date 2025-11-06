@@ -491,7 +491,7 @@ export default function MapWrapper({ session }: { session: Session }) {
       />
       <MemorySearchButton onClick={() => setIsMemorySearchOpen(true)} />
 
-      <div className="relative w-full h-[calc(100vh-56px)] mt-14 md:mt-0 md:h-screen">
+      <div className="relative w-full h-[calc(100vh-112px)] mt-14 md:mt-0 md:h-[calc(100vh-64px)]">
         {isLocating && (
           <div className="absolute inset-0 z-[1001] flex justify-center items-center bg-black/50 text-white text-lg font-bold">
             <p>現在地を取得中...</p>
