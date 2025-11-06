@@ -116,6 +116,10 @@ export default function MemorySearchModal({
         queryBuilder = queryBuilder.lte("created_at", `${endDate}T23:59:59`);
       }
 
+      if (query.trim()) {
+        queryBuilder = queryBuilder.ilike("text", `%${query.trim()}%`);
+      }
+
       const { data, error } = await queryBuilder;
 
       if (error) {
