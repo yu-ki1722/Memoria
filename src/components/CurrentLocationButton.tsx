@@ -42,7 +42,7 @@ export default function CurrentLocationButton({
     <button
       onClick={handleGetCurrentLocation}
       className={clsx(
-        "absolute bottom-[75px] right-2 z-10 w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors disabled:opacity-50",
+        "absolute bottom-[20px] right-5 z-10 w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors disabled:opacity-50",
         isLoading && "animate-customPulse"
       )}
       disabled={isLoading}

@@ -8,6 +8,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import Image from "next/image";
 import { supabase } from "@/lib/supabaseClient";
 import Header from "../Header";
+import Footer from "../Footer";
 import MemoryForm from "../MemoryForm";
 import Button from "../Button";
 import CurrentLocationButton from "../CurrentLocationButton";
@@ -20,6 +21,8 @@ import TagManagerModal from "../TagManagerModal";
 import TagManagerButton from "../TagManagerButton";
 import MemorySearchButton from "../MemorySearchButton";
 import MemorySearchModal from "../MemorySearchModal";
+import { useRouter } from "next/navigation";
+import { Search } from "lucide-react";
 
 const emotionStyles = {
   "😊": { bg: "bg-emotion-happy", shadow: "shadow-glow-happy" },
@@ -99,6 +102,22 @@ export default function MapWrapper({ session }: { session: Session }) {
   const [filteredMemories, setFilteredMemories] = useState<Memory[] | null>(
     null
   );
+  const [isMobile, setIsMobile] = useState(false);
+  const router = useRouter();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const checkDevice = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkDevice();
+    window.addEventListener("resize", checkDevice);
+
+    return () => {
+      window.removeEventListener("resize", checkDevice);
+    };
+  }, []);
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
@@ -446,6 +465,14 @@ export default function MapWrapper({ session }: { session: Session }) {
     setClickedPoi(null);
   };
 
+  const handleTagManagerClick = () => {
+    if (isMobile) {
+      router.push("/tag-manager");
+    } else {
+      setIsTagManagerOpen(true);
+    }
+  };
+
   const handleFilterResults = (filtered: Memory[]) => {
     setFilteredMemories(filtered);
   };
@@ -469,8 +496,56 @@ export default function MapWrapper({ session }: { session: Session }) {
 
   return (
     <>
-      <Header session={session} />
-      <SearchButton onClick={() => setIsSearchOpen(true)} />
+      <Header
+        title="Memoria"
+        rightActions={
+          <>
+            <button
+              onClick={() => setIsSearchOpen(true)}
+              className="w-10 h-10 flex items-center justify-center text-memoria-text hover:text-memoria-secondary-dark transition"
+            >
+              <Search className="w-6 h-6" />
+            </button>
+
+            {session && (
+              <div className="relative">
+                <button
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  className="
+              w-10 h-10 rounded-full bg-memoria-secondary text-white 
+              flex items-center justify-center font-bold text-lg 
+              hover:scale-105 transition-transform
+            "
+                >
+                  {session?.user?.email?.[0]?.toUpperCase() ?? "?"}
+                </button>
+
+                {isMenuOpen && (
+                  <div
+                    className="
+                absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl z-30 
+                overflow-hidden border border-gray-100
+              "
+                  >
+                    <div className="p-3 border-b text-sm text-gray-600">
+                      {session?.user?.email ?? "No email"}
+                    </div>
+                    <button
+                      onClick={async () => {
+                        await supabase.auth.signOut();
+                        router.push("/");
+                      }}
+                      className="w-full px-4 py-2 text-left text-gray-700 hover:bg-memoria-secondary hover:text-white transition"
+                    >
+                      ログアウト
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        }
+      />
       <PlaceSearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
@@ -480,7 +555,10 @@ export default function MapWrapper({ session }: { session: Session }) {
         isOpen={isTagManagerOpen}
         onClose={() => setIsTagManagerOpen(false)}
       />
-      <TagManagerButton onClick={() => setIsTagManagerOpen(true)} />
+      <TagManagerButton
+        onClick={handleTagManagerClick}
+        className="hidden md:block"
+      />
       <MemorySearchModal
         isOpen={isMemorySearchOpen}
         onClose={() => setIsMemorySearchOpen(false)}
@@ -489,16 +567,16 @@ export default function MapWrapper({ session }: { session: Session }) {
         }}
       />
       <MemorySearchButton onClick={() => setIsMemorySearchOpen(true)} />
-      <div style={{ position: "relative", width: "100vw", height: "100vh" }}>
+      <div className="relative w-full h-[calc(100vh-112px)] mt-14 md:mt-0 md:h-[calc(100vh-64px)]">
         {isLocating && (
-          <div className="absolute top-0 left-0 w-full h-full z-[1001] flex justify-center items-center bg-black/50 text-white text-lg font-bold">
+          <div className="absolute inset-0 z-[1001] flex justify-center items-center bg-black/50 text-white text-lg font-bold">
             <p>現在地を取得中...</p>
           </div>
         )}
         {!initialView ? (
-          <p className="absolute top-0 left-0 w-full h-full z-[1001] flex justify-center items-center bg-black/50 text-white text-lg font-bold">
+          <div className="absolute inset-0 z-[1001] flex justify-center items-center bg-black/50 text-white text-lg font-bold">
             現在地を取得中...
-          </p>
+          </div>
         ) : (
           <Map
             mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
@@ -512,7 +590,10 @@ export default function MapWrapper({ session }: { session: Session }) {
             {memories.map((memory) => {
               const colors = emotionGradientColors[
                 memory.emotion as Emotion
-              ] || { start: "#CCCCCC", end: "#999999" };
+              ] || {
+                start: "#CCCCCC",
+                end: "#999999",
+              };
 
               return (
                 <Marker
@@ -705,6 +786,7 @@ export default function MapWrapper({ session }: { session: Session }) {
         )}
         <CurrentLocationButton mapRef={mapRef} setIsLocating={setIsLocating} />
       </div>
+      <Footer onTagManagerOpen={handleTagManagerClick} />{" "}
     </>
   );
 }
