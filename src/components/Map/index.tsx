@@ -21,7 +21,8 @@ import TagManagerModal from "../TagManagerModal";
 import TagManagerButton from "../TagManagerButton";
 import MemorySearchButton from "../MemorySearchButton";
 import MemorySearchModal from "../MemorySearchModal";
-import { useRouter } from "next/navigation"; // ★ 1. useRouter をインポート
+import { useRouter } from "next/navigation";
+import { Search } from "lucide-react";
 
 const emotionStyles = {
   "😊": { bg: "bg-emotion-happy", shadow: "shadow-glow-happy" },
@@ -103,6 +104,7 @@ export default function MapWrapper({ session }: { session: Session }) {
   );
   const [isMobile, setIsMobile] = useState(false);
   const router = useRouter();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     const checkDevice = () => {
@@ -494,10 +496,55 @@ export default function MapWrapper({ session }: { session: Session }) {
 
   return (
     <>
-      <Header session={session} onSearchOpen={() => setIsSearchOpen(true)} />
-      <SearchButton
-        onClick={() => setIsSearchOpen(true)}
-        className="hidden md:block"
+      <Header
+        title="Memoria"
+        rightActions={
+          <>
+            <button
+              onClick={() => setIsSearchOpen(true)}
+              className="w-10 h-10 flex items-center justify-center text-memoria-text hover:text-memoria-secondary-dark transition"
+            >
+              <Search className="w-6 h-6" />
+            </button>
+
+            {session && (
+              <div className="relative">
+                <button
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  className="
+              w-10 h-10 rounded-full bg-memoria-secondary text-white 
+              flex items-center justify-center font-bold text-lg 
+              hover:scale-105 transition-transform
+            "
+                >
+                  {session?.user?.email?.[0]?.toUpperCase() ?? "?"}
+                </button>
+
+                {isMenuOpen && (
+                  <div
+                    className="
+                absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl z-30 
+                overflow-hidden border border-gray-100
+              "
+                  >
+                    <div className="p-3 border-b text-sm text-gray-600">
+                      {session?.user?.email ?? "No email"}
+                    </div>
+                    <button
+                      onClick={async () => {
+                        await supabase.auth.signOut();
+                        router.push("/");
+                      }}
+                      className="w-full px-4 py-2 text-left text-gray-700 hover:bg-memoria-secondary hover:text-white transition"
+                    >
+                      ログアウト
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        }
       />
       <PlaceSearchModal
         isOpen={isSearchOpen}
