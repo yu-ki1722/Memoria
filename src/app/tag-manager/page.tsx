@@ -165,7 +165,7 @@ export default function TagManagerPage() {
   const otherTags = tags.filter((t) => !t.is_favorite);
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className="relative min-h-screen bg-white overflow-hidden">
       <Header
         title="タグ一覧"
         rightActions={
@@ -179,7 +179,7 @@ export default function TagManagerPage() {
             </button>
 
             {sortMenuOpen && (
-              <div className="absolute top-8 right-0 bg-white border border-gray-200 rounded-lg shadow-md text-sm text-gray-700 z-[2000] w-40">
+              <div className="absolute top-10 right-6 bg-white border border-gray-200 rounded-lg shadow-md text-sm text-gray-700 z-[2000] w-40">
                 <button
                   onClick={() => handleSortChange("newest")}
                   className={`block w-full text-left px-3 py-2 hover:bg-gray-100 ${
@@ -228,7 +228,7 @@ export default function TagManagerPage() {
         }
       />
 
-      <main className="flex-1 overflow-y-auto p-6 mt-10 mb-28 space-y-6">
+      <main className="absolute top-[50px] bottom-[64px] left-0 right-0 overflow-y-auto p-6 bg-white">
         {isLoading ? (
           <p className="text-center text-sm text-gray-500">読み込み中...</p>
         ) : (
@@ -243,8 +243,6 @@ export default function TagManagerPage() {
               emptyMessage="まだお気に入りタグはありません"
             />
 
-            <hr className="border-gray-200" />
-
             <TagSection
               title="タグ"
               color="gray"
@@ -256,29 +254,29 @@ export default function TagManagerPage() {
             />
           </>
         )}
-      </main>
 
-      <div className="fixed bottom-16 left-0 w-full px-4 py-3 bg-gray-50 border-t border-gray-200 shadow-md">
-        <div className="flex items-center gap-2 max-w-lg mx-auto">
-          <div className="relative flex-1 flex items-center bg-white border border-gray-200 rounded-full px-3 py-2 shadow-sm">
-            <span className="text-gray-400 mr-1">#</span>
-            <input
-              type="text"
-              value={newTag}
-              onChange={(e) => setNewTag(e.target.value)}
-              placeholder="新しいタグ"
-              className="flex-1 bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400"
-              onKeyDown={(e) => e.key === "Enter" && handleAddTag()}
-            />
-            <button
-              onClick={handleAddTag}
-              className="text-gray-600 hover:text-blue-500 transition"
-            >
-              <Plus size={18} />
-            </button>
+        <div className="mt-6">
+          <div className="flex items-center gap-2 max-w-lg mx-auto">
+            <div className="relative flex-1 flex items-center bg-white border border-gray-200 rounded-full px-3 py-2 shadow-sm">
+              <span className="text-gray-400 mr-1">#</span>
+              <input
+                type="text"
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                placeholder="新しいタグ"
+                className="flex-1 bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400"
+                onKeyDown={(e) => e.key === "Enter" && handleAddTag()}
+              />
+              <button
+                onClick={handleAddTag}
+                className="text-gray-600 hover:text-blue-500 transition"
+              >
+                <Plus size={18} />
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </main>
 
       <Footer onTagManagerOpen={() => router.push("/tag-manager")} />
     </div>
