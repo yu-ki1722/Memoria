@@ -21,6 +21,7 @@ import TagManagerModal from "../TagManagerModal";
 import TagManagerButton from "../TagManagerButton";
 import MemorySearchButton from "../MemorySearchButton";
 import MemorySearchModal from "../MemorySearchModal";
+import { useRouter } from "next/navigation"; // ★ 1. useRouter をインポート
 
 const emotionStyles = {
   "😊": { bg: "bg-emotion-happy", shadow: "shadow-glow-happy" },
@@ -100,6 +101,21 @@ export default function MapWrapper({ session }: { session: Session }) {
   const [filteredMemories, setFilteredMemories] = useState<Memory[] | null>(
     null
   );
+  const [isMobile, setIsMobile] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    const checkDevice = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkDevice();
+    window.addEventListener("resize", checkDevice);
+
+    return () => {
+      window.removeEventListener("resize", checkDevice);
+    };
+  }, []);
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
@@ -447,6 +463,14 @@ export default function MapWrapper({ session }: { session: Session }) {
     setClickedPoi(null);
   };
 
+  const handleTagManagerClick = () => {
+    if (isMobile) {
+      router.push("/tag-manager");
+    } else {
+      setIsTagManagerOpen(true);
+    }
+  };
+
   const handleFilterResults = (filtered: Memory[]) => {
     setFilteredMemories(filtered);
   };
@@ -485,7 +509,7 @@ export default function MapWrapper({ session }: { session: Session }) {
         onClose={() => setIsTagManagerOpen(false)}
       />
       <TagManagerButton
-        onClick={() => setIsTagManagerOpen(true)}
+        onClick={handleTagManagerClick}
         className="hidden md:block"
       />
       <MemorySearchModal
@@ -496,7 +520,6 @@ export default function MapWrapper({ session }: { session: Session }) {
         }}
       />
       <MemorySearchButton onClick={() => setIsMemorySearchOpen(true)} />
-
       <div className="relative w-full h-[calc(100vh-112px)] mt-14 md:mt-0 md:h-[calc(100vh-64px)]">
         {isLocating && (
           <div className="absolute inset-0 z-[1001] flex justify-center items-center bg-black/50 text-white text-lg font-bold">
@@ -716,7 +739,7 @@ export default function MapWrapper({ session }: { session: Session }) {
         )}
         <CurrentLocationButton mapRef={mapRef} setIsLocating={setIsLocating} />
       </div>
-      <Footer onTagManagerOpen={() => setIsTagManagerOpen(true)} />
+      <Footer onTagManagerOpen={handleTagManagerClick} />{" "}
     </>
   );
 }
