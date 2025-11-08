@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trash2, Plus, Star, ArrowUpDown, ChevronLeft } from "lucide-react";
+import { Trash2, Plus, Star, ArrowUpDown } from "lucide-react";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import { useRouter } from "next/navigation";
 
 type Tag = {
@@ -163,83 +165,70 @@ export default function TagManagerPage() {
   const otherTags = tags.filter((t) => !t.is_favorite);
 
   return (
-    <motion.div
-      className="fixed inset-0 bg-white z-[1003] flex flex-col"
-      initial={{ y: "100%" }}
-      animate={{ y: 0 }}
-      exit={{ y: "100%" }}
-      transition={{ type: "spring", stiffness: 300, damping: 30 }}
-    >
-      <div className="flex justify-between items-center p-4 border-b bg-white shadow-sm">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => router.push("/map")}
-            className="text-gray-600 hover:text-gray-900"
-          >
-            <ChevronLeft size={22} />
-          </button>
-          <h2 className="text-lg font-semibold text-gray-800">タグ一覧</h2>
-        </div>
+    <div className="flex flex-col min-h-screen bg-white">
+      <Header
+        title="タグ一覧"
+        rightActions={
+          <>
+            <button
+              onClick={() => setSortMenuOpen(!sortMenuOpen)}
+              className="text-gray-500 hover:text-blue-500 transition"
+              title="並び替え"
+            >
+              <ArrowUpDown size={20} />
+            </button>
 
-        <div className="flex gap-3 items-center relative">
-          <button
-            onClick={() => setSortMenuOpen(!sortMenuOpen)}
-            className="text-gray-500 hover:text-blue-500 transition"
-            title="並び替え"
-          >
-            <ArrowUpDown size={20} />
-          </button>
+            {sortMenuOpen && (
+              <div className="absolute top-8 right-0 bg-white border border-gray-200 rounded-lg shadow-md text-sm text-gray-700 z-[2000] w-40">
+                <button
+                  onClick={() => handleSortChange("newest")}
+                  className={`block w-full text-left px-3 py-2 hover:bg-gray-100 ${
+                    sortOption === "newest" ? "font-semibold" : ""
+                  }`}
+                >
+                  日付順（新しい順）
+                </button>
+                <button
+                  onClick={() => handleSortChange("oldest")}
+                  className={`block w-full text-left px-3 py-2 hover:bg-gray-100 ${
+                    sortOption === "oldest" ? "font-semibold" : ""
+                  }`}
+                >
+                  日付順（古い順）
+                </button>
+                <button
+                  onClick={() => handleSortChange("az")}
+                  className={`block w-full text-left px-3 py-2 hover:bg-gray-100 ${
+                    sortOption === "az" ? "font-semibold" : ""
+                  }`}
+                >
+                  名前順（A→Z）
+                </button>
+                <button
+                  onClick={() => handleSortChange("za")}
+                  className={`block w-full text-left px-3 py-2 hover:bg-gray-100 ${
+                    sortOption === "za" ? "font-semibold" : ""
+                  }`}
+                >
+                  名前順（Z→A）
+                </button>
+              </div>
+            )}
 
-          {sortMenuOpen && (
-            <div className="absolute top-8 right-0 bg-white border border-gray-200 rounded-lg shadow-md text-sm text-gray-700 z-[2000] w-40">
-              <button
-                onClick={() => handleSortChange("newest")}
-                className={`block w-full text-left px-3 py-2 hover:bg-gray-100 ${
-                  sortOption === "newest" ? "font-semibold" : ""
-                }`}
-              >
-                日付順（新しい順）
-              </button>
-              <button
-                onClick={() => handleSortChange("oldest")}
-                className={`block w-full text-left px-3 py-2 hover:bg-gray-100 ${
-                  sortOption === "oldest" ? "font-semibold" : ""
-                }`}
-              >
-                日付順（古い順）
-              </button>
-              <button
-                onClick={() => handleSortChange("az")}
-                className={`block w-full text-left px-3 py-2 hover:bg-gray-100 ${
-                  sortOption === "az" ? "font-semibold" : ""
-                }`}
-              >
-                名前順（A→Z）
-              </button>
-              <button
-                onClick={() => handleSortChange("za")}
-                className={`block w-full text-left px-3 py-2 hover:bg-gray-100 ${
-                  sortOption === "za" ? "font-semibold" : ""
-                }`}
-              >
-                名前順（Z→A）
-              </button>
-            </div>
-          )}
+            <button
+              onClick={() => setDeleteMode(!deleteMode)}
+              className={`transition ${
+                deleteMode ? "text-red-500" : "text-gray-500 hover:text-red-500"
+              }`}
+              title="削除モード"
+            >
+              <Trash2 size={20} />
+            </button>
+          </>
+        }
+      />
 
-          <button
-            onClick={() => setDeleteMode(!deleteMode)}
-            className={`transition ${
-              deleteMode ? "text-red-500" : "text-gray-500 hover:text-red-500"
-            }`}
-            title="タグを削除"
-          >
-            <Trash2 size={20} />
-          </button>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      <main className="flex-1 overflow-y-auto p-6 mt-10 mb-28 space-y-6">
         {isLoading ? (
           <p className="text-center text-sm text-gray-500">読み込み中...</p>
         ) : (
@@ -267,28 +256,32 @@ export default function TagManagerPage() {
             />
           </>
         )}
-      </div>
+      </main>
 
-      <div className="p-4 border-t bg-gray-50 flex items-center gap-2">
-        <div className="relative flex-1 flex items-center bg-white border border-gray-200 rounded-full px-3 py-2 shadow-sm">
-          <span className="text-gray-400 mr-1">#</span>
-          <input
-            type="text"
-            value={newTag}
-            onChange={(e) => setNewTag(e.target.value)}
-            placeholder="新しいタグ"
-            className="flex-1 bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400"
-            onKeyDown={(e) => e.key === "Enter" && handleAddTag()}
-          />
-          <button
-            onClick={handleAddTag}
-            className="text-gray-600 hover:text-blue-500 transition"
-          >
-            <Plus size={18} />
-          </button>
+      <div className="fixed bottom-16 left-0 w-full px-4 py-3 bg-gray-50 border-t border-gray-200 shadow-md">
+        <div className="flex items-center gap-2 max-w-lg mx-auto">
+          <div className="relative flex-1 flex items-center bg-white border border-gray-200 rounded-full px-3 py-2 shadow-sm">
+            <span className="text-gray-400 mr-1">#</span>
+            <input
+              type="text"
+              value={newTag}
+              onChange={(e) => setNewTag(e.target.value)}
+              placeholder="新しいタグ"
+              className="flex-1 bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400"
+              onKeyDown={(e) => e.key === "Enter" && handleAddTag()}
+            />
+            <button
+              onClick={handleAddTag}
+              className="text-gray-600 hover:text-blue-500 transition"
+            >
+              <Plus size={18} />
+            </button>
+          </div>
         </div>
       </div>
-    </motion.div>
+
+      <Footer onTagManagerOpen={() => router.push("/tag-manager")} />
+    </div>
   );
 }
 
