@@ -156,21 +156,29 @@ export default function MapWrapper({ session }: { session: Session }) {
       mapRef.current?.flyTo({
         center: [newMemoryLocation.lng, newMemoryLocation.lat],
         zoom: 15,
-        padding: { top: 100, bottom: 0, left: 0, right: 0 },
+        padding: {
+          top: isMobile ? 650 : 400,
+          bottom: isMobile ? 56 : 0,
+          left: 0,
+          right: 0,
+        },
       });
     }
-  }, [newMemoryLocation]);
-
+  }, [newMemoryLocation, isMobile]);
   useEffect(() => {
     if (selectedMemory) {
       mapRef.current?.flyTo({
         center: [selectedMemory.longitude, selectedMemory.latitude],
         zoom: 15,
-        padding: { top: 100, bottom: 0, left: 0, right: 0 },
+        padding: {
+          top: isMobile ? 350 : 100,
+          bottom: isMobile ? 56 : 0,
+          left: 0,
+          right: 0,
+        },
       });
     }
-  }, [selectedMemory]);
-
+  }, [selectedMemory, isMobile]);
   useEffect(() => {
     if (editingMemory) {
       const memoryToEdit = memories.find((m) => m.id === editingMemory);
@@ -178,11 +186,16 @@ export default function MapWrapper({ session }: { session: Session }) {
         mapRef.current?.flyTo({
           center: [memoryToEdit.longitude, memoryToEdit.latitude],
           zoom: 15,
-          padding: { top: 100, bottom: 0, left: 0, right: 0 },
+          padding: {
+            top: isMobile ? 650 : 400,
+            bottom: isMobile ? 56 : 0,
+            left: 0,
+            right: 0,
+          },
         });
       }
     }
-  }, [editingMemory, memories]);
+  }, [editingMemory, memories, isMobile]); // ★ isMobile を依存配列に追加
 
   const handleSaveMemory = async (
     emotion: string,
@@ -630,6 +643,7 @@ export default function MapWrapper({ session }: { session: Session }) {
                 onClose={() => setSelectedMemory(null)}
                 anchor="bottom"
                 className="memoria-popup"
+                offset={25}
               >
                 {(() => {
                   const emotionKey = selectedMemory.emotion as Emotion;
@@ -716,6 +730,7 @@ export default function MapWrapper({ session }: { session: Session }) {
                     anchor="bottom"
                     className="memoria-popup new-memory-popup"
                     data-emotion={memoryToEdit.emotion}
+                    offset={25}
                   >
                     <MemoryForm
                       user={session.user}
@@ -756,6 +771,7 @@ export default function MapWrapper({ session }: { session: Session }) {
                 onClose={() => setNewMemoryLocation(null)}
                 anchor="bottom"
                 className="memoria-popup new-memory-popup"
+                offset={25}
               >
                 <MemoryForm
                   user={session.user}
