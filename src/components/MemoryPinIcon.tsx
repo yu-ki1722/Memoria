@@ -1,41 +1,45 @@
 "use client";
 
 type Props = {
-  startColor: string;
-  endColor: string;
+  color: string;
   className?: string;
 };
 
-export default function MemoryPinIcon({
-  startColor,
-  endColor,
-  className,
-}: Props) {
-  const gradientId = `pin-gradient-${startColor}-${endColor}`.replace(/#/g, "");
-
+export default function MemoryPinIcon({ color, className }: Props) {
   return (
-    <svg
-      className={className}
-      width="100%"
-      height="100%"
-      viewBox="0 0 512 512"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <defs>
-        <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor={startColor} />
-          <stop offset="100%" stopColor={endColor} />
-        </linearGradient>
-      </defs>
-      <path
-        d="M256 48c-91.6 0-166 74.4-166 166 0 111.2 166 250 166 250s166-138.8 166-250c0-91.6-74.4-166-166-166zM256 288c-51.9 0-94-42.1-94-94s42.1-94 94-94 94 42.1 94 94-42.1 94-94 94z"
-        fill={`url(#${gradientId})`}
+    <div className={`relative w-full h-full ${className ?? ""}`}>
+      <svg
+        width="100%"
+        height="100%"
+        viewBox="265 50 700 700"
+        xmlns="http://www.w3.org/2000/svg"
+        preserveAspectRatio="xMidYMid meet"
+        style={{
+          filter: "drop-shadow(0 3px 4px rgba(0,0,0,0.15))",
+        }}
+      >
+        <g
+          transform="translate(0.000000,800.000000) scale(0.100000,-0.100000)"
+          fill={color}
+          stroke="white"
+          strokeWidth="40"
+        >
+          <path d="M6190 7468 c-586 -30 -1181 -309 -1609 -753 -166 -173 -281 -329 -403 -550 -186 -336 -288 -739 -288 -1140 0 -523 163 -1028 486 -1515 109 -164 495 -666 959 -1250 72 -91 196 -248 275 -350 79 -102 178 -228 220 -280 42 -52 164 -210 272 -350 108 -140 208 -266 222 -279 l26 -25 51 55 c27 30 76 88 108 130 33 42 90 116 128 165 254 325 516 660 621 793 131 167 555 708 791 1011 455 584 656 1010 737 1565 24 160 24 514 1 668 -54 351 -191 707 -390 1007 -120 182 -311 396 -477 535 -342 285 -779 480 -1224 545 -114 17 -362 26 -506 18z m481 -1006 c131 -31 232 -68 354 -128 299 -149 541 -391 685 -688 107 -219 144 -387 144 -646 0 -205 -15 -307 -74 -481 -124 -372 -356 -663 -793 -992 -202 -152 -601 -407 -636 -407 -18 0 -156 81 -356 209 -248 158 -338 225 -549 411 -308 270 -497 586 -578 965 -26 121 -31 394 -10 515 32 178 105 388 181 518 151 258 360 456 623 590 131 67 237 103 398 138 106 22 132 24 320 20 159 -3 224 -9 291 -24z" />
+          <path d="M5825 5703 c-220 -32 -383 -164 -446 -363 -29 -91 -29 -239 1 -335 51 -163 159 -327 327 -498 204 -207 625 -556 656 -544 19 7 304 235 402 321 343 301 508 517 565 740 24 94 25 157 6 259 -42 218 -224 390 -440 417 -199 25 -378 -54 -519 -229 l-27 -33 -68 73 c-81 88 -164 143 -252 169 -70 20 -157 30 -205 23z" />
+        </g>
+      </svg>
+
+      <div
+        className="absolute bottom-[-4px] left-1/2 -translate-x-1/2"
+        style={{
+          width: "60%",
+          height: "8px",
+          borderRadius: "50%",
+          background:
+            "radial-gradient(ellipse at center, rgba(0,0,0,0.3) 0%, transparent 70%)",
+          filter: "blur(4px)",
+        }}
       />
-      <path
-        transform="translate(0, -15)"
-        d="M256 168 c-16.7-19.9-49.2-20.6-65.3 2.2 c-15.7 22.2 1.2 47.4 24.7 67.7 c9.8 8.5 25.1 20.5 40.6 33.1 c15.5-12.6 30.8-24.6 40.6-33.1 c23.5-20.3 40.4-45.5 24.7-67.7 c-16.1-22.8-48.6-22.1-65.3-2.2z"
-        fill={`url(#${gradientId})`}
-      />
-    </svg>
+    </div>
   );
 }
