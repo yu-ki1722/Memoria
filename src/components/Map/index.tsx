@@ -23,6 +23,7 @@ import MemorySearchButton from "../MemorySearchButton";
 import MemorySearchModal from "../MemorySearchModal";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
+import { Toaster, toast } from "sonner"; // ← これを追加
 
 const emotionStyles = {
   "😊": { bg: "bg-emotion-happy", shadow: "shadow-glow-happy" },
@@ -271,11 +272,11 @@ export default function MapWrapper({ session }: { session: Session }) {
       .select()
       .single();
 
-    if (error) return alert("保存失敗: " + error.message);
+    if (error) return toast.error("保存失敗: " + error.message);
 
     setMemories([...memories, data]);
     setNewMemoryLocation(null);
-    alert("思い出を記録しました！");
+    toast.success("思い出を記録しました！");
   };
 
   const handleUpdateMemory = async (
@@ -329,11 +330,11 @@ export default function MapWrapper({ session }: { session: Session }) {
       .select()
       .single();
 
-    if (error) return alert("更新失敗: " + error.message);
+    if (error) return toast.error("更新失敗: " + error.message);
 
     setMemories(memories.map((m) => (m.id === id ? data : m)));
     setEditingMemory(null);
-    alert("思い出を更新しました。");
+    toast.success("思い出を更新しました。");
   };
 
   const handleDeleteMemory = async (id: number) => {
@@ -346,11 +347,11 @@ export default function MapWrapper({ session }: { session: Session }) {
     }
 
     const { error } = await supabase.from("memories").delete().eq("id", id);
-    if (error) return alert("削除失敗: " + error.message);
+    if (error) return toast.error("削除失敗: " + error.message);
 
     setMemories(memories.filter((memory) => memory.id !== id));
     setSelectedMemory(null);
-    alert("思い出を削除しました。");
+    toast.success("思い出を削除しました。");
   };
 
   const fetchGooglePlaceDetails = async (
@@ -509,6 +510,7 @@ export default function MapWrapper({ session }: { session: Session }) {
 
   return (
     <>
+      <Toaster richColors position="top-center" /> {/* ← これを追加 */}
       <Header
         title="Memoria"
         rightActions={
