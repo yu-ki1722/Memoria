@@ -288,6 +288,18 @@ export default function MapWrapper({ session }: { session: Session }) {
 
     setMemories([...memories, data]);
     setNewMemoryLocation(null);
+
+    const centerPadding = isMobile
+      ? { top: 56, bottom: 56, left: 0, right: 0 } // モバイルのヘッダー/フッター
+      : { top: 64, bottom: 0, left: 0, right: 0 }; // PCのヘッダー
+
+    mapRef.current?.flyTo({
+      center: [data.longitude, data.latitude],
+      zoom: 16,
+      padding: centerPadding,
+      duration: 1000,
+    });
+
     toast.success("思い出を記録しました！");
 
     setNewlyAddedPinId(data.id);
@@ -348,6 +360,18 @@ export default function MapWrapper({ session }: { session: Session }) {
 
     setMemories(memories.map((m) => (m.id === id ? data : m)));
     setEditingMemory(null);
+
+    const centerPadding = isMobile
+      ? { top: 56, bottom: 56, left: 0, right: 0 }
+      : { top: 64, bottom: 0, left: 0, right: 0 };
+
+    mapRef.current?.flyTo({
+      center: [data.longitude, data.latitude],
+      zoom: 16,
+      padding: centerPadding,
+      duration: 1000,
+    });
+
     toast.success("思い出を更新しました。");
   };
 
