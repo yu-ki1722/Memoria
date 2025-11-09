@@ -22,7 +22,9 @@ import TagManagerButton from "../TagManagerButton";
 import MemorySearchButton from "../MemorySearchButton";
 import MemorySearchModal from "../MemorySearchModal";
 import { useRouter } from "next/navigation";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
+import { Toaster, toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
 
 const emotionStyles = {
   "😊": { bg: "bg-emotion-happy", shadow: "shadow-glow-happy" },
@@ -78,6 +80,13 @@ type Place = {
   photos?: { photo_reference: string }[];
 };
 
+const isStringVideo = (url: string | null | undefined) => {
+  if (!url) return false;
+  const videoExtensions = [".mp4", ".webm", ".mov"];
+  const lowerUrl = url.toLowerCase();
+  return videoExtensions.some((ext) => lowerUrl.endsWith(ext));
+};
+
 export default function MapWrapper({ session }: { session: Session }) {
   console.log("Mapbox Token:", process.env.NEXT_PUBLIC_MAPBOX_TOKEN);
   const [memories, setMemories] = useState<Memory[]>([]);
@@ -105,6 +114,9 @@ export default function MapWrapper({ session }: { session: Session }) {
   const [isMobile, setIsMobile] = useState(false);
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [newlyAddedPinId, setNewlyAddedPinId] = useState<number | null>(null);
+
+  const [zoomedMediaUrl, setZoomedMediaUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const checkDevice = () => {
@@ -156,20 +168,30 @@ export default function MapWrapper({ session }: { session: Session }) {
       mapRef.current?.flyTo({
         center: [newMemoryLocation.lng, newMemoryLocation.lat],
         zoom: 15,
-        padding: { top: 400, bottom: 0, left: 0, right: 0 },
+        padding: {
+          top: isMobile ? 650 : 400,
+          bottom: isMobile ? 56 : 0,
+          left: 0,
+          right: 0,
+        },
       });
     }
-  }, [newMemoryLocation]);
+  }, [newMemoryLocation, isMobile]);
 
   useEffect(() => {
     if (selectedMemory) {
       mapRef.current?.flyTo({
         center: [selectedMemory.longitude, selectedMemory.latitude],
         zoom: 15,
-        padding: { top: 100, bottom: 0, left: 0, right: 0 },
+        padding: {
+          top: isMobile ? 350 : 100,
+          bottom: isMobile ? 56 : 0,
+          left: 0,
+          right: 0,
+        },
       });
     }
-  }, [selectedMemory]);
+  }, [selectedMemory, isMobile]);
 
   useEffect(() => {
     if (editingMemory) {
@@ -178,11 +200,25 @@ export default function MapWrapper({ session }: { session: Session }) {
         mapRef.current?.flyTo({
           center: [memoryToEdit.longitude, memoryToEdit.latitude],
           zoom: 15,
-          padding: { top: 400, bottom: 0, left: 0, right: 0 },
+          padding: {
+            top: isMobile ? 650 : 400,
+            bottom: isMobile ? 56 : 0,
+            left: 0,
+            right: 0,
+          },
         });
       }
     }
-  }, [editingMemory, memories]);
+  }, [editingMemory, memories, isMobile]);
+
+  useEffect(() => {
+    if (newlyAddedPinId) {
+      const timer = setTimeout(() => {
+        setNewlyAddedPinId(null);
+      }, 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [newlyAddedPinId]);
 
   const handleSaveMemory = async (
     emotion: string,
@@ -228,7 +264,7 @@ export default function MapWrapper({ session }: { session: Session }) {
         .from("memory-images")
         .upload(filePath, imageFile);
       if (uploadError)
-        return alert("画像アップロード失敗: " + uploadError.message);
+        return toast.error("画像アップロード失敗: " + uploadError.message);
 
       const { data: urlData } = supabase.storage
         .from("memory-images")
@@ -258,11 +294,25 @@ export default function MapWrapper({ session }: { session: Session }) {
       .select()
       .single();
 
-    if (error) return alert("保存失敗: " + error.message);
+    if (error) return toast.error("保存失敗: " + error.message);
 
     setMemories([...memories, data]);
     setNewMemoryLocation(null);
-    alert("思い出を記録しました！");
+
+    const centerPadding = isMobile
+      ? { top: 56, bottom: 56, left: 0, right: 0 }
+      : { top: 64, bottom: 0, left: 0, right: 0 };
+
+    mapRef.current?.flyTo({
+      center: [data.longitude, data.latitude],
+      zoom: 16,
+      padding: centerPadding,
+      duration: 1000,
+    });
+
+    toast.success("思い出を記録しました！");
+
+    setNewlyAddedPinId(data.id);
   };
 
   const handleUpdateMemory = async (
@@ -295,7 +345,7 @@ export default function MapWrapper({ session }: { session: Session }) {
         .from("memory-images")
         .upload(newFilePath, imageFile);
       if (uploadError)
-        return alert("画像アップロード失敗: " + uploadError.message);
+        return toast.error("画像アップロード失敗: " + uploadError.message);
       const { data: urlData } = supabase.storage
         .from("memory-images")
         .getPublicUrl(newFilePath);
@@ -316,11 +366,23 @@ export default function MapWrapper({ session }: { session: Session }) {
       .select()
       .single();
 
-    if (error) return alert("更新失敗: " + error.message);
+    if (error) return toast.error("更新失敗: " + error.message);
 
     setMemories(memories.map((m) => (m.id === id ? data : m)));
     setEditingMemory(null);
-    alert("思い出を更新しました。");
+
+    const centerPadding = isMobile
+      ? { top: 56, bottom: 56, left: 0, right: 0 }
+      : { top: 64, bottom: 0, left: 0, right: 0 };
+
+    mapRef.current?.flyTo({
+      center: [data.longitude, data.latitude],
+      zoom: 16,
+      padding: centerPadding,
+      duration: 1000,
+    });
+
+    toast.success("思い出を更新しました。");
   };
 
   const handleDeleteMemory = async (id: number) => {
@@ -333,11 +395,11 @@ export default function MapWrapper({ session }: { session: Session }) {
     }
 
     const { error } = await supabase.from("memories").delete().eq("id", id);
-    if (error) return alert("削除失敗: " + error.message);
+    if (error) return toast.error("削除失敗: " + error.message);
 
     setMemories(memories.filter((memory) => memory.id !== id));
     setSelectedMemory(null);
-    alert("思い出を削除しました。");
+    toast.success("思い出を削除しました。");
   };
 
   const fetchGooglePlaceDetails = async (
@@ -496,6 +558,7 @@ export default function MapWrapper({ session }: { session: Session }) {
 
   return (
     <>
+      <Toaster richColors position="top-center" />
       <Header
         title="Memoria"
         rightActions={
@@ -512,10 +575,10 @@ export default function MapWrapper({ session }: { session: Session }) {
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
                   className="
-              w-10 h-10 rounded-full bg-memoria-secondary text-white 
-              flex items-center justify-center font-bold text-lg 
-              hover:scale-105 transition-transform
-            "
+                    w-10 h-10 rounded-full bg-memoria-secondary text-white 
+                    flex items-center justify-center font-bold text-lg 
+                    hover:scale-105 transition-transform
+                  "
                 >
                   {session?.user?.email?.[0]?.toUpperCase() ?? "?"}
                 </button>
@@ -523,9 +586,9 @@ export default function MapWrapper({ session }: { session: Session }) {
                 {isMenuOpen && (
                   <div
                     className="
-                absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl z-30 
-                overflow-hidden border border-gray-100
-              "
+                      absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl z-30 
+                      overflow-hidden border border-gray-100
+                    "
                   >
                     <div className="p-3 border-b text-sm text-gray-600">
                       {session?.user?.email ?? "No email"}
@@ -591,6 +654,8 @@ export default function MapWrapper({ session }: { session: Session }) {
               const color =
                 emotionColors[memory.emotion as Emotion] || "#999999";
 
+              const isNew = newlyAddedPinId === memory.id;
+
               return (
                 <Marker
                   key={`memory-${memory.id}`}
@@ -606,6 +671,7 @@ export default function MapWrapper({ session }: { session: Session }) {
                           ? "scale-125"
                           : "hover:scale-110"
                       }
+                      ${isNew ? "animate-pin-drop" : ""}
                     `}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -637,29 +703,69 @@ export default function MapWrapper({ session }: { session: Session }) {
 
                   return (
                     <div
-                      className={`w-56 flex flex-col gap-2 rounded-lg animate-softAppear ${style.bg} ${style.shadow} p-4 pt-8 mt-4 relative`}
+                      className={`relative w-64 rounded-xl p-4 pt-10 
+                        ${
+                          style ? `${style.bg} ${style.shadow}` : "bg-gray-200"
+                        }`}
                     >
                       <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
                         <div
-                          className={`w-12 h-12 rounded-full text-3xl flex items-center justify-center ${style.bg} ${style.shadow}`}
+                          className={`w-16 h-16 rounded-full text-4xl flex items-center justify-center 
+                            ${
+                              style
+                                ? `${style.bg} ${style.shadow}`
+                                : "bg-gray-200"
+                            }`}
                         >
                           {selectedMemory.emotion}
                         </div>
                       </div>
 
-                      {selectedMemory.image_url && (
-                        <Image
-                          src={selectedMemory.image_url}
-                          alt={selectedMemory.text}
-                          width={200}
-                          height={150}
-                          className="rounded-md object-cover w-full"
-                        />
-                      )}
-                      <p className="text-gray-700 text-sm pb-8">
+                      {selectedMemory.image_url &&
+                        (isStringVideo(selectedMemory.image_url) ? (
+                          <video
+                            src={selectedMemory.image_url}
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
+                            className="rounded-lg w-full aspect-video object-cover mb-3 cursor-pointer"
+                            onClick={() =>
+                              setZoomedMediaUrl(selectedMemory.image_url)
+                            }
+                          />
+                        ) : (
+                          <Image
+                            src={selectedMemory.image_url}
+                            alt={selectedMemory.text}
+                            width={256}
+                            height={144}
+                            className="rounded-lg w-full aspect-video object-cover mb-3 cursor-pointer"
+                            onClick={() =>
+                              setZoomedMediaUrl(selectedMemory.image_url)
+                            }
+                          />
+                        ))}
+
+                      <p className="text-gray-800 text-base leading-relaxed mb-3 break-words text-center">
                         {selectedMemory.text}
                       </p>
-                      <div className="absolute bottom-3 right-3 flex gap-2">
+
+                      {selectedMemory.tags &&
+                        selectedMemory.tags.length > 0 && (
+                          <div className="flex flex-wrap justify-center gap-2 mb-4">
+                            {selectedMemory.tags.map((tag) => (
+                              <span
+                                key={tag}
+                                className="bg-white/60 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-full"
+                              >
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                      <div className="flex justify-end gap-2 pt-2">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -667,7 +773,7 @@ export default function MapWrapper({ session }: { session: Session }) {
                             setEditingMemory(selectedMemory.id);
                             setSelectedMemory(null);
                           }}
-                          className="memoria-icon-button memoria-edit-button"
+                          className="memoria-icon-button memoria-edit-button text-gray-700 hover:bg-black/10"
                           title="思い出を書き換える"
                         >
                           <svg
@@ -684,7 +790,7 @@ export default function MapWrapper({ session }: { session: Session }) {
                             setClickedPoi(null);
                             handleDeleteMemory(selectedMemory.id);
                           }}
-                          className="memoria-icon-button memoria-delete-button"
+                          className="memoria-icon-button memoria-delete-button text-gray-700 hover:bg-black/10"
                           title="思い出を削除"
                         >
                           <svg
@@ -716,6 +822,7 @@ export default function MapWrapper({ session }: { session: Session }) {
                     anchor="bottom"
                     className="memoria-popup new-memory-popup"
                     data-emotion={memoryToEdit.emotion}
+                    offset={25}
                   >
                     <MemoryForm
                       user={session.user}
@@ -756,6 +863,7 @@ export default function MapWrapper({ session }: { session: Session }) {
                 onClose={() => setNewMemoryLocation(null)}
                 anchor="bottom"
                 className="memoria-popup new-memory-popup"
+                offset={25}
               >
                 <MemoryForm
                   user={session.user}
@@ -787,6 +895,54 @@ export default function MapWrapper({ session }: { session: Session }) {
         <CurrentLocationButton mapRef={mapRef} setIsLocating={setIsLocating} />
       </div>
       <Footer onTagManagerOpen={handleTagManagerClick} />{" "}
+      <AnimatePresence>
+        {zoomedMediaUrl && (
+          <motion.div
+            className="fixed inset-0 z-[1100] flex items-center justify-center bg-stone-100/80 backdrop-blur-sm"
+            onClick={() => setZoomedMediaUrl(null)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="relative"
+              onClick={(e) => e.stopPropagation()}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+            >
+              {isStringVideo(zoomedMediaUrl) ? (
+                <video
+                  src={zoomedMediaUrl}
+                  autoPlay
+                  controls
+                  playsInline
+                  className="rounded-xl shadow-2xl object-contain max-w-[90vw] max-h-[80vh]"
+                />
+              ) : (
+                <Image
+                  src={zoomedMediaUrl}
+                  alt="拡大画像"
+                  width={1200}
+                  height={900}
+                  className="rounded-xl shadow-2xl object-contain max-w-[90vw] max-h-[80vh]"
+                />
+              )}
+
+              <motion.button
+                className="absolute -top-4 -right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center text-gray-700 shadow-lg hover:bg-white transition-colors"
+                onClick={() => setZoomedMediaUrl(null)}
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1, transition: { delay: 0.1 } }}
+                exit={{ opacity: 0, scale: 0.5 }}
+                title="画像を閉じる"
+              >
+                <X className="w-6 h-6" />
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
