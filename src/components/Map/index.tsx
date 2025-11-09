@@ -686,7 +686,6 @@ export default function MapWrapper({ session }: { session: Session }) {
                 onClose={() => setSelectedMemory(null)}
                 anchor="bottom"
                 className="memoria-popup"
-                offset={25}
               >
                 {(() => {
                   const emotionKey = selectedMemory.emotion as Emotion;
@@ -694,11 +693,19 @@ export default function MapWrapper({ session }: { session: Session }) {
 
                   return (
                     <div
-                      className={`w-56 flex flex-col gap-2 rounded-lg animate-softAppear ${style.bg} ${style.shadow} p-4 pt-8 mt-4 relative`}
+                      className={`relative w-64 rounded-xl p-4 pt-10 
+                        ${
+                          style ? `${style.bg} ${style.shadow}` : "bg-gray-200"
+                        }`}
                     >
                       <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
                         <div
-                          className={`w-12 h-12 rounded-full text-3xl flex items-center justify-center ${style.bg} ${style.shadow}`}
+                          className={`w-16 h-16 rounded-full text-4xl flex items-center justify-center 
+                            ${
+                              style
+                                ? `${style.bg} ${style.shadow}`
+                                : "bg-gray-200"
+                            }`}
                         >
                           {selectedMemory.emotion}
                         </div>
@@ -708,15 +715,31 @@ export default function MapWrapper({ session }: { session: Session }) {
                         <Image
                           src={selectedMemory.image_url}
                           alt={selectedMemory.text}
-                          width={200}
-                          height={150}
-                          className="rounded-md object-cover w-full"
+                          width={256}
+                          height={144}
+                          className="rounded-lg w-full aspect-video object-cover mb-3"
                         />
                       )}
-                      <p className="text-gray-700 text-sm pb-8">
+
+                      <p className="text-gray-800 text-base leading-relaxed mb-3 break-words text-center">
                         {selectedMemory.text}
                       </p>
-                      <div className="absolute bottom-3 right-3 flex gap-2">
+
+                      {selectedMemory.tags &&
+                        selectedMemory.tags.length > 0 && (
+                          <div className="flex flex-wrap justify-center gap-2 mb-4">
+                            {selectedMemory.tags.map((tag) => (
+                              <span
+                                key={tag}
+                                className="bg-white/60 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-full"
+                              >
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                      <div className="flex justify-end gap-2 pt-2">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -724,11 +747,11 @@ export default function MapWrapper({ session }: { session: Session }) {
                             setEditingMemory(selectedMemory.id);
                             setSelectedMemory(null);
                           }}
-                          className="memoria-icon-button memoria-edit-button"
+                          className="memoria-icon-button memoria-edit-button text-gray-700 hover:bg-black/10"
                           title="思い出を書き換える"
                         >
                           <svg
-                            xmlns="http://www.w.org/2000/svg"
+                            xmlns="http://www.w3.org/2000/svg"
                             viewBox="0 0 24 24"
                             fill="currentColor"
                           >
@@ -741,7 +764,7 @@ export default function MapWrapper({ session }: { session: Session }) {
                             setClickedPoi(null);
                             handleDeleteMemory(selectedMemory.id);
                           }}
-                          className="memoria-icon-button memoria-delete-button"
+                          className="memoria-icon-button memoria-delete-button text-gray-700 hover:bg-black/10"
                           title="思い出を削除"
                         >
                           <svg
