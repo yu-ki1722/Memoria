@@ -8,6 +8,15 @@
   padding: 0;
 }
 
+.mapboxgl-popup.new-memory-popup {
+  max-width: 320px !important;
+}
+
+.memoria-popup.new-memory-popup .mapboxgl-popup-content {
+  width: 320px;
+  border-radius: 0.5rem;
+}
+
 .memoria-popup .mapboxgl-popup-close-button {
   position: absolute;
   top: 18px;
@@ -28,8 +37,8 @@
 }
 
 .new-memory-popup .mapboxgl-popup-close-button {
-  top: 5px;
-  right: -13px;
+  top: 10px;
+  right: 5;
 }
 
 .memoria-popup .mapboxgl-popup-close-button:hover {

@@ -243,7 +243,7 @@ export default function MemoryForm({
   return (
     <div
       className={`
-        w-64 flex flex-col gap-4 p-4 rounded-lg animate-softAppear transition-all duration-300
+        w-80 flex flex-col gap-4 p-4 rounded-lg animate-softAppear transition-all duration-300
         ${
           styleKey
             ? `bg-emotion-${styleKey} shadow-glow-${styleKey}`
@@ -252,7 +252,8 @@ export default function MemoryForm({
       `}
     >
       <p className="font-bold text-center text-gray-700">どんな気持ち？</p>
-      <div className="grid grid-cols-3 gap-2 justify-items-center">
+
+      <div className="grid grid-cols-6 gap-2 justify-items-center px-2">
         {emotions.map((emotion) => {
           const isSelected = selectedEmotion === emotion;
           const borderColorClass = emotionStyles[emotion].border;
@@ -273,31 +274,39 @@ export default function MemoryForm({
           );
         })}
       </div>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div className="text-center">
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            ref={fileInputRef}
-            className="hidden"
-            id="imageUpload"
-          />
-        </div>
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          ref={fileInputRef}
+          className="hidden"
+          id="imageUpload"
+        />
+
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="思い出を書き留めよう..."
+          rows={3}
+          required
+          className="w-full p-3 bg-white/70 backdrop-blur-sm border border-white/30 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-shadow shadow-sm focus:shadow-glow"
+        />
 
         {imageUrlPreview ? (
-          <div className="relative inline-block group self-center">
+          <div className="relative inline-block group self-center w-full">
             <Image
               src={imageUrlPreview}
               alt="Preview"
-              width={100}
-              height={100}
-              className="rounded-lg object-cover border-2 border-white/50 shadow-soft-glow"
+              width={320}
+              height={320}
+              className="rounded-lg object-cover border-2 border-white/50 shadow-soft-glow w-full aspect-video"
             />
             <button
               type="button"
               onClick={handleClearImage}
-              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center shadow-md transition-transform transform scale-0 group-hover:scale-100"
+              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center shadow-md"
             >
               ×
             </button>
@@ -309,23 +318,13 @@ export default function MemoryForm({
           >
             <Plus className="w-8 h-8 text-gray-400 mb-2" />
             <span className="text-sm font-semibold text-gray-600">
-              思い出を追加
+              写真を追加
             </span>
           </label>
         )}
 
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="思い出を書き留めよう..."
-          rows={4}
-          required
-          className="w-full p-3 bg-white/70 backdrop-blur-sm border border-white/30 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-shadow shadow-sm focus:shadow-soft-glow"
-        />
-
         <div ref={formRef}>
           <label className="text-sm font-semibold text-gray-700">タグ</label>
-
           <div className="flex flex-col gap-3 mt-1 max-h-28 overflow-y-auto pr-1">
             {availableTags.some((t) => t.is_favorite) && (
               <div>
@@ -393,7 +392,7 @@ export default function MemoryForm({
                   key="tagInputForm"
                   className="absolute left-0 top-0 h-full bg-white border border-gray-300 rounded-full flex items-center overflow-hidden"
                   initial={{ width: 32 }}
-                  animate={{ width: 222 }}
+                  animate={{ width: "100%" }}
                   exit={{ width: 32 }}
                   transition={{ duration: 0.3, ease: "easeInOut" }}
                   onClick={(e) => e.stopPropagation()}
@@ -427,7 +426,7 @@ export default function MemoryForm({
                 else handleAddNewTag();
               }}
               className="w-7 h-7 rounded-full text-xs font-medium bg-white/70 text-gray-700 border border-white/50 hover:bg-white/90 flex items-center justify-center flex-shrink-0"
-              animate={{ x: isTagInputOpen ? 190 : 0 }}
+              animate={{ x: isTagInputOpen ? "calc(100% - 32px)" : 0 }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
             >
               <Plus size={14} />
@@ -435,7 +434,7 @@ export default function MemoryForm({
           </div>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex justify-end items-center gap-3 pt-2 border-t border-white/30">
           {onCancel && (
             <Button onClick={onCancel} variant="secondary" type="button">
               キャンセル

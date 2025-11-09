@@ -156,7 +156,7 @@ export default function MapWrapper({ session }: { session: Session }) {
       mapRef.current?.flyTo({
         center: [newMemoryLocation.lng, newMemoryLocation.lat],
         zoom: 15,
-        padding: { top: 400, bottom: 0, left: 0, right: 0 },
+        padding: { top: 100, bottom: 0, left: 0, right: 0 },
       });
     }
   }, [newMemoryLocation]);
@@ -178,7 +178,7 @@ export default function MapWrapper({ session }: { session: Session }) {
         mapRef.current?.flyTo({
           center: [memoryToEdit.longitude, memoryToEdit.latitude],
           zoom: 15,
-          padding: { top: 400, bottom: 0, left: 0, right: 0 },
+          padding: { top: 100, bottom: 0, left: 0, right: 0 },
         });
       }
     }
@@ -512,10 +512,10 @@ export default function MapWrapper({ session }: { session: Session }) {
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
                   className="
-              w-10 h-10 rounded-full bg-memoria-secondary text-white 
-              flex items-center justify-center font-bold text-lg 
-              hover:scale-105 transition-transform
-            "
+                    w-10 h-10 rounded-full bg-memoria-secondary text-white 
+                    flex items-center justify-center font-bold text-lg 
+                    hover:scale-105 transition-transform
+                  "
                 >
                   {session?.user?.email?.[0]?.toUpperCase() ?? "?"}
                 </button>
@@ -523,9 +523,9 @@ export default function MapWrapper({ session }: { session: Session }) {
                 {isMenuOpen && (
                   <div
                     className="
-                absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl z-30 
-                overflow-hidden border border-gray-100
-              "
+                      absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl z-30 
+                      overflow-hidden border border-gray-100
+                    "
                   >
                     <div className="p-3 border-b text-sm text-gray-600">
                       {session?.user?.email ?? "No email"}
