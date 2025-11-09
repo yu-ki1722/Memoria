@@ -33,13 +33,13 @@ const emotionStyles = {
   "🤔": { bg: "bg-emotion-thinking", shadow: "shadow-glow-thinking" },
 } as const;
 
-const emotionGradientColors = {
-  "😊": { start: "#FFD18E", end: "#FFA07A" },
-  "😂": { start: "#ffff7aff", end: "#efffb6ff" },
-  "😍": { start: "#FFB6C1", end: "#FF69B4" },
-  "😢": { start: "#ADD8E6", end: "#87CEFA" },
-  "😮": { start: "#afeeb0ff", end: "#7fff88ff" },
-  "🤔": { start: "#D8BFD8", end: "#BA55D3" },
+const emotionColors = {
+  "😊": "#FFBE98",
+  "😂": "#FDEE93",
+  "😍": "#FFAEC7",
+  "😢": "#77C3EC",
+  "😮": "#8DECB4",
+  "🤔": "#BEAEE2",
 };
 
 type Emotion = keyof typeof emotionStyles;
@@ -588,12 +588,8 @@ export default function MapWrapper({ session }: { session: Session }) {
           >
             <RealtimeLocationMarker />
             {memories.map((memory) => {
-              const colors = emotionGradientColors[
-                memory.emotion as Emotion
-              ] || {
-                start: "#CCCCCC",
-                end: "#999999",
-              };
+              const color =
+                emotionColors[memory.emotion as Emotion] || "#999999";
 
               return (
                 <Marker
@@ -603,7 +599,14 @@ export default function MapWrapper({ session }: { session: Session }) {
                   anchor="bottom"
                 >
                   <div
-                    className="w-10 h-10 cursor-pointer transition-transform hover:scale-110"
+                    className={`
+                      w-10 h-10 cursor-pointer transition-transform duration-300 ease-out 
+                      ${
+                        isMobile && selectedMemory?.id === memory.id
+                          ? "scale-125"
+                          : "hover:scale-110"
+                      }
+                    `}
                     onClick={(e) => {
                       e.stopPropagation();
                       setClickedPoi(null);
@@ -613,10 +616,7 @@ export default function MapWrapper({ session }: { session: Session }) {
                       setIsTagInputOpen(false);
                     }}
                   >
-                    <MemoryPinIcon
-                      startColor={colors.start}
-                      endColor={colors.end}
-                    />
+                    <MemoryPinIcon color={color} />
                   </div>
                 </Marker>
               );
