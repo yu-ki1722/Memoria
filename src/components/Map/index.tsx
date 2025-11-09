@@ -23,7 +23,7 @@ import MemorySearchButton from "../MemorySearchButton";
 import MemorySearchModal from "../MemorySearchModal";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
-import { Toaster, toast } from "sonner"; // ← これを追加
+import { Toaster, toast } from "sonner";
 
 const emotionStyles = {
   "😊": { bg: "bg-emotion-happy", shadow: "shadow-glow-happy" },
@@ -106,6 +106,7 @@ export default function MapWrapper({ session }: { session: Session }) {
   const [isMobile, setIsMobile] = useState(false);
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [newlyAddedPinId, setNewlyAddedPinId] = useState<number | null>(null);
 
   useEffect(() => {
     const checkDevice = () => {
@@ -166,6 +167,7 @@ export default function MapWrapper({ session }: { session: Session }) {
       });
     }
   }, [newMemoryLocation, isMobile]);
+
   useEffect(() => {
     if (selectedMemory) {
       mapRef.current?.flyTo({
@@ -180,6 +182,7 @@ export default function MapWrapper({ session }: { session: Session }) {
       });
     }
   }, [selectedMemory, isMobile]);
+
   useEffect(() => {
     if (editingMemory) {
       const memoryToEdit = memories.find((m) => m.id === editingMemory);
@@ -196,7 +199,16 @@ export default function MapWrapper({ session }: { session: Session }) {
         });
       }
     }
-  }, [editingMemory, memories, isMobile]); // ★ isMobile を依存配列に追加
+  }, [editingMemory, memories, isMobile]);
+
+  useEffect(() => {
+    if (newlyAddedPinId) {
+      const timer = setTimeout(() => {
+        setNewlyAddedPinId(null);
+      }, 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [newlyAddedPinId]);
 
   const handleSaveMemory = async (
     emotion: string,
@@ -242,7 +254,7 @@ export default function MapWrapper({ session }: { session: Session }) {
         .from("memory-images")
         .upload(filePath, imageFile);
       if (uploadError)
-        return alert("画像アップロード失敗: " + uploadError.message);
+        return toast.error("画像アップロード失敗: " + uploadError.message);
 
       const { data: urlData } = supabase.storage
         .from("memory-images")
@@ -277,6 +289,8 @@ export default function MapWrapper({ session }: { session: Session }) {
     setMemories([...memories, data]);
     setNewMemoryLocation(null);
     toast.success("思い出を記録しました！");
+
+    setNewlyAddedPinId(data.id);
   };
 
   const handleUpdateMemory = async (
@@ -309,7 +323,7 @@ export default function MapWrapper({ session }: { session: Session }) {
         .from("memory-images")
         .upload(newFilePath, imageFile);
       if (uploadError)
-        return alert("画像アップロード失敗: " + uploadError.message);
+        return toast.error("画像アップロード失敗: " + uploadError.message);
       const { data: urlData } = supabase.storage
         .from("memory-images")
         .getPublicUrl(newFilePath);
@@ -510,7 +524,7 @@ export default function MapWrapper({ session }: { session: Session }) {
 
   return (
     <>
-      <Toaster richColors position="top-center" /> {/* ← これを追加 */}
+      <Toaster richColors position="top-center" />
       <Header
         title="Memoria"
         rightActions={
@@ -606,6 +620,8 @@ export default function MapWrapper({ session }: { session: Session }) {
               const color =
                 emotionColors[memory.emotion as Emotion] || "#999999";
 
+              const isNew = newlyAddedPinId === memory.id;
+
               return (
                 <Marker
                   key={`memory-${memory.id}`}
@@ -621,6 +637,7 @@ export default function MapWrapper({ session }: { session: Session }) {
                           ? "scale-125"
                           : "hover:scale-110"
                       }
+                      ${isNew ? "animate-pin-drop" : ""}
                     `}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -687,7 +704,7 @@ export default function MapWrapper({ session }: { session: Session }) {
                           title="思い出を書き換える"
                         >
                           <svg
-                            xmlns="http://www.w3.org/2000/svg"
+                            xmlns="http://www.w.org/2000/svg"
                             viewBox="0 0 24 24"
                             fill="currentColor"
                           >
