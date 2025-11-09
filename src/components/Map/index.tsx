@@ -599,7 +599,14 @@ export default function MapWrapper({ session }: { session: Session }) {
                   anchor="bottom"
                 >
                   <div
-                    className="w-10 h-10 cursor-pointer transition-transform hover:scale-110"
+                    className={`
+                      w-10 h-10 cursor-pointer transition-transform duration-300 ease-out 
+                      ${
+                        isMobile && selectedMemory?.id === memory.id
+                          ? "scale-125"
+                          : "hover:scale-110"
+                      }
+                    `}
                     onClick={(e) => {
                       e.stopPropagation();
                       setClickedPoi(null);
