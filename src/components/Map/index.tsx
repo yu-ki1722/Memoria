@@ -22,8 +22,9 @@ import TagManagerButton from "../TagManagerButton";
 import MemorySearchButton from "../MemorySearchButton";
 import MemorySearchModal from "../MemorySearchModal";
 import { useRouter } from "next/navigation";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { Toaster, toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
 
 const emotionStyles = {
   "😊": { bg: "bg-emotion-happy", shadow: "shadow-glow-happy" },
@@ -107,6 +108,7 @@ export default function MapWrapper({ session }: { session: Session }) {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [newlyAddedPinId, setNewlyAddedPinId] = useState<number | null>(null);
+  const [zoomedImageUrl, setZoomedImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const checkDevice = () => {
@@ -717,7 +719,10 @@ export default function MapWrapper({ session }: { session: Session }) {
                           alt={selectedMemory.text}
                           width={256}
                           height={144}
-                          className="rounded-lg w-full aspect-video object-cover mb-3"
+                          className="rounded-lg w-full aspect-video object-cover mb-3 cursor-pointer"
+                          onClick={() =>
+                            setZoomedImageUrl(selectedMemory.image_url)
+                          }
                         />
                       )}
 
@@ -869,6 +874,43 @@ export default function MapWrapper({ session }: { session: Session }) {
         <CurrentLocationButton mapRef={mapRef} setIsLocating={setIsLocating} />
       </div>
       <Footer onTagManagerOpen={handleTagManagerClick} />{" "}
+      <AnimatePresence>
+        {zoomedImageUrl && (
+          <motion.div
+            className="fixed inset-0 z-[1100] flex items-center justify-center bg-stone-100/80 backdrop-blur-sm"
+            onClick={() => setZoomedImageUrl(null)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="relative"
+              onClick={(e) => e.stopPropagation()}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+            >
+              <Image
+                src={zoomedImageUrl}
+                alt="拡大画像"
+                width={1200}
+                height={900}
+                className="rounded-xl shadow-2xl object-contain max-w-[90vw] max-h-[80vh]"
+              />
+              <motion.button
+                className="absolute -top-4 -right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center text-gray-700 shadow-lg hover:bg-white transition-colors"
+                onClick={() => setZoomedImageUrl(null)}
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1, transition: { delay: 0.1 } }}
+                exit={{ opacity: 0, scale: 0.5 }}
+                title="画像を閉じる"
+              >
+                <X className="w-6 h-6" />
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
