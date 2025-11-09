@@ -49,6 +49,12 @@ type TagData = {
   created_at?: string | null;
 };
 
+const isStringVideo = (url: string) => {
+  const videoExtensions = [".mp4", ".webm", ".mov"];
+  const lowerUrl = url.toLowerCase();
+  return videoExtensions.some((ext) => lowerUrl.endsWith(ext));
+};
+
 export default function MemoryForm({
   onSave,
   user,
@@ -69,12 +75,26 @@ export default function MemoryForm({
   const [imageUrlPreview, setImageUrlPreview] = useState(
     initialImageUrl || null
   );
+  const [mediaType, setMediaType] = useState<"image" | "video" | null>(null);
+
   const [imageWasCleared, setImageWasCleared] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>(initialTags || []);
   const [availableTags, setAvailableTags] = useState<TagData[]>([]);
   const [newTagInput, setNewTagInput] = useState("");
   const [sortOption, setSortOption] = useState<SortOption>("newest");
+
+  useEffect(() => {
+    if (initialImageUrl) {
+      if (isStringVideo(initialImageUrl)) {
+        setMediaType("video");
+      } else {
+        setMediaType("image");
+      }
+    } else {
+      setMediaType(null);
+    }
+  }, [initialImageUrl]);
 
   useEffect(() => {
     const fetchUserTags = async () => {
@@ -157,6 +177,12 @@ export default function MemoryForm({
       const file = e.target.files[0];
       setImageFile(file);
       setImageUrlPreview(URL.createObjectURL(file));
+
+      if (file.type.startsWith("video/")) {
+        setMediaType("video");
+      } else if (file.type.startsWith("image/")) {
+        setMediaType("image");
+      }
     }
   };
 
@@ -165,6 +191,7 @@ export default function MemoryForm({
     setImageUrlPreview(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
     setImageWasCleared(true);
+    setMediaType(null);
   };
 
   const handleSubmit = (e: FormEvent) => {
@@ -278,7 +305,7 @@ export default function MemoryForm({
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <input
           type="file"
-          accept="image/*"
+          accept="image/*,video/*"
           onChange={handleFileChange}
           ref={fileInputRef}
           className="hidden"
@@ -296,13 +323,28 @@ export default function MemoryForm({
 
         {imageUrlPreview ? (
           <div className="relative inline-block group self-center w-full">
-            <Image
-              src={imageUrlPreview}
-              alt="Preview"
-              width={320}
-              height={320}
-              className="rounded-lg object-cover border-2 border-white/50 shadow-soft-glow w-full aspect-video"
-            />
+            {mediaType === "video" && (
+              <video
+                src={imageUrlPreview}
+                autoPlay
+                muted
+                loop
+                playsInline
+                controls
+                className="rounded-lg object-cover border-2 border-white/50 shadow-soft-glow w-full aspect-video"
+              />
+            )}
+
+            {mediaType === "image" && (
+              <Image
+                src={imageUrlPreview}
+                alt="Preview"
+                width={320}
+                height={320}
+                className="rounded-lg object-cover border-2 border-white/50 shadow-soft-glow w-full aspect-video"
+              />
+            )}
+
             <button
               type="button"
               onClick={handleClearImage}
@@ -318,7 +360,7 @@ export default function MemoryForm({
           >
             <Plus className="w-8 h-8 text-gray-400 mb-2" />
             <span className="text-sm font-semibold text-gray-600">
-              写真を追加
+              写真や動画を追加
             </span>
           </label>
         )}

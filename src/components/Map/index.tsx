@@ -80,6 +80,13 @@ type Place = {
   photos?: { photo_reference: string }[];
 };
 
+const isStringVideo = (url: string | null | undefined) => {
+  if (!url) return false;
+  const videoExtensions = [".mp4", ".webm", ".mov"];
+  const lowerUrl = url.toLowerCase();
+  return videoExtensions.some((ext) => lowerUrl.endsWith(ext));
+};
+
 export default function MapWrapper({ session }: { session: Session }) {
   console.log("Mapbox Token:", process.env.NEXT_PUBLIC_MAPBOX_TOKEN);
   const [memories, setMemories] = useState<Memory[]>([]);
@@ -108,7 +115,8 @@ export default function MapWrapper({ session }: { session: Session }) {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [newlyAddedPinId, setNewlyAddedPinId] = useState<number | null>(null);
-  const [zoomedImageUrl, setZoomedImageUrl] = useState<string | null>(null);
+
+  const [zoomedMediaUrl, setZoomedMediaUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const checkDevice = () => {
@@ -292,8 +300,8 @@ export default function MapWrapper({ session }: { session: Session }) {
     setNewMemoryLocation(null);
 
     const centerPadding = isMobile
-      ? { top: 56, bottom: 56, left: 0, right: 0 } // モバイルのヘッダー/フッター
-      : { top: 64, bottom: 0, left: 0, right: 0 }; // PCのヘッダー
+      ? { top: 56, bottom: 56, left: 0, right: 0 }
+      : { top: 64, bottom: 0, left: 0, right: 0 };
 
     mapRef.current?.flyTo({
       center: [data.longitude, data.latitude],
@@ -713,18 +721,31 @@ export default function MapWrapper({ session }: { session: Session }) {
                         </div>
                       </div>
 
-                      {selectedMemory.image_url && (
-                        <Image
-                          src={selectedMemory.image_url}
-                          alt={selectedMemory.text}
-                          width={256}
-                          height={144}
-                          className="rounded-lg w-full aspect-video object-cover mb-3 cursor-pointer"
-                          onClick={() =>
-                            setZoomedImageUrl(selectedMemory.image_url)
-                          }
-                        />
-                      )}
+                      {selectedMemory.image_url &&
+                        (isStringVideo(selectedMemory.image_url) ? (
+                          <video
+                            src={selectedMemory.image_url}
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
+                            className="rounded-lg w-full aspect-video object-cover mb-3 cursor-pointer"
+                            onClick={() =>
+                              setZoomedMediaUrl(selectedMemory.image_url)
+                            }
+                          />
+                        ) : (
+                          <Image
+                            src={selectedMemory.image_url}
+                            alt={selectedMemory.text}
+                            width={256}
+                            height={144}
+                            className="rounded-lg w-full aspect-video object-cover mb-3 cursor-pointer"
+                            onClick={() =>
+                              setZoomedMediaUrl(selectedMemory.image_url)
+                            }
+                          />
+                        ))}
 
                       <p className="text-gray-800 text-base leading-relaxed mb-3 break-words text-center">
                         {selectedMemory.text}
@@ -875,10 +896,10 @@ export default function MapWrapper({ session }: { session: Session }) {
       </div>
       <Footer onTagManagerOpen={handleTagManagerClick} />{" "}
       <AnimatePresence>
-        {zoomedImageUrl && (
+        {zoomedMediaUrl && (
           <motion.div
             className="fixed inset-0 z-[1100] flex items-center justify-center bg-stone-100/80 backdrop-blur-sm"
-            onClick={() => setZoomedImageUrl(null)}
+            onClick={() => setZoomedMediaUrl(null)}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -890,16 +911,27 @@ export default function MapWrapper({ session }: { session: Session }) {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
             >
-              <Image
-                src={zoomedImageUrl}
-                alt="拡大画像"
-                width={1200}
-                height={900}
-                className="rounded-xl shadow-2xl object-contain max-w-[90vw] max-h-[80vh]"
-              />
+              {isStringVideo(zoomedMediaUrl) ? (
+                <video
+                  src={zoomedMediaUrl}
+                  autoPlay
+                  controls
+                  playsInline
+                  className="rounded-xl shadow-2xl object-contain max-w-[90vw] max-h-[80vh]"
+                />
+              ) : (
+                <Image
+                  src={zoomedMediaUrl}
+                  alt="拡大画像"
+                  width={1200}
+                  height={900}
+                  className="rounded-xl shadow-2xl object-contain max-w-[90vw] max-h-[80vh]"
+                />
+              )}
+
               <motion.button
                 className="absolute -top-4 -right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center text-gray-700 shadow-lg hover:bg-white transition-colors"
-                onClick={() => setZoomedImageUrl(null)}
+                onClick={() => setZoomedMediaUrl(null)}
                 initial={{ opacity: 0, scale: 0.5 }}
                 animate={{ opacity: 1, scale: 1, transition: { delay: 0.1 } }}
                 exit={{ opacity: 0, scale: 0.5 }}
