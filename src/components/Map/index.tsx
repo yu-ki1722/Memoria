@@ -647,6 +647,12 @@ export default function MapWrapper({ session }: { session: Session }) {
             initialViewState={initialView}
             style={{ width: "100%", height: "100%" }}
             mapStyle="mapbox://styles/yu-ki1722/cmh2dk0dm00el01srfg7yfpkt"
+            onLoad={() => {
+              if (mapRef.current) {
+                const map = mapRef.current.getMap();
+                map.setLanguage("ja");
+              }
+            }}
             onClick={handleMapClick}
           >
             <RealtimeLocationMarker />
@@ -877,19 +883,21 @@ export default function MapWrapper({ session }: { session: Session }) {
                 />
               </Popup>
             )}
-            {clickedPoi && (
-              <PlaceDetailModal
-                place={clickedPoi}
-                onClose={() => setClickedPoi(null)}
-                onAddMemory={() => {
-                  setNewMemoryLocation({
-                    lng: clickedPoi.lng,
-                    lat: clickedPoi.lat,
-                  });
-                  setClickedPoi(null);
-                }}
-              />
-            )}
+            <AnimatePresence>
+              {clickedPoi && (
+                <PlaceDetailModal
+                  place={clickedPoi}
+                  onClose={() => setClickedPoi(null)}
+                  onAddMemory={() => {
+                    setNewMemoryLocation({
+                      lng: clickedPoi.lng,
+                      lat: clickedPoi.lat,
+                    });
+                    setClickedPoi(null);
+                  }}
+                />
+              )}
+            </AnimatePresence>
           </Map>
         )}
         <CurrentLocationButton mapRef={mapRef} setIsLocating={setIsLocating} />
