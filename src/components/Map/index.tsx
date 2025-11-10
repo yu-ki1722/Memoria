@@ -647,6 +647,12 @@ export default function MapWrapper({ session }: { session: Session }) {
             initialViewState={initialView}
             style={{ width: "100%", height: "100%" }}
             mapStyle="mapbox://styles/yu-ki1722/cmh2dk0dm00el01srfg7yfpkt"
+            onLoad={() => {
+              if (mapRef.current) {
+                const map = mapRef.current.getMap();
+                map.setLanguage("ja");
+              }
+            }}
             onClick={handleMapClick}
           >
             <RealtimeLocationMarker />
