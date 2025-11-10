@@ -163,7 +163,7 @@ export default function PlaceSearchModal({
               fixed md:right-0 md:top-0 md:w-[400px] md:h-full
               bottom-0 w-full h-[70vh]
               bg-white rounded-t-2xl md:rounded-none shadow-xl
-              z-[2000] flex flex-col overflow-hidden border-l border-black/10
+              z-[2000] flex flex-col overflow-hidden border-l border-gray-300
             "
             initial={
               isMobile ? { y: "100%", opacity: 0 } : { x: "100%", opacity: 0 }
@@ -198,15 +198,13 @@ export default function PlaceSearchModal({
               </div>
             )}
 
-            <div className="p-4 border-b border-black/10 flex justify-between items-center">
-              <h2 className="text-lg font-semibold text-memoria-text">
+            <div className="p-4 border-b border-gray-300 flex justify-between items-center">
+              <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <Search size={20} className="text-memoria-secondary" />
                 {selectedPlace ? "場所の詳細" : "場所検索"}
               </h2>
               <button onClick={onClose}>
-                <X
-                  size={24}
-                  className="text-memoria-text/60 hover:text-memoria-primary"
-                />
+                <X size={24} className="text-gray-500 hover:text-gray-800" />
               </button>
             </div>
 
@@ -238,15 +236,13 @@ export default function PlaceSearchModal({
                                    text-white text-sm font-semibold w-10 h-10 rounded-full transition-colors
                                    flex items-center justify-center"
                       >
-                        <Search size={20} className="text-gray-700" />{" "}
+                        <Search size={20} className="text-gray-700" />
                       </button>
                     </div>
 
-                    {loading && (
-                      <p className="text-memoria-text/70">検索中...</p>
-                    )}
+                    {loading && <p className="text-gray-600">検索中...</p>}
                     {!loading && results.length === 0 && (
-                      <p className="text-memoria-text/50 text-sm">
+                      <p className="text-gray-400 text-sm">
                         現在地付近の施設を取得中...
                       </p>
                     )}
@@ -256,18 +252,18 @@ export default function PlaceSearchModal({
                         <motion.div
                           layoutId={place.place_id}
                           key={place.place_id}
-                          className="p-3 border border-black/10 rounded-lg hover:bg-white/30 cursor-pointer"
+                          className="p-3 border border-gray-300 rounded-lg hover:bg-gray-100 cursor-pointer"
                           onClick={() => handleSelectPlace(place)}
                           whileHover={{ scale: 1.02 }}
                         >
-                          <p className="font-medium text-sm text-memoria-text">
+                          <p className="font-medium text-sm text-gray-800">
                             {place.name}
                           </p>
-                          <p className="text-xs text-memoria-text/70">
+                          <p className="text-xs text-gray-600">
                             {place.formatted_address}
                           </p>
                           {place.distance && !input.trim() && (
-                            <p className="text-xs text-memoria-text/60">
+                            <p className="text-xs text-gray-500">
                               約 {place.distance}m
                             </p>
                           )}
@@ -286,15 +282,15 @@ export default function PlaceSearchModal({
                   >
                     <button
                       onClick={() => setSelectedPlace(null)}
-                      className="flex items-center gap-1 text-memoria-primary hover:text-memoria-primary-dark text-sm"
+                      className="flex items-center gap-1 text-gray-700 hover:text-gray-900 text-sm"
                     >
                       <ArrowLeft size={16} /> 検索結果に戻る
                     </button>
 
-                    <h3 className="text-xl font-semibold text-memoria-text">
+                    <h3 className="text-xl font-semibold text-gray-800">
                       {selectedPlace.name}
                     </h3>
-                    <p className="text-sm text-memoria-text/80">
+                    <p className="text-sm text-gray-700">
                       {selectedPlace.formatted_address}
                     </p>
 
@@ -313,13 +309,13 @@ export default function PlaceSearchModal({
                       </p>
                     )}
 
-                    <div className="border-t border-black/10 pt-4">
+                    <div className="border-t border-gray-300 pt-4">
                       <button
                         onClick={() => {
                           onSelectPlace(selectedPlace);
                           onClose();
                         }}
-                        className="bg-memoria-primary hover:bg-memoria-primary-dark text-white text-base font-bold px-4 py-3 rounded-lg w-full transition-colors"
+                        className="bg-gray-700 hover:bg-gray-800 text-white text-base font-bold px-4 py-3 rounded-lg w-full transition-colors"
                       >
                         この場所に思い出を記録する
                       </button>
