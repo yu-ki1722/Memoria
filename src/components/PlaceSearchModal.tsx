@@ -1,6 +1,7 @@
 "use client";
+
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, type PanInfo } from "framer-motion";
 import { X, Search, ArrowLeft } from "lucide-react";
 
 type Props = {
@@ -32,6 +33,14 @@ export default function PlaceSearchModal({
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(
     null
   );
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const handleSearch = async () => {
     if (!location) {
@@ -123,6 +132,21 @@ export default function PlaceSearchModal({
     onSelectPlace(place);
   };
 
+  const DRAG_THRESHOLD = 100;
+  const VELOCITY_THRESHOLD = 500;
+
+  const handleDragEnd = (
+    event: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo
+  ) => {
+    if (
+      info.offset.y > DRAG_THRESHOLD ||
+      info.velocity.y > VELOCITY_THRESHOLD
+    ) {
+      onClose();
+    }
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -136,22 +160,14 @@ export default function PlaceSearchModal({
           />
           <motion.div
             className="
-    fixed md:right-0 md:top-0 md:w-[400px] md:h-full
-    bottom-0 w-full h-[70vh]
-    bg-memoria-background rounded-t-2xl md:rounded-none shadow-xl
-    z-[2000] flex flex-col overflow-hidden border-l border-black/10
-  "
-            initial={{
-              x:
-                typeof window !== "undefined" && window.innerWidth >= 768
-                  ? "100%"
-                  : 0,
-              y:
-                typeof window !== "undefined" && window.innerWidth < 768
-                  ? "100%"
-                  : 0,
-              opacity: 0,
-            }}
+              fixed md:right-0 md:top-0 md:w-[400px] md:h-full
+              bottom-0 w-full h-[70vh]
+              bg-memoria-background rounded-t-2xl md:rounded-none shadow-xl
+              z-[2000] flex flex-col overflow-hidden border-l border-black/10
+            "
+            initial={
+              isMobile ? { y: "100%", opacity: 0 } : { x: "100%", opacity: 0 }
+            }
             animate={{
               x: 0,
               y: 0,
@@ -164,22 +180,24 @@ export default function PlaceSearchModal({
                 ease: "easeOut",
               },
             }}
-            exit={{
-              x:
-                typeof window !== "undefined" && window.innerWidth >= 768
-                  ? "100%"
-                  : 0,
-              y:
-                typeof window !== "undefined" && window.innerWidth < 768
-                  ? "100%"
-                  : 0,
-              opacity: 0,
-              transition: {
-                duration: 0.35,
-                ease: "easeInOut",
-              },
-            }}
+            exit={
+              isMobile ? { y: "100%", opacity: 0 } : { x: "100%", opacity: 0 }
+            }
+            {...(isMobile
+              ? {
+                  drag: "y",
+                  dragConstraints: { top: 0 },
+                  dragElastic: 0.1,
+                  onDragEnd: handleDragEnd,
+                }
+              : {})}
           >
+            {isMobile && (
+              <div className="flex-shrink-0 flex justify-center items-center pt-3 pb-2">
+                <div className="w-12 h-1.5 bg-gray-300 rounded-full"></div>
+              </div>
+            )}
+
             <div className="p-4 border-b border-black/10 flex justify-between items-center">
               <h2 className="text-lg font-semibold text-memoria-text">
                 {selectedPlace ? "場所の詳細" : "場所検索"}
@@ -211,8 +229,8 @@ export default function PlaceSearchModal({
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                         className="flex-1 px-3 py-2 border border-black/10 rounded-lg text-sm 
-                                   focus:ring-2 focus:ring-memoria-secondary outline-none
-                                   bg-white/50 text-memoria-text placeholder:text-memoria-text/50"
+                                    focus:ring-2 focus:ring-memoria-secondary outline-none
+                                    bg-white/50 text-memoria-text placeholder:text-memoria-text/50"
                       />
                       <button
                         onClick={handleSearch}
