@@ -69,7 +69,7 @@ export default function PlaceDetailModal({
         className="
           fixed bottom-0 md:bottom-auto md:right-0
           w-full md:w-[420px] h-[70vh] md:h-full
-          bg-memoria-background rounded-t-2xl md:rounded-none shadow-2xl
+          bg-white rounded-t-2xl md:rounded-none shadow-2xl  /* ★ 1. bg-memoria-background を bg-white に変更 */
           z-[2000] overflow-y-auto border-l border-black/10
           flex flex-col
         "
@@ -117,11 +117,11 @@ export default function PlaceDetailModal({
           </div>
         )}
 
-        <div className="p-4 border-b border-black/10 flex justify-between items-center bg-memoria-background">
+        <div className="p-4 border-b border-black/10 flex items-center bg-white">
+          {" "}
           <h2 className="text-lg font-semibold text-memoria-text">
             場所の詳細
           </h2>
-
           <button onClick={onClose} className="ml-auto">
             <X
               size={24}
