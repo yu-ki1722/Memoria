@@ -651,6 +651,9 @@ export default function MapWrapper({ session }: { session: Session }) {
               if (mapRef.current) {
                 const map = mapRef.current.getMap();
                 map.setLanguage("ja");
+                map.setConfigProperty("basemap", "showPlaceLabels", false);
+                map.setConfigProperty("basemap", "showTransitLabels", false);
+                map.setConfigProperty("basemap", "showRoadLabels", false);
               }
             }}
             onClick={handleMapClick}
