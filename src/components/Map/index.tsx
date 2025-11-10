@@ -877,19 +877,21 @@ export default function MapWrapper({ session }: { session: Session }) {
                 />
               </Popup>
             )}
-            {clickedPoi && (
-              <PlaceDetailModal
-                place={clickedPoi}
-                onClose={() => setClickedPoi(null)}
-                onAddMemory={() => {
-                  setNewMemoryLocation({
-                    lng: clickedPoi.lng,
-                    lat: clickedPoi.lat,
-                  });
-                  setClickedPoi(null);
-                }}
-              />
-            )}
+            <AnimatePresence>
+              {clickedPoi && (
+                <PlaceDetailModal
+                  place={clickedPoi}
+                  onClose={() => setClickedPoi(null)}
+                  onAddMemory={() => {
+                    setNewMemoryLocation({
+                      lng: clickedPoi.lng,
+                      lat: clickedPoi.lat,
+                    });
+                    setClickedPoi(null);
+                  }}
+                />
+              )}
+            </AnimatePresence>
           </Map>
         )}
         <CurrentLocationButton mapRef={mapRef} setIsLocating={setIsLocating} />

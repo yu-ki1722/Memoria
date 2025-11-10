@@ -1,8 +1,9 @@
 "use client";
 import Image from "next/image";
 import Button from "./Button";
-import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ChevronDown, ChevronUp } from "lucide-react";
+import { motion, type PanInfo } from "framer-motion";
+import { ChevronDown, ChevronUp, X } from "lucide-react";
+import { useState, useEffect } from "react";
 
 type Props = {
   place: {
@@ -28,15 +29,38 @@ export default function PlaceDetailModal({
   onAddMemory,
 }: Props) {
   const uniqueKey = place.placeId || `${place.lat}-${place.lng}`;
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  const DRAG_THRESHOLD = 100;
+  const VELOCITY_THRESHOLD = 500;
+
+  const handleDragEnd = (
+    event: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo
+  ) => {
+    if (
+      info.offset.y > DRAG_THRESHOLD ||
+      info.velocity.y > VELOCITY_THRESHOLD
+    ) {
+      onClose();
+    }
+  };
 
   return (
-    <AnimatePresence>
+    <>
       <motion.div
         key={`${uniqueKey}-overlay`}
         className="fixed inset-0 bg-black/30 z-[1999]"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
+        exit={{ opacity: 0, transition: { duration: 0.3 } }}
         onClick={onClose}
       />
 
@@ -49,24 +73,61 @@ export default function PlaceDetailModal({
           z-[2000] overflow-y-auto border-l border-black/10
           flex flex-col
         "
-        initial={{ y: "100%", opacity: 0 }}
-        animate={{
-          y: 0,
-          opacity: 1,
-          transition: { type: "spring", damping: 25, stiffness: 200 },
+        initial={{
+          x:
+            typeof window !== "undefined" && window.innerWidth >= 768
+              ? "100%"
+              : 0,
+          y:
+            typeof window !== "undefined" && window.innerWidth < 768
+              ? "100%"
+              : 0,
         }}
-        exit={{ y: "100%", opacity: 0 }}
+        animate={{
+          x: 0,
+          y: 0,
+        }}
+        exit={{
+          x:
+            typeof window !== "undefined" && window.innerWidth >= 768
+              ? "100%"
+              : 0,
+          y:
+            typeof window !== "undefined" && window.innerWidth < 768
+              ? "100%"
+              : 0,
+        }}
+        transition={{
+          type: "spring",
+          stiffness: 250,
+          damping: 30,
+        }}
+        {...(isMobile
+          ? {
+              drag: "y",
+              dragConstraints: { top: 0 },
+              dragElastic: 0.1,
+              onDragEnd: handleDragEnd,
+            }
+          : {})}
       >
-        <div className="p-4 border-b border-black/10 flex items-center bg-memoria-background">
-          <button onClick={onClose} className="mr-3">
-            <ArrowLeft
-              size={20}
+        {isMobile && (
+          <div className="flex-shrink-0 flex justify-center items-center pt-3 pb-2">
+            <div className="w-12 h-1.5 bg-gray-300 rounded-full"></div>
+          </div>
+        )}
+
+        <div className="p-4 border-b border-black/10 flex justify-between items-center bg-memoria-background">
+          <h2 className="text-lg font-semibold text-memoria-text">
+            場所の詳細
+          </h2>
+
+          <button onClick={onClose} className="ml-auto">
+            <X
+              size={24}
               className="text-memoria-text/60 hover:text-memoria-primary"
             />
           </button>
-          <h2 className="text-lg font-semibold text-memoria-text flex-1">
-            場所の詳細
-          </h2>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
@@ -115,7 +176,7 @@ export default function PlaceDetailModal({
             {place.googleMapUrl && (
               <Button
                 variant="gradient"
-                className="w-full bg-gradient-to-r from-[#a8e0c4] to-[#8bc4ed] text-white rounded-full py-3 shadow-md" // 画像2枚目のグラデーション色とrounded-fullを適用
+                className="w-full bg-gradient-to-r from-[#a8e0c4] to-[#8bc4ed] text-white rounded-full py-3 shadow-md"
                 onClick={() => window.open(place.googleMapUrl!, "_blank")}
               >
                 Googleマップで開く
@@ -124,7 +185,7 @@ export default function PlaceDetailModal({
             {place.website && (
               <Button
                 variant="gradient"
-                className="w-full bg-gradient-to-r from-[#D5B0ED] to-[#B099DD] text-white rounded-full py-3 shadow-md" // 画像1枚目のグラデーション色とrounded-fullを適用
+                className="w-full bg-gradient-to-r from-[#D5B0ED] to-[#B099DD] text-white rounded-full py-3 shadow-md"
                 onClick={() => window.open(place.website!, "_blank")}
               >
                 公式サイト
@@ -136,7 +197,7 @@ export default function PlaceDetailModal({
             <div className="mt-6 py-3 text-lg">
               <Button
                 variant="gradient"
-                className="w-full bg-gradient-to-r from-[#f9bbb6] to-[#E897A8] text-white rounded-full py-3 shadow-lg shadow-pink-200/50" // 画像2枚目のグラデーション色とrounded-full、影を適用
+                className="w-full bg-gradient-to-r from-[#f9bbb6] to-[#E897A8] text-white rounded-full py-3 shadow-lg shadow-pink-200/50"
                 onClick={onAddMemory}
               >
                 この場所に思い出を記録する
@@ -145,6 +206,6 @@ export default function PlaceDetailModal({
           )}
         </div>
       </motion.div>
-    </AnimatePresence>
+    </>
   );
 }
