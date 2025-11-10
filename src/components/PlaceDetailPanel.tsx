@@ -2,7 +2,7 @@
 import Image from "next/image";
 import Button from "./Button";
 import { motion, type PanInfo } from "framer-motion";
-import { ChevronDown, ChevronUp, X } from "lucide-react";
+import { ChevronDown, ChevronUp, X, Info } from "lucide-react";
 import { useState, useEffect } from "react";
 
 type Props = {
@@ -69,7 +69,7 @@ export default function PlaceDetailModal({
         className="
           fixed bottom-0 md:bottom-auto md:right-0
           w-full md:w-[420px] h-[70vh] md:h-full
-          bg-white rounded-t-2xl md:rounded-none shadow-2xl  /* ★ 1. bg-memoria-background を bg-white に変更 */
+          bg-white rounded-t-2xl md:rounded-none shadow-2xl  
           z-[2000] overflow-y-auto border-l border-black/10
           flex flex-col
         "
@@ -119,7 +119,9 @@ export default function PlaceDetailModal({
 
         <div className="p-4 border-b border-black/10 flex items-center bg-white">
           {" "}
-          <h2 className="text-lg font-semibold text-memoria-text">
+          <h2 className="text-lg font-semibold text-memoria-text flex items-center gap-2">
+            {" "}
+            <Info size={20} className="text-memoria-secondary" />
             場所の詳細
           </h2>
           <button onClick={onClose} className="ml-auto">
