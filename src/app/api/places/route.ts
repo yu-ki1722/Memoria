@@ -1,3 +1,5 @@
+// src/app/api/places/route.ts
+
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
@@ -13,7 +15,7 @@ export async function GET(request: Request) {
 
   const searchUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=100&keyword=${encodeURIComponent(
     keyword || ""
-  )}&key=${apiKey}`;
+  )}&language=ja&key=${apiKey}`;
 
   try {
     const searchRes = await fetch(searchUrl);
@@ -25,11 +27,12 @@ export async function GET(request: Request) {
 
     const placeId = searchData.results[0].place_id;
 
-    const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,formatted_phone_number,website,opening_hours,rating,user_ratings_total,url,photos&key=${apiKey}`;
+    const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,formatted_phone_number,website,opening_hours,rating,user_ratings_total,url,photos&language=ja&key=${apiKey}`;
+
     const detailsRes = await fetch(detailsUrl);
     const detailsData = await detailsRes.json();
 
-    return NextResponse.json(detailsData);
+    return NextResponse.json({ status: "OK", result: detailsData.result });
   } catch (error) {
     console.error("Google Places error:", error);
     return NextResponse.json({ error: "Google API error" }, { status: 500 });
