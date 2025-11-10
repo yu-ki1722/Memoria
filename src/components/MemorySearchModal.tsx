@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, type PanInfo } from "framer-motion";
 import { Search, X, Star } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -182,6 +182,21 @@ export default function MemorySearchModal({
     onClose();
   };
 
+  const DRAG_THRESHOLD = 100;
+  const VELOCITY_THRESHOLD = 500;
+
+  const handleDragEnd = (
+    event: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo
+  ) => {
+    if (
+      info.offset.y > DRAG_THRESHOLD ||
+      info.velocity.y > VELOCITY_THRESHOLD
+    ) {
+      onClose();
+    }
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -204,8 +219,25 @@ export default function MemorySearchModal({
             animate={isMobile ? { y: 0 } : { x: 0 }}
             exit={isMobile ? { y: "100%" } : { x: "100%" }}
             transition={{ type: "spring", stiffness: 250, damping: 30 }}
+            {...(isMobile
+              ? {
+                  drag: "y",
+                  dragConstraints: { top: 0 },
+                  dragElastic: 0.1,
+                  onDragEnd: handleDragEnd,
+                }
+              : {})}
           >
             <div className="flex flex-col h-full">
+              {isMobile && (
+                <div
+                  className="flex-shrink-0 flex justify-center items-center pt-3 pb-2"
+                  style={{ cursor: "grab" }}
+                >
+                  <div className="w-12 h-1.5 bg-gray-300 rounded-full"></div>
+                </div>
+              )}
+
               <div className="flex justify-between items-center border-b px-6 py-4 flex-shrink-0 bg-white">
                 <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
                   <Search size={20} className="text-blue-500" />
