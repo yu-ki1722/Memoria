@@ -220,23 +220,25 @@ export default function PlaceSearchModal({
                     exit={{ opacity: 0, y: -30 }}
                     transition={{ duration: 0.25 }}
                   >
-                    <div className="flex gap-2 items-center border-b border-black/10 pb-3 mb-3">
-                      <Search size={20} className="text-memoria-text/50" />
+                    <div className="relative w-full mb-3">
                       <input
                         type="text"
-                        placeholder="場所名・住所を入力（例：コンビニ、レストラン）"
+                        placeholder="場所名・住所を入力（例：コンビニ）"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                        className="flex-1 px-3 py-2 border border-black/10 rounded-lg text-sm 
-                                    focus:ring-2 focus:ring-memoria-secondary outline-none
-                                    bg-white/50 text-memoria-text placeholder:text-memoria-text/50"
+                        className="w-full px-4 py-3 pl-4 pr-14 border border-gray-300 rounded-full text-sm 
+                                   focus:ring-2 focus:ring-memoria-secondary outline-none
+                                   bg-gray-50 text-gray-800 placeholder:text-gray-500"
                       />
                       <button
                         onClick={handleSearch}
-                        className="bg-memoria-secondary hover:bg-memoria-secondary-dark text-white text-sm px-3 py-2 rounded-lg transition-colors"
+                        className="absolute right-1.5 top-1/2 -translate-y-1/2 
+                                   bg-transparent hover:bg-gray-100 
+                                   text-white text-sm font-semibold w-10 h-10 rounded-full transition-colors
+                                   flex items-center justify-center"
                       >
-                        検索
+                        <Search size={20} className="text-gray-700" />{" "}
                       </button>
                     </div>
 
