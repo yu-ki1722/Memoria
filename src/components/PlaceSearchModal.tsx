@@ -162,7 +162,7 @@ export default function PlaceSearchModal({
             className="
               fixed md:right-0 md:top-0 md:w-[400px] md:h-full
               bottom-0 w-full h-[70vh]
-              bg-memoria-background rounded-t-2xl md:rounded-none shadow-xl
+              bg-white rounded-t-2xl md:rounded-none shadow-xl
               z-[2000] flex flex-col overflow-hidden border-l border-black/10
             "
             initial={
