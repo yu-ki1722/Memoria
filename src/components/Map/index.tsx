@@ -55,6 +55,11 @@ type Memory = {
   user_id: string;
   image_url: string | null;
   tags: string[] | null;
+  prefecture?: string | null;
+  city?: string | null;
+  place_name?: string | null;
+  place_id?: string | null;
+  place_address?: string | null;
 };
 
 type ClickedPoi = {
@@ -770,6 +775,23 @@ export default function MapWrapper({ session }: { session: Session }) {
                       <p className="text-gray-800 text-base leading-relaxed mb-3 break-words text-center">
                         {selectedMemory.text}
                       </p>
+                      {(selectedMemory.prefecture ||
+                        selectedMemory.city ||
+                        selectedMemory.place_name) && (
+                        <div className="text-center text-xs text-gray-600/70 mb-3">
+                          <span>
+                            {selectedMemory.prefecture
+                              ? `${selectedMemory.prefecture} `
+                              : ""}
+                            {selectedMemory.city
+                              ? `${selectedMemory.city} `
+                              : ""}
+                            {selectedMemory.place_name
+                              ? `｜${selectedMemory.place_name}`
+                              : ""}
+                          </span>
+                        </div>
+                      )}
 
                       {selectedMemory.tags &&
                         selectedMemory.tags.length > 0 && (
