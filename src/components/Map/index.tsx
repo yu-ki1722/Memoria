@@ -562,12 +562,49 @@ export default function MapWrapper({ session }: { session: Session }) {
     const res = await fetch(url);
     const data = await res.json();
 
-    const context = data.features?.[0]?.context || [];
+    const feature = data.features?.[0];
+    const context = feature?.context || [];
+
     const prefecture =
       context.find((c: { id: string }) => c.id.startsWith("region"))?.text ||
       "";
-    const city =
+
+    let city = "";
+
+    const place =
       context.find((c: { id: string }) => c.id.startsWith("place"))?.text || "";
+
+    if (prefecture === "東京都" && place === "東京都") {
+      city =
+        context.find((c: { id: string }) => c.id.startsWith("district"))
+          ?.text ||
+        context.find((c: { id: string }) => c.id.startsWith("locality"))
+          ?.text ||
+        "";
+    } else {
+      city = place;
+    }
+
+    if (!city && feature?.place_type?.includes("place")) {
+      city = feature.text;
+    }
+    if (!city) {
+      city =
+        context.find((c: { id: string }) => c.id.startsWith("district"))
+          ?.text ||
+        context.find((c: { id: string }) => c.id.startsWith("locality"))
+          ?.text ||
+        "";
+    }
+    if (
+      city &&
+      !city.endsWith("市") &&
+      !city.endsWith("区") &&
+      feature?.text &&
+      (feature.text.endsWith("市") || feature.text.endsWith("区"))
+    ) {
+      city = feature.text;
+    }
 
     return { prefecture, city };
   };
