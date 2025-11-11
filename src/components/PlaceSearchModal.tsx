@@ -129,7 +129,6 @@ export default function PlaceSearchModal({
 
   const handleSelectPlace = (place: Place) => {
     setSelectedPlace(place);
-    onSelectPlace(place);
   };
 
   const DRAG_THRESHOLD = 100;

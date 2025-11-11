@@ -55,6 +55,11 @@ type Memory = {
   user_id: string;
   image_url: string | null;
   tags: string[] | null;
+  prefecture?: string | null;
+  city?: string | null;
+  place_name?: string | null;
+  place_id?: string | null;
+  place_address?: string | null;
 };
 
 type ClickedPoi = {
@@ -80,6 +85,14 @@ type Place = {
   photos?: { photo_reference: string }[];
 };
 
+type NewMemoryLocation = {
+  lat: number;
+  lng: number;
+  placeId?: string;
+  placeName?: string;
+  placeAddress?: string;
+};
+
 const isStringVideo = (url: string | null | undefined) => {
   if (!url) return false;
   const videoExtensions = [".mp4", ".webm", ".mov"];
@@ -91,10 +104,8 @@ export default function MapWrapper({ session }: { session: Session }) {
   console.log("Mapbox Token:", process.env.NEXT_PUBLIC_MAPBOX_TOKEN);
   const [memories, setMemories] = useState<Memory[]>([]);
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
-  const [newMemoryLocation, setNewMemoryLocation] = useState<{
-    lat: number;
-    lng: number;
-  } | null>(null);
+  const [newMemoryLocation, setNewMemoryLocation] =
+    useState<NewMemoryLocation | null>(null);
   const [editingMemory, setEditingMemory] = useState<number | null>(null);
   const [initialView, setInitialView] = useState<{
     latitude: number;
@@ -228,27 +239,9 @@ export default function MapWrapper({ session }: { session: Session }) {
   ) => {
     if (!newMemoryLocation || !session) return;
 
-    const fetchAddress = async (lat: number, lng: number) => {
-      const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${token}&language=ja`;
-      const res = await fetch(url);
-      const data = await res.json();
-
-      const context = data.features?.[0]?.context || [];
-      const prefecture =
-        context.find((c: { id: string }) => c.id.startsWith("region"))?.text ||
-        "";
-      const city =
-        context.find((c: { id: string }) => c.id.startsWith("place"))?.text ||
-        "";
-      const placeName = data.features?.[0]?.text || "";
-
-      return { prefecture, city, placeName };
-    };
-
-    const { prefecture, city, placeName } = await fetchAddress(
-      newMemoryLocation!.lat,
-      newMemoryLocation!.lng
+    const { prefecture, city } = await fetchAddress(
+      newMemoryLocation.lat,
+      newMemoryLocation.lng
     );
 
     let imageUrl: string | undefined = undefined;
@@ -272,9 +265,15 @@ export default function MapWrapper({ session }: { session: Session }) {
       imageUrl = urlData.publicUrl;
     }
 
-    const finalPlaceName =
-      placeName && placeName.trim() !== "" ? placeName : null;
+    let finalPlaceId: string | null = null;
+    let finalPlaceName: string | null = null;
+    let finalPlaceAddress: string | null = null;
 
+    if (newMemoryLocation.placeId) {
+      finalPlaceId = newMemoryLocation.placeId;
+      finalPlaceName = newMemoryLocation.placeName ?? null;
+      finalPlaceAddress = newMemoryLocation.placeAddress ?? null;
+    }
     const { data, error } = await supabase
       .from("memories")
       .insert([
@@ -283,18 +282,23 @@ export default function MapWrapper({ session }: { session: Session }) {
           text,
           user_id: session.user.id,
           image_url: imageUrl,
-          latitude: newMemoryLocation!.lat,
-          longitude: newMemoryLocation!.lng,
+          latitude: newMemoryLocation.lat,
+          longitude: newMemoryLocation.lng,
           tags,
           prefecture,
           city,
           place_name: finalPlaceName,
+          place_id: finalPlaceId,
+          place_address: finalPlaceAddress,
         },
       ])
       .select()
       .single();
 
-    if (error) return toast.error("保存失敗: " + error.message);
+    if (error) {
+      console.error("保存失敗:", error);
+      return toast.error("保存失敗: " + error.message);
+    }
 
     setMemories([...memories, data]);
     setNewMemoryLocation(null);
@@ -415,63 +419,61 @@ export default function MapWrapper({ session }: { session: Session }) {
       const res = await fetch(searchUrl);
       const data = await res.json();
 
-      if (data.status === "OK" && data.result) {
-        const place = data.result;
-        const photoRef = place.photos?.[0]?.photo_reference;
-        const photoUrl = photoRef
-          ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${photoRef}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
-          : null;
-
-        setClickedPoi({
-          lng,
-          lat,
-          name: place.name ?? mapboxName,
-          address: place.formatted_address ?? "住所情報なし",
-          rating: place.rating ?? null,
-          photoUrl,
-          phone: place.formatted_phone_number ?? null,
-          website: place.website ?? null,
-          hours: place.opening_hours?.weekday_text ?? [],
-          googleMapUrl: place.url ?? null,
-        });
-      } else {
+      if (data?.status !== "OK" || !data.result) {
+        console.warn("No place data:", data);
         setClickedPoi({ lng, lat, name: mapboxName, address: "詳細情報なし" });
+        return;
       }
+
+      const place = data.result;
+      const photoRef = place.photos?.[0]?.photo_reference;
+      const photoUrl = photoRef
+        ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${photoRef}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+        : null;
+
+      setClickedPoi({
+        lng,
+        lat,
+        name: place.name ?? mapboxName,
+        address: place.formatted_address ?? "住所情報なし",
+        rating: place.rating ?? null,
+        photoUrl,
+        placeId: place.place_id ?? null,
+        phone: place.formatted_phone_number ?? null,
+        website: place.website ?? null,
+        hours: place.opening_hours?.weekday_text ?? [],
+        googleMapUrl: place.url ?? null,
+      });
     } catch (err) {
-      console.error("Error:", err);
+      console.error("Error fetching Google place details:", err);
+      setClickedPoi({
+        lng,
+        lat,
+        name: mapboxName,
+        address: "詳細の取得に失敗",
+      });
     }
   };
 
-  const handleSelectPlace = async (place: Place) => {
+  const handleSelectPlace = (place: Place) => {
     if (!place.geometry?.location) return;
 
     const { lat, lng } = place.geometry.location;
-    mapRef.current?.flyTo({ center: [lng, lat], zoom: 16 });
 
-    try {
-      const res = await fetch(
-        `/api/places?lat=${lat}&lng=${lng}&keyword=${encodeURIComponent(
-          place.name
-        )}`
-      );
-      const data = await res.json();
+    mapRef.current?.flyTo({ center: [lng, lat], zoom: 16, duration: 1000 });
 
-      if (
-        data?.status === "OK" &&
-        Array.isArray(data.results) &&
-        data.results.length > 0
-      ) {
-        const detail = data.results[0];
-        const photoRef = detail.photos?.[0]?.photo_reference;
-        const photoUrl = photoRef
-          ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${photoRef}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
-          : null;
-      } else {
-        console.warn("Google API returned no results:", data);
-      }
-    } catch (error) {
-      console.error("詳細取得エラー:", error);
-    }
+    setNewMemoryLocation({
+      lat,
+      lng,
+      placeId: place.place_id,
+      placeName: place.name,
+      placeAddress: place.formatted_address,
+    });
+
+    setIsSearchOpen(false);
+    setClickedPoi(null);
+    setSelectedMemory(null);
+    setEditingMemory(null);
   };
 
   const handleMapClick = (event: MapMouseEvent) => {
@@ -485,14 +487,29 @@ export default function MapWrapper({ session }: { session: Session }) {
     const targetElement = event.originalEvent.target as HTMLElement;
     if (targetElement?.closest(".mapboxgl-marker, .mapboxgl-popup")) return;
 
-    const features = map.queryRenderedFeatures(event.point);
-    const poi = features.find((f) => f.properties && f.properties.name);
+    const features = map.queryRenderedFeatures(event.point); // ★ POIの可能性があるフィーチャを "filter" で全て探し出す
 
-    if (poi && poi.properties?.name) {
-      const name = poi.properties.name as string;
+    const poiFeatures = features.filter(
+      (f) =>
+        f.properties &&
+        (f.properties.name || f.properties.name_ja || f.properties.name_en)
+    );
+
+    let poiName: string | null = null;
+    let poi: mapboxgl.MapboxGeoJSONFeature | null = null;
+
+    if (poiFeatures.length > 0) {
+      poi = poiFeatures[0];
+      poiName =
+        poi.properties!.name ||
+        poi.properties!.name_ja ||
+        poi.properties!.name_en;
+    }
+
+    if (poi && poiName) {
       const { lng, lat } = event.lngLat;
 
-      if (clickedPoi && clickedPoi.name === name) {
+      if (clickedPoi && clickedPoi.name === poiName) {
         setClickedPoi(null);
         return;
       }
@@ -504,7 +521,7 @@ export default function MapWrapper({ session }: { session: Session }) {
           lat,
           name: "検索中...",
         });
-        fetchGooglePlaceDetails(lat, lng, name);
+        fetchGooglePlaceDetails(lat, lng, poiName!);
       }, 0);
 
       setNewMemoryLocation(null);
@@ -545,15 +562,51 @@ export default function MapWrapper({ session }: { session: Session }) {
     const res = await fetch(url);
     const data = await res.json();
 
-    const context = data.features?.[0]?.context || [];
+    const feature = data.features?.[0];
+    const context = feature?.context || [];
+
     const prefecture =
       context.find((c: { id: string }) => c.id.startsWith("region"))?.text ||
       "";
-    const city =
-      context.find((c: { id: string }) => c.id.startsWith("place"))?.text || "";
-    const placeName = data.features?.[0]?.text || "";
 
-    return { prefecture, city, placeName };
+    let city = "";
+
+    const place =
+      context.find((c: { id: string }) => c.id.startsWith("place"))?.text || "";
+
+    if (prefecture === "東京都" && place === "東京都") {
+      city =
+        context.find((c: { id: string }) => c.id.startsWith("district"))
+          ?.text ||
+        context.find((c: { id: string }) => c.id.startsWith("locality"))
+          ?.text ||
+        "";
+    } else {
+      city = place;
+    }
+
+    if (!city && feature?.place_type?.includes("place")) {
+      city = feature.text;
+    }
+    if (!city) {
+      city =
+        context.find((c: { id: string }) => c.id.startsWith("district"))
+          ?.text ||
+        context.find((c: { id: string }) => c.id.startsWith("locality"))
+          ?.text ||
+        "";
+    }
+    if (
+      city &&
+      !city.endsWith("市") &&
+      !city.endsWith("区") &&
+      feature?.text &&
+      (feature.text.endsWith("市") || feature.text.endsWith("区"))
+    ) {
+      city = feature.text;
+    }
+
+    return { prefecture, city };
   };
 
   return (
@@ -759,6 +812,23 @@ export default function MapWrapper({ session }: { session: Session }) {
                       <p className="text-gray-800 text-base leading-relaxed mb-3 break-words text-center">
                         {selectedMemory.text}
                       </p>
+                      {(selectedMemory.prefecture ||
+                        selectedMemory.city ||
+                        selectedMemory.place_name) && (
+                        <div className="text-center text-xs text-gray-600/70 mb-3">
+                          <span>
+                            {selectedMemory.prefecture
+                              ? `${selectedMemory.prefecture} `
+                              : ""}
+                            {selectedMemory.city
+                              ? `${selectedMemory.city} `
+                              : ""}
+                            {selectedMemory.place_name
+                              ? `｜${selectedMemory.place_name}`
+                              : ""}
+                          </span>
+                        </div>
+                      )}
 
                       {selectedMemory.tags &&
                         selectedMemory.tags.length > 0 && (
@@ -892,9 +962,19 @@ export default function MapWrapper({ session }: { session: Session }) {
                   place={clickedPoi}
                   onClose={() => setClickedPoi(null)}
                   onAddMemory={() => {
+                    if (!clickedPoi || !clickedPoi.placeId) {
+                      console.warn(
+                        "❌ placeId missing in clickedPoi:",
+                        clickedPoi
+                      );
+                      return;
+                    }
                     setNewMemoryLocation({
                       lng: clickedPoi.lng,
                       lat: clickedPoi.lat,
+                      placeId: clickedPoi.placeId,
+                      placeName: clickedPoi.name,
+                      placeAddress: clickedPoi.address,
                     });
                     setClickedPoi(null);
                   }}

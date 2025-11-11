@@ -1,5 +1,3 @@
-// src/app/api/places/route.ts
-
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
@@ -25,14 +23,20 @@ export async function GET(request: Request) {
       return NextResponse.json({ status: "ZERO_RESULTS", results: [] });
     }
 
-    const placeId = searchData.results[0].place_id;
+    const firstResult = searchData.results[0];
+    const placeId = firstResult.place_id;
 
     const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,formatted_phone_number,website,opening_hours,rating,user_ratings_total,url,photos&language=ja&key=${apiKey}`;
 
     const detailsRes = await fetch(detailsUrl);
     const detailsData = await detailsRes.json();
 
-    return NextResponse.json({ status: "OK", result: detailsData.result });
+    const mergedResult = {
+      ...detailsData.result,
+      place_id: placeId,
+    };
+
+    return NextResponse.json({ status: "OK", result: mergedResult });
   } catch (error) {
     console.error("Google Places error:", error);
     return NextResponse.json({ error: "Google API error" }, { status: 500 });
