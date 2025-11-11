@@ -450,36 +450,25 @@ export default function MapWrapper({ session }: { session: Session }) {
     }
   };
 
-  const handleSelectPlace = async (place: Place) => {
+  const handleSelectPlace = (place: Place) => {
     if (!place.geometry?.location) return;
 
     const { lat, lng } = place.geometry.location;
-    mapRef.current?.flyTo({ center: [lng, lat], zoom: 16 });
 
-    try {
-      const res = await fetch(
-        `/api/places?lat=${lat}&lng=${lng}&keyword=${encodeURIComponent(
-          place.name
-        )}`
-      );
-      const data = await res.json();
+    mapRef.current?.flyTo({ center: [lng, lat], zoom: 16, duration: 1000 });
 
-      if (
-        data?.status === "OK" &&
-        Array.isArray(data.results) &&
-        data.results.length > 0
-      ) {
-        const detail = data.results[0];
-        const photoRef = detail.photos?.[0]?.photo_reference;
-        const photoUrl = photoRef
-          ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${photoRef}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
-          : null;
-      } else {
-        console.warn("Google API returned no results:", data);
-      }
-    } catch (error) {
-      console.error("詳細取得エラー:", error);
-    }
+    setNewMemoryLocation({
+      lat,
+      lng,
+      placeId: place.place_id,
+      placeName: place.name,
+      placeAddress: place.formatted_address,
+    });
+
+    setIsSearchOpen(false);
+    setClickedPoi(null);
+    setSelectedMemory(null);
+    setEditingMemory(null);
   };
 
   const handleMapClick = (event: MapMouseEvent) => {
