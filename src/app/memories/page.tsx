@@ -5,7 +5,15 @@ import {
   createClientComponentClient,
   type Session,
 } from "@supabase/auth-helpers-nextjs";
-import { Loader2, ImageOff, MapPin, Calendar } from "lucide-react";
+import {
+  Loader2,
+  ImageOff,
+  MapPin,
+  Calendar,
+  List,
+  Columns2,
+  LayoutGrid,
+} from "lucide-react";
 import { motion, type Variants } from "framer-motion";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -66,7 +74,7 @@ export default function MemoriesPage() {
   const [session, setSession] = useState<Session | null>(null);
   const [memories, setMemories] = useState<Memory[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const [layout, setLayout] = useState<number>(1);
   useEffect(() => {
     const fetchSession = async () => {
       const { data } = await supabase.auth.getSession();
@@ -94,6 +102,18 @@ export default function MemoriesPage() {
     fetchMemories();
   }, [session, supabase]);
 
+  const layoutOptions = [
+    { value: 1, icon: List, label: "1列" },
+    { value: 2, icon: Columns2, label: "2列" },
+    { value: 4, icon: LayoutGrid, label: "4列" },
+  ];
+
+  const gridColsClass: { [key: number]: string } = {
+    1: "grid-cols-1",
+    2: "grid-cols-2",
+    4: "grid-cols-4",
+  };
+
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
     show: {
@@ -115,8 +135,26 @@ export default function MemoriesPage() {
   return (
     <>
       <Header title="思い出一覧" />
-      <main className="min-h-screen bg-[#fffefb] pt-20 pb-24 px-4 relative">
-        <div className="absolute inset-0 bg-[url('/paper-texture.png')] opacity-20 pointer-events-none"></div>
+      <main className="min-h-screen bg-[#fffefb] pt-16 pb-24 px-4 relative">
+        <div className="flex justify-end gap-2 mb-6 sticky top-16 z-20 py-2">
+          {layoutOptions.map((option) => (
+            <button
+              key={option.value}
+              onClick={() => setLayout(option.value)}
+              aria-label={option.label}
+              className={`
+                p-2 rounded-lg transition-all duration-200
+                ${
+                  layout === option.value
+                    ? "bg-gray-800 text-white shadow"
+                    : "text-gray-500 bg-white/70 backdrop-blur-sm shadow-md hover:bg-gray-100 hover:text-gray-700"
+                }
+              `}
+            >
+              <option.icon className="w-5 h-5" />
+            </button>
+          ))}
+        </div>
 
         {loading ? (
           <div className="flex justify-center items-center h-[60vh] text-gray-500">
@@ -132,7 +170,13 @@ export default function MemoriesPage() {
             variants={containerVariants}
             initial="hidden"
             animate="show"
-            className="max-w-md mx-auto flex flex-col gap-5 pb-10"
+            className={`
+              mx-auto grid ${gridColsClass[layout]} 
+              ${layout === 4 ? "gap-2" : "gap-4"} 
+              pb-10
+              transition-all duration-300
+              ${layout === 1 ? "max-w-md" : "max-w-5xl"}
+            `}
           >
             {memories.map((memory) => {
               const color = getEmotionColor(memory.emotion);
@@ -141,66 +185,102 @@ export default function MemoriesPage() {
                 "ja-JP"
               );
 
+              const isThumbnailView = layout === 4;
+
               return (
                 <motion.div
                   key={memory.id}
                   variants={cardVariants}
-                  className={`rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 ${color.bg}`}
+                  className={
+                    !isThumbnailView
+                      ? `rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 ${color.bg}`
+                      : "relative"
+                  }
                 >
                   {hasImage ? (
                     memory.image_url?.match(/\.(mp4|mov|webm|ogg)$/i) ? (
                       <video
                         src={memory.image_url!}
-                        controls
+                        controls={!isThumbnailView}
                         playsInline
                         preload="metadata"
-                        className="w-full h-52 object-cover bg-black"
+                        className={`w-full aspect-square object-cover bg-black ${
+                          isThumbnailView
+                            ? `rounded-lg shadow-md hover:shadow-xl transition-all duration-300`
+                            : ""
+                        }`}
                         onClick={(e) => e.stopPropagation()}
                       />
                     ) : (
                       <img
                         src={memory.image_url!}
                         alt={memory.text}
-                        className="w-full h-52 object-cover"
+                        className={`w-full aspect-square object-cover ${
+                          isThumbnailView
+                            ? `rounded-lg shadow-md hover:shadow-xl transition-all duration-300`
+                            : ""
+                        }`}
                       />
                     )
                   ) : (
-                    <div className="h-52 flex items-center justify-center bg-white/60">
+                    <div
+                      className={`relative aspect-square flex items-center justify-center ${
+                        isThumbnailView
+                          ? `rounded-lg shadow-md hover:shadow-xl transition-all duration-300 ${color.bg}`
+                          : "bg-white/60"
+                      }`}
+                    >
                       <ImageOff
-                        className={`w-12 h-12 ${color.accent} opacity-40`}
+                        className={`w-10 h-10 ${color.accent} ${
+                          isThumbnailView ? "opacity-60" : "opacity-40"
+                        }`}
                       />
                     </div>
                   )}
 
-                  <div className="p-4 pb-5">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-2xl">{memory.emotion}</span>
-                      <span
-                        className={`text-xs flex items-center gap-1 ${color.accent}`}
-                      >
-                        <Calendar size={14} />
-                        {date}
-                      </span>
-                    </div>
-
-                    <p
-                      className={`text-gray-700 text-[15px] leading-snug mt-1 line-clamp-2`}
-                    >
-                      {memory.text || "（タイトルなし）"}
-                    </p>
-
-                    {(memory.prefecture || memory.city) && (
-                      <div
-                        className={`flex items-center gap-1 mt-3 text-sm text-gray-500`}
-                      >
-                        <MapPin size={14} />
-                        <span>
-                          {memory.prefecture ?? ""}
-                          {memory.city ? ` ${memory.city}` : ""}
+                  {!isThumbnailView && (
+                    <div className="p-4 pb-5">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-2xl">{memory.emotion}</span>
+                        <span
+                          className={`text-xs flex items-center gap-1 ${color.accent}`}
+                        >
+                          <Calendar size={14} />
+                          {date}
                         </span>
                       </div>
-                    )}
-                  </div>
+
+                      <p
+                        className={`text-gray-700 text-[15px] leading-snug mt-1 line-clamp-2`}
+                      >
+                        {memory.text || "（タイトルなし）"}
+                      </p>
+
+                      {(memory.prefecture || memory.city) && (
+                        <div
+                          className={`flex items-center gap-1 mt-3 text-sm text-gray-500`}
+                        >
+                          <MapPin size={14} />
+                          <span>
+                            {memory.prefecture ?? ""}
+                            {memory.city ? ` ${memory.city}` : ""}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {isThumbnailView && (
+                    <span
+                      className="absolute -top-1 -left-1 text-xl z-10"
+                      style={{
+                        textShadow:
+                          "0px 2px 4px rgba(0, 0, 0, 0.2), 0px -1px 2px rgba(255, 255, 255, 0.1)",
+                      }}
+                    >
+                      {memory.emotion}
+                    </span>
+                  )}
                 </motion.div>
               );
             })}
