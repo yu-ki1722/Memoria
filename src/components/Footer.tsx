@@ -2,6 +2,7 @@
 
 import { Map, Tag, Images } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
+import { motion } from "framer-motion";
 
 type FooterProps = {
   onTagManagerOpen: () => void;
@@ -17,35 +18,38 @@ export default function Footer({ onTagManagerOpen }: FooterProps) {
 
   return (
     <footer className="fixed bottom-0 left-0 w-full h-16 bg-memoria-background/80 backdrop-blur-sm shadow-sm border-t border-gray-200 flex justify-around items-center z-50 md:hidden">
-      <button
+      <motion.button
         onClick={onTagManagerOpen}
+        whileTap={{ scale: 0.9, opacity: 0.8 }}
         className={`flex flex-col items-center ${
           pathname === "/tag-manager" ? activeClass : inactiveClass
         }`}
       >
         <Tag className="w-6 h-6 mb-1" />
         <span className="text-[10px] font-medium">タグ</span>
-      </button>
+      </motion.button>
 
-      <button
+      <motion.button
         onClick={() => router.push("/map")}
+        whileTap={{ scale: 0.9, opacity: 0.8 }}
         className={`flex flex-col items-center ${
           pathname === "/map" ? activeClass : inactiveClass
         }`}
       >
         <Map className="w-6 h-6 mb-1" />
         <span className="text-[10px] font-medium">マップ</span>
-      </button>
+      </motion.button>
 
-      <button
+      <motion.button
         onClick={() => router.push("/memories")}
+        whileTap={{ scale: 0.9, opacity: 0.8 }}
         className={`flex flex-col items-center ${
           pathname === "/memories" ? activeClass : inactiveClass
         }`}
       >
         <Images className="w-6 h-6 mb-1" />
         <span className="text-[10px] font-medium">思い出</span>
-      </button>
+      </motion.button>
     </footer>
   );
 }
