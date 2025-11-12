@@ -148,11 +148,22 @@ export default function MemoriesPage() {
                   className={`rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 ${color.bg}`}
                 >
                   {hasImage ? (
-                    <img
-                      src={memory.image_url!}
-                      alt={memory.text}
-                      className="w-full h-52 object-cover"
-                    />
+                    memory.image_url?.match(/\.(mp4|mov|webm|ogg)$/i) ? (
+                      <video
+                        src={memory.image_url!}
+                        controls
+                        playsInline
+                        preload="metadata"
+                        className="w-full h-52 object-cover bg-black"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    ) : (
+                      <img
+                        src={memory.image_url!}
+                        alt={memory.text}
+                        className="w-full h-52 object-cover"
+                      />
+                    )
                   ) : (
                     <div className="h-52 flex items-center justify-center bg-white/60">
                       <ImageOff
