@@ -14,9 +14,10 @@ import {
   Columns2,
   LayoutGrid,
 } from "lucide-react";
-import { motion, type Variants } from "framer-motion";
+import { motion, type Variants, AnimatePresence } from "framer-motion";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import MemoryDetailModal from "@/components/MemoryDetailModal";
 
 const getEmotionColor = (emotion: string) => {
   switch (emotion) {
@@ -67,6 +68,7 @@ type Memory = {
   city: string | null;
   facility: string | null;
   created_at: string;
+  tags: string[] | null;
 };
 
 export default function MemoriesPage() {
@@ -75,6 +77,8 @@ export default function MemoriesPage() {
   const [memories, setMemories] = useState<Memory[]>([]);
   const [loading, setLoading] = useState(true);
   const [layout, setLayout] = useState<number>(1);
+  const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null); // ★ 3. モーダル用の State
+
   useEffect(() => {
     const fetchSession = async () => {
       const { data } = await supabase.auth.getSession();
@@ -92,7 +96,7 @@ export default function MemoriesPage() {
           .select("*")
           .eq("user_id", session.user.id)
           .order("created_at", { ascending: false });
-        if (!error && data) setMemories(data);
+        if (!error && data) setMemories(data as Memory[]);
       } catch (err) {
         console.error(err);
       } finally {
@@ -136,6 +140,8 @@ export default function MemoriesPage() {
     <>
       <Header title="思い出一覧" />
       <main className="min-h-screen bg-[#fffefb] pt-16 pb-24 px-4 relative">
+        <div className="absolute inset-0 bg-[url('/paper-texture.png')] opacity-20 pointer-events-none"></div>
+
         <div className="flex justify-end gap-2 mb-6 sticky top-16 z-20 py-2">
           {layoutOptions.map((option) => (
             <button
@@ -184,18 +190,18 @@ export default function MemoriesPage() {
               const date = new Date(memory.created_at).toLocaleDateString(
                 "ja-JP"
               );
-
               const isThumbnailView = layout === 4;
 
               return (
                 <motion.div
                   key={memory.id}
                   variants={cardVariants}
-                  className={
+                  onClick={() => setSelectedMemory(memory)}
+                  className={`cursor-pointer ${
                     !isThumbnailView
                       ? `rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 ${color.bg}`
                       : "relative"
-                  }
+                  }`}
                 >
                   {hasImage ? (
                     memory.image_url?.match(/\.(mp4|mov|webm|ogg)$/i) ? (
@@ -205,20 +211,19 @@ export default function MemoriesPage() {
                         playsInline
                         preload="metadata"
                         className={`w-full aspect-square object-cover bg-black ${
-                          isThumbnailView
-                            ? `rounded-lg shadow-md hover:shadow-xl transition-all duration-300`
-                            : ""
+                          isThumbnailView ? "rounded-lg shadow-md" : ""
                         }`}
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          if (isThumbnailView) return;
+                          e.stopPropagation();
+                        }}
                       />
                     ) : (
                       <img
                         src={memory.image_url!}
                         alt={memory.text}
                         className={`w-full aspect-square object-cover ${
-                          isThumbnailView
-                            ? `rounded-lg shadow-md hover:shadow-xl transition-all duration-300`
-                            : ""
+                          isThumbnailView ? "rounded-lg shadow-md" : ""
                         }`}
                       />
                     )
@@ -226,7 +231,7 @@ export default function MemoriesPage() {
                     <div
                       className={`relative aspect-square flex items-center justify-center ${
                         isThumbnailView
-                          ? `rounded-lg shadow-md hover:shadow-xl transition-all duration-300 ${color.bg}`
+                          ? `rounded-lg shadow-md ${color.bg}`
                           : "bg-white/60"
                       }`}
                     >
@@ -249,13 +254,11 @@ export default function MemoriesPage() {
                           {date}
                         </span>
                       </div>
-
                       <p
                         className={`text-gray-700 text-[15px] leading-snug mt-1 line-clamp-2`}
                       >
                         {memory.text || "（タイトルなし）"}
                       </p>
-
                       {(memory.prefecture || memory.city) && (
                         <div
                           className={`flex items-center gap-1 mt-3 text-sm text-gray-500`}
@@ -286,6 +289,16 @@ export default function MemoriesPage() {
             })}
           </motion.div>
         )}
+
+        <AnimatePresence>
+          {selectedMemory && (
+            <MemoryDetailModal
+              memory={selectedMemory}
+              onClose={() => setSelectedMemory(null)}
+              getEmotionColor={getEmotionColor}
+            />
+          )}
+        </AnimatePresence>
       </main>
       <Footer onTagManagerOpen={() => {}} />
     </>
