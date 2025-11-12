@@ -1,6 +1,7 @@
 "use client";
+
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, type PanInfo } from "framer-motion";
 import { X, Search, ArrowLeft } from "lucide-react";
 
 type Props = {
@@ -32,6 +33,14 @@ export default function PlaceSearchModal({
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(
     null
   );
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const handleSearch = async () => {
     if (!location) {
@@ -123,6 +132,21 @@ export default function PlaceSearchModal({
     onSelectPlace(place);
   };
 
+  const DRAG_THRESHOLD = 100;
+  const VELOCITY_THRESHOLD = 500;
+
+  const handleDragEnd = (
+    event: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo
+  ) => {
+    if (
+      info.offset.y > DRAG_THRESHOLD ||
+      info.velocity.y > VELOCITY_THRESHOLD
+    ) {
+      onClose();
+    }
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -136,22 +160,14 @@ export default function PlaceSearchModal({
           />
           <motion.div
             className="
-    fixed md:right-0 md:top-0 md:w-[400px] md:h-full
-    bottom-0 w-full h-[70vh]
-    bg-memoria-background rounded-t-2xl md:rounded-none shadow-xl
-    z-[2000] flex flex-col overflow-hidden border-l border-black/10
-  "
-            initial={{
-              x:
-                typeof window !== "undefined" && window.innerWidth >= 768
-                  ? "100%"
-                  : 0,
-              y:
-                typeof window !== "undefined" && window.innerWidth < 768
-                  ? "100%"
-                  : 0,
-              opacity: 0,
-            }}
+              fixed md:right-0 md:top-0 md:w-[400px] md:h-full
+              bottom-0 w-full h-[70vh]
+              bg-white rounded-t-2xl md:rounded-none shadow-xl
+              z-[2000] flex flex-col overflow-hidden border-l border-gray-300
+            "
+            initial={
+              isMobile ? { y: "100%", opacity: 0 } : { x: "100%", opacity: 0 }
+            }
             animate={{
               x: 0,
               y: 0,
@@ -164,31 +180,31 @@ export default function PlaceSearchModal({
                 ease: "easeOut",
               },
             }}
-            exit={{
-              x:
-                typeof window !== "undefined" && window.innerWidth >= 768
-                  ? "100%"
-                  : 0,
-              y:
-                typeof window !== "undefined" && window.innerWidth < 768
-                  ? "100%"
-                  : 0,
-              opacity: 0,
-              transition: {
-                duration: 0.35,
-                ease: "easeInOut",
-              },
-            }}
+            exit={
+              isMobile ? { y: "100%", opacity: 0 } : { x: "100%", opacity: 0 }
+            }
+            {...(isMobile
+              ? {
+                  drag: "y",
+                  dragConstraints: { top: 0 },
+                  dragElastic: 0.1,
+                  onDragEnd: handleDragEnd,
+                }
+              : {})}
           >
-            <div className="p-4 border-b border-black/10 flex justify-between items-center">
-              <h2 className="text-lg font-semibold text-memoria-text">
+            {isMobile && (
+              <div className="flex-shrink-0 flex justify-center items-center pt-3 pb-2">
+                <div className="w-12 h-1.5 bg-gray-300 rounded-full"></div>
+              </div>
+            )}
+
+            <div className="p-4 border-b border-gray-300 flex justify-between items-center">
+              <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <Search size={20} className="text-memoria-secondary" />
                 {selectedPlace ? "場所の詳細" : "場所検索"}
               </h2>
               <button onClick={onClose}>
-                <X
-                  size={24}
-                  className="text-memoria-text/60 hover:text-memoria-primary"
-                />
+                <X size={24} className="text-gray-500 hover:text-gray-800" />
               </button>
             </div>
 
@@ -202,31 +218,31 @@ export default function PlaceSearchModal({
                     exit={{ opacity: 0, y: -30 }}
                     transition={{ duration: 0.25 }}
                   >
-                    <div className="flex gap-2 items-center border-b border-black/10 pb-3 mb-3">
-                      <Search size={20} className="text-memoria-text/50" />
+                    <div className="relative w-full mb-3">
                       <input
                         type="text"
-                        placeholder="場所名・住所を入力（例：コンビニ、レストラン）"
+                        placeholder="場所名・住所を入力（例：コンビニ）"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                        className="flex-1 px-3 py-2 border border-black/10 rounded-lg text-sm 
+                        className="w-full px-4 py-3 pl-4 pr-14 border border-gray-300 rounded-full text-sm 
                                    focus:ring-2 focus:ring-memoria-secondary outline-none
-                                   bg-white/50 text-memoria-text placeholder:text-memoria-text/50"
+                                   bg-gray-50 text-gray-800 placeholder:text-gray-500"
                       />
                       <button
                         onClick={handleSearch}
-                        className="bg-memoria-secondary hover:bg-memoria-secondary-dark text-white text-sm px-3 py-2 rounded-lg transition-colors"
+                        className="absolute right-1.5 top-1/2 -translate-y-1/2 
+                                   bg-transparent hover:bg-gray-100 
+                                   text-white text-sm font-semibold w-10 h-10 rounded-full transition-colors
+                                   flex items-center justify-center"
                       >
-                        検索
+                        <Search size={20} className="text-gray-700" />
                       </button>
                     </div>
 
-                    {loading && (
-                      <p className="text-memoria-text/70">検索中...</p>
-                    )}
+                    {loading && <p className="text-gray-600">検索中...</p>}
                     {!loading && results.length === 0 && (
-                      <p className="text-memoria-text/50 text-sm">
+                      <p className="text-gray-400 text-sm">
                         現在地付近の施設を取得中...
                       </p>
                     )}
@@ -236,18 +252,18 @@ export default function PlaceSearchModal({
                         <motion.div
                           layoutId={place.place_id}
                           key={place.place_id}
-                          className="p-3 border border-black/10 rounded-lg hover:bg-white/30 cursor-pointer"
+                          className="p-3 border border-gray-300 rounded-lg hover:bg-gray-100 cursor-pointer"
                           onClick={() => handleSelectPlace(place)}
                           whileHover={{ scale: 1.02 }}
                         >
-                          <p className="font-medium text-sm text-memoria-text">
+                          <p className="font-medium text-sm text-gray-800">
                             {place.name}
                           </p>
-                          <p className="text-xs text-memoria-text/70">
+                          <p className="text-xs text-gray-600">
                             {place.formatted_address}
                           </p>
                           {place.distance && !input.trim() && (
-                            <p className="text-xs text-memoria-text/60">
+                            <p className="text-xs text-gray-500">
                               約 {place.distance}m
                             </p>
                           )}
@@ -266,15 +282,15 @@ export default function PlaceSearchModal({
                   >
                     <button
                       onClick={() => setSelectedPlace(null)}
-                      className="flex items-center gap-1 text-memoria-primary hover:text-memoria-primary-dark text-sm"
+                      className="flex items-center gap-1 text-gray-700 hover:text-gray-900 text-sm"
                     >
                       <ArrowLeft size={16} /> 検索結果に戻る
                     </button>
 
-                    <h3 className="text-xl font-semibold text-memoria-text">
+                    <h3 className="text-xl font-semibold text-gray-800">
                       {selectedPlace.name}
                     </h3>
-                    <p className="text-sm text-memoria-text/80">
+                    <p className="text-sm text-gray-700">
                       {selectedPlace.formatted_address}
                     </p>
 
@@ -293,13 +309,13 @@ export default function PlaceSearchModal({
                       </p>
                     )}
 
-                    <div className="border-t border-black/10 pt-4">
+                    <div className="border-t border-gray-300 pt-4">
                       <button
                         onClick={() => {
                           onSelectPlace(selectedPlace);
                           onClose();
                         }}
-                        className="bg-memoria-primary hover:bg-memoria-primary-dark text-white text-base font-bold px-4 py-3 rounded-lg w-full transition-colors"
+                        className="bg-gray-700 hover:bg-gray-800 text-white text-base font-bold px-4 py-3 rounded-lg w-full transition-colors"
                       >
                         この場所に思い出を記録する
                       </button>

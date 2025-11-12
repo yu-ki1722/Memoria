@@ -9,7 +9,7 @@ export default function MemorySearchButton({
     <button
       onClick={onClick}
       className="
-        absolute top-[11rem] right-4 z-[1001]
+        absolute bottom-[7.7rem] right-[1.3rem] z-[1001]
         bg-white rounded-full shadow-md
         p-3 hover:bg-gray-100 transition
         flex items-center justify-center

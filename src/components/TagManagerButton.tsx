@@ -2,16 +2,25 @@
 
 import { Tag } from "lucide-react";
 
-export default function TagManagerButton({ onClick }: { onClick: () => void }) {
+type TagManagerButtonProps = {
+  onClick: () => void;
+  className?: string;
+};
+
+export default function TagManagerButton({
+  onClick,
+  className = "",
+}: TagManagerButtonProps) {
   return (
     <button
       onClick={onClick}
-      className="
-    absolute top-[8rem] right-4 z-[1001]
-    bg-white rounded-full shadow-md
-    p-3 hover:bg-gray-100 transition
-    flex items-center justify-center
-  "
+      className={`
+        absolute top-[8rem] right-4 z-[1001]
+        bg-white rounded-full shadow-md
+        p-3 hover:bg-gray-100 transition
+        flex items-center justify-center
+        ${className}
+      `}
       aria-label="タグ管理"
     >
       <svg

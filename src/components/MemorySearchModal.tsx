@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, type PanInfo } from "framer-motion";
 import { Search, X, Star } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -182,6 +182,21 @@ export default function MemorySearchModal({
     onClose();
   };
 
+  const DRAG_THRESHOLD = 100;
+  const VELOCITY_THRESHOLD = 500;
+
+  const handleDragEnd = (
+    event: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo
+  ) => {
+    if (
+      info.offset.y > DRAG_THRESHOLD ||
+      info.velocity.y > VELOCITY_THRESHOLD
+    ) {
+      onClose();
+    }
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -204,11 +219,28 @@ export default function MemorySearchModal({
             animate={isMobile ? { y: 0 } : { x: 0 }}
             exit={isMobile ? { y: "100%" } : { x: "100%" }}
             transition={{ type: "spring", stiffness: 250, damping: 30 }}
+            {...(isMobile
+              ? {
+                  drag: "y",
+                  dragConstraints: { top: 0 },
+                  dragElastic: 0.1,
+                  onDragEnd: handleDragEnd,
+                }
+              : {})}
           >
             <div className="flex flex-col h-full">
+              {isMobile && (
+                <div
+                  className="flex-shrink-0 flex justify-center items-center pt-3 pb-2"
+                  style={{ cursor: "grab" }}
+                >
+                  <div className="w-12 h-1.5 bg-gray-300 rounded-full"></div>
+                </div>
+              )}
+
               <div className="flex justify-between items-center border-b px-6 py-4 flex-shrink-0 bg-white">
                 <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                  <Search size={20} className="text-blue-500" />
+                  <Search size={20} className="text-memoria-secondary" />
                   思い出検索
                 </h2>
                 <button
@@ -226,7 +258,7 @@ export default function MemorySearchModal({
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="キーワードを入力..."
-                    className="w-full border border-gray-300 rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                    className="w-full border border-gray-300 rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-memoria-secondary/50 focus:border-memoria-secondary focus:outline-none"
                   />
                 </div>
 
@@ -244,8 +276,8 @@ export default function MemorySearchModal({
                           onClick={() => toggleEmotion(emoji)}
                           className={`px-3 py-2 rounded-full text-lg border transition-all duration-200 ${
                             isActive
-                              ? "bg-blue-100 border-blue-400 text-blue-700 shadow-inner"
-                              : "bg-white border-gray-300 hover:border-blue-300 hover:bg-blue-50"
+                              ? "bg-memoria-secondary/20 border-memoria-secondary/50 text-gray-800 shadow-inner"
+                              : "bg-white border-gray-300 hover:border-memoria-secondary/50"
                           }`}
                         >
                           {emoji}
@@ -284,9 +316,10 @@ export default function MemorySearchModal({
                               >
                                 <Star
                                   size={14}
-                                  fill="gold"
-                                  stroke="gold"
-                                  className="text-yellow-400"
+                                  className={
+                                    isActive ? "text-white" : "text-yellow-400"
+                                  }
+                                  fill="currentColor"
                                 />
                                 #{tag}
                               </button>
@@ -321,7 +354,7 @@ export default function MemorySearchModal({
                                   className={`px-3 py-1 rounded-full text-sm font-medium border shadow-sm transition-all duration-200 ${
                                     isActive
                                       ? "bg-memoria-secondary text-white border-memoria-secondary-dark shadow-inner"
-                                      : "bg-gray-100 text-gray-700 hover:bg-memoria-secondary/10"
+                                      : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-memoria-secondary/10 hover:border-memoria-secondary/50"
                                   }`}
                                 >
                                   #{tag}
@@ -335,7 +368,7 @@ export default function MemorySearchModal({
                           <div className="mt-2 text-center">
                             <button
                               onClick={() => setShowAllTags((prev) => !prev)}
-                              className="text-sm text-gray-700 hover:underline font-medium"
+                              className="text-sm text-memoria-secondary-dark hover:underline font-medium"
                             >
                               {showAllTags ? "閉じる ▲" : "すべて表示 ▼"}
                             </button>
@@ -355,14 +388,14 @@ export default function MemorySearchModal({
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
-                      className="flex-1 rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      className="flex-1 rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-memoria-secondary/50 focus:border-memoria-secondary"
                     />
                     <span className="text-gray-400">〜</span>
                     <input
                       type="date"
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
-                      className="flex-1 rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      className="flex-1 rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-memoria-secondary/50 focus:border-memoria-secondary"
                     />
                   </div>
                 </div>
@@ -381,7 +414,7 @@ export default function MemorySearchModal({
                         value={prefectureInput}
                         onChange={(e) => setPrefectureInput(e.target.value)}
                         placeholder="例: 東京都"
-                        className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-memoria-secondary/50 focus:border-memoria-secondary"
                       />
                     </div>
 
@@ -394,7 +427,7 @@ export default function MemorySearchModal({
                         value={cityInput}
                         onChange={(e) => setCityInput(e.target.value)}
                         placeholder="例: 渋谷区"
-                        className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-memoria-secondary/50 focus:border-memoria-secondary"
                       />
                     </div>
 
@@ -407,7 +440,7 @@ export default function MemorySearchModal({
                         value={placeInput}
                         onChange={(e) => setPlaceInput(e.target.value)}
                         placeholder="例: 東京タワー"
-                        className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-memoria-secondary/50 focus:border-memoria-secondary"
                       />
                     </div>
                   </div>
@@ -418,7 +451,7 @@ export default function MemorySearchModal({
                 <div className="flex flex-col gap-2 w-full max-w-[360px] mx-auto">
                   <button
                     onClick={handleReset}
-                    className="w-full py-2 rounded-xl bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition"
+                    className="w-full py-2 rounded-xl bg-white text-gray-700 font-semibold border border-gray-300 hover:bg-gray-50 transition"
                   >
                     検索をリセット
                   </button>
