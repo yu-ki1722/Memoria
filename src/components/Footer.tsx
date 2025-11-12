@@ -1,6 +1,7 @@
 "use client";
 
-import { Map, Tag, Images } from "lucide-react";
+import { TbMapPinHeart, TbTags } from "react-icons/tb";
+import { BiPhotoAlbum } from "react-icons/bi";
 import { useRouter, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 
@@ -25,7 +26,7 @@ export default function Footer({ onTagManagerOpen }: FooterProps) {
           pathname === "/tag-manager" ? activeClass : inactiveClass
         }`}
       >
-        <Tag className="w-6 h-6 mb-1" />
+        <TbTags className="w-7 h-7 mb-1" />{" "}
         <span className="text-[10px] font-medium">タグ</span>
       </motion.button>
 
@@ -36,7 +37,7 @@ export default function Footer({ onTagManagerOpen }: FooterProps) {
           pathname === "/map" ? activeClass : inactiveClass
         }`}
       >
-        <Map className="w-6 h-6 mb-1" />
+        <TbMapPinHeart className="w-6 h-6 mb-1" />
         <span className="text-[10px] font-medium">マップ</span>
       </motion.button>
 
@@ -47,7 +48,8 @@ export default function Footer({ onTagManagerOpen }: FooterProps) {
           pathname === "/memories" ? activeClass : inactiveClass
         }`}
       >
-        <Images className="w-6 h-6 mb-1" />
+        <BiPhotoAlbum className="w-6 h-6 mb-1" />
+
         <span className="text-[10px] font-medium">思い出</span>
       </motion.button>
     </footer>
