@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   createClientComponentClient,
   type Session,
@@ -8,7 +8,6 @@ import {
 import {
   Loader2,
   ImageOff,
-  MapPin,
   Calendar,
   List,
   Columns2,
@@ -18,6 +17,7 @@ import { motion, type Variants, AnimatePresence } from "framer-motion";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import MemoryDetailModal from "@/components/MemoryDetailModal";
+import MemoriesListSearchModal from "@/components/MemoriesListSearchModal";
 
 const getEmotionColor = (emotion: string) => {
   switch (emotion) {
@@ -85,6 +85,16 @@ export default function MemoriesPage() {
 
   const [groupedMemories, setGroupedMemories] = useState<GroupedMemories>({});
 
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchEmotions, setSearchEmotions] = useState<string[]>([]);
+  const [searchTags, setSearchTags] = useState<string[]>([]);
+  const [searchStartDate, setSearchStartDate] = useState<string>("");
+  const [searchEndDate, setSearchEndDate] = useState<string>("");
+  const [searchPrefecture, setSearchPrefecture] = useState("");
+  const [searchCity, setSearchCity] = useState("");
+  const [searchPlace, setSearchPlace] = useState("");
+
   useEffect(() => {
     const fetchSession = async () => {
       const { data } = await supabase.auth.getSession();
@@ -93,24 +103,45 @@ export default function MemoriesPage() {
     fetchSession();
   }, [supabase]);
 
-  useEffect(() => {
+  const fetchAllMemories = useCallback(async () => {
     if (!session) return;
-    const fetchMemories = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("memories")
-          .select("*")
-          .eq("user_id", session.user.id)
-          .order("created_at", { ascending: false });
-        if (!error && data) setMemories(data as Memory[]);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchMemories();
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("memories")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .order("created_at", { ascending: false });
+      if (!error && data) setMemories(data as Memory[]);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   }, [session, supabase]);
+
+  useEffect(() => {
+    if (session) {
+      fetchAllMemories();
+    }
+  }, [session, fetchAllMemories]);
+
+  const handleFilterResults = (filteredData: Memory[]) => {
+    setMemories(filteredData);
+  };
+
+  const handleSearchReset = useCallback(async () => {
+    setSearchQuery("");
+    setSearchEmotions([]);
+    setSearchTags([]);
+    setSearchStartDate("");
+    setSearchEndDate("");
+    setSearchPrefecture("");
+    setSearchCity("");
+    setSearchPlace("");
+
+    await fetchAllMemories();
+  }, [fetchAllMemories]);
 
   useEffect(() => {
     if (memories.length === 0) {
@@ -165,7 +196,37 @@ export default function MemoriesPage() {
 
   return (
     <>
-      <Header title="思い出一覧" />
+      <Header
+        title="思い出一覧"
+        rightActions={
+          <button
+            onClick={() => setIsSearchOpen(true)}
+            className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+            aria-label="思い出を検索"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-5 h-5"
+              transform="scale(1.5)"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <line x1="16.65" y1="16.65" x2="21" y2="21" />
+              <path
+                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+                fill="currentColor"
+                transform="translate(6.2, 6.3) scale(0.40)"
+              />
+            </svg>
+          </button>
+        }
+      />
+
       <main className="min-h-screen bg-[#fffefb] pt-16 pb-24 px-4 relative">
         <div className="absolute inset-0 bg-[url('/paper-texture.png')] opacity-20 pointer-events-none"></div>
 
@@ -217,6 +278,9 @@ export default function MemoriesPage() {
                   </div>
 
                   <motion.div
+                    key={
+                      monthYear + "_" + monthMemories.map((m) => m.id).join("-")
+                    }
                     variants={containerVariants}
                     initial="hidden"
                     animate="show"
@@ -335,6 +399,34 @@ export default function MemoriesPage() {
               memory={selectedMemory}
               onClose={() => setSelectedMemory(null)}
               getEmotionColor={getEmotionColor}
+            />
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {isSearchOpen && (
+            <MemoriesListSearchModal
+              isOpen={isSearchOpen}
+              onClose={() => setIsSearchOpen(false)}
+              onFilterResults={handleFilterResults}
+              supabase={supabase}
+              query={searchQuery}
+              setQuery={setSearchQuery}
+              selectedEmotions={searchEmotions}
+              setSelectedEmotions={setSearchEmotions}
+              selectedTags={searchTags}
+              setSelectedTags={setSearchTags}
+              startDate={searchStartDate}
+              setStartDate={setSearchStartDate}
+              endDate={searchEndDate}
+              setEndDate={setSearchEndDate}
+              prefectureInput={searchPrefecture}
+              setPrefectureInput={setSearchPrefecture}
+              cityInput={searchCity}
+              setCityInput={setSearchCity}
+              placeInput={searchPlace}
+              setPlaceInput={setSearchPlace}
+              onReset={handleSearchReset}
             />
           )}
         </AnimatePresence>
