@@ -354,11 +354,23 @@ export default function MemoriesPage() {
 
                           {!isThumbnailView && (
                             <div className="p-4 pb-5">
-                              <div className="flex items-center gap-3 mb-2">
-                                <span className="text-3xl flex-shrink-0">
+                              <div
+                                className={`flex items-center ${
+                                  layout === 1 ? "gap-3" : "gap-2"
+                                } mb-2`}
+                              >
+                                <span
+                                  className={`${
+                                    layout === 1 ? "text-3xl" : "text-2xl"
+                                  } flex-shrink-0`}
+                                >
                                   {memory.emotion}
                                 </span>
-                                <p className="text-gray-800 font-semibold text-lg leading-tight line-clamp-2">
+                                <p
+                                  className={`text-gray-800 font-semibold ${
+                                    layout === 1 ? "text-lg" : "text-base"
+                                  } leading-tight line-clamp-2`}
+                                >
                                   {memory.text || "（タイトルなし）"}
                                 </p>
                               </div>
