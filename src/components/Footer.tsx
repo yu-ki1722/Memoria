@@ -29,8 +29,8 @@ export default function Footer({ onTagManagerOpen }: FooterProps) {
       </button>
 
       <button
-        disabled
-        className="flex flex-col items-center text-gray-400 cursor-not-allowed"
+        onClick={() => router.push("/memories")}
+        className="flex flex-col items-center text-memoria-text/70 hover:text-memoria-secondary transition"
       >
         <Images className="w-6 h-6 mb-1" />
         <span className="text-[10px] font-medium">思い出</span>
