@@ -443,7 +443,7 @@ export default function MemoriesPage() {
           )}
         </AnimatePresence>
       </main>
-      <Footer onTagManagerOpen={() => {}} />
+      <Footer />
     </>
   );
 }

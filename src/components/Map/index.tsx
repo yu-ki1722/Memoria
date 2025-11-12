@@ -985,7 +985,7 @@ export default function MapWrapper({ session }: { session: Session }) {
         )}
         <CurrentLocationButton mapRef={mapRef} setIsLocating={setIsLocating} />
       </div>
-      <Footer onTagManagerOpen={handleTagManagerClick} />{" "}
+      <Footer />
       <AnimatePresence>
         {zoomedMediaUrl && (
           <motion.div

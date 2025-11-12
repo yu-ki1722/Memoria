@@ -278,7 +278,7 @@ export default function TagManagerPage() {
         </div>
       </main>
 
-      <Footer onTagManagerOpen={() => router.push("/tag-manager")} />
+      <Footer />
     </div>
   );
 }
