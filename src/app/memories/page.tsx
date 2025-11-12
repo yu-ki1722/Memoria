@@ -290,33 +290,21 @@ export default function MemoriesPage() {
 
                           {!isThumbnailView && (
                             <div className="p-4 pb-5">
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="text-2xl">
+                              <div className="flex items-center gap-3 mb-2">
+                                <span className="text-3xl flex-shrink-0">
                                   {memory.emotion}
                                 </span>
-                                <span
-                                  className={`text-xs flex items-center gap-1 ${color.accent}`}
-                                >
-                                  <Calendar size={14} />
-                                  {date}
-                                </span>
+                                <p className="text-gray-800 font-semibold text-lg leading-tight line-clamp-2">
+                                  {memory.text || "（タイトルなし）"}
+                                </p>
                               </div>
-                              <p
-                                className={`text-gray-700 text-[15px] leading-snug mt-1 line-clamp-2`}
+
+                              <div
+                                className={`flex items-center gap-1 text-xs ${color.accent}`}
                               >
-                                {memory.text || "（タイトルなし）"}
-                              </p>
-                              {(memory.prefecture || memory.city) && (
-                                <div
-                                  className={`flex items-center gap-1 mt-3 text-sm text-gray-500`}
-                                >
-                                  <MapPin size={14} />
-                                  <span>
-                                    {memory.prefecture ?? ""}
-                                    {memory.city ? ` ${memory.city}` : ""}
-                                  </span>
-                                </div>
-                              )}
+                                <Calendar size={14} />
+                                <span className="font-medium">{date}</span>
+                              </div>
                             </div>
                           )}
 
