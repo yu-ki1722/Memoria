@@ -17,7 +17,6 @@ export default function WelcomePage() {
       color: string;
     }[]
   >([]);
-  const [cloudOpacity, setCloudOpacity] = useState(1);
   const [showContent, setShowContent] = useState(false);
 
   useEffect(() => {
@@ -39,14 +38,14 @@ export default function WelcomePage() {
     }));
     setParticles(newParticles);
 
-    setTimeout(() => {
-      setCloudOpacity(0);
-    }, 1000);
-
-    setTimeout(() => {
-      setShowContent(true);
-    }, 2500);
+    setTimeout(() => setShowContent(true), 3500);
   }, []);
+
+  const smokeAnimationVariants = {
+    fast: { x: ["-10%", "5%", "10%", "-5%"], y: ["5%", "-5%", "0%", "5%"] },
+    medium: { x: ["5%", "-10%", "0%", "5%"], y: ["-5%", "10%", "-10%", "-5%"] },
+    slow: { x: ["-5%", "15%", "-10%", "-5%"], y: ["10%", "-15%", "5%", "10%"] },
+  };
 
   return (
     <div className="relative flex flex-col items-center justify-center min-h-screen bg-[#fffdf8] overflow-hidden">
@@ -83,7 +82,7 @@ export default function WelcomePage() {
       {particles.map((p) => (
         <motion.div
           key={p.id}
-          className="absolute rounded-full mix-blend-screen z-20"
+          className="absolute rounded-full mix-blend-lighten z-20"
           style={{
             width: p.size,
             height: p.size,
@@ -110,20 +109,38 @@ export default function WelcomePage() {
       ))}
 
       <motion.div
-        className="absolute inset-0 bg-white z-30 blur-[80px]"
-        animate={{ opacity: cloudOpacity }}
+        className="absolute inset-0 bg-white/90 z-[120] blur-[100px] pointer-events-none"
+        initial={{
+          opacity: 1,
+          filter: "blur(100px) contrast(1.2) saturate(1.2)",
+        }}
+        animate={{ opacity: 0, ...smokeAnimationVariants.fast }}
         transition={{ duration: 2.5, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute inset-0 bg-white/80 z-[110] blur-[150px] pointer-events-none"
+        initial={{
+          opacity: 1,
+          filter: "blur(150px) contrast(1.2) saturate(1.2)",
+        }}
+        animate={{ opacity: 0, ...smokeAnimationVariants.medium }}
+        transition={{ duration: 4.5, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute inset-0 bg-gray-100/70 z-[100] blur-[200px] pointer-events-none"
+        initial={{
+          opacity: 1,
+          filter: "blur(200px) contrast(1.2) saturate(1.2)",
+        }}
+        animate={{ opacity: 0, ...smokeAnimationVariants.slow }}
+        transition={{ duration: 5.5, ease: "easeInOut" }}
       />
 
       <motion.div
-        className="relative z-40 flex flex-col items-center text-center px-6"
-        initial={{ opacity: 0, y: 40, filter: "blur(12px)" }}
-        animate={
-          showContent
-            ? { opacity: 1, y: 0, filter: "blur(0px)" }
-            : { opacity: 0, y: 40, filter: "blur(12px)" }
-        }
-        transition={{ duration: 2, ease: "easeOut" }}
+        className="relative z-30 flex flex-col items-center text-center px-6"
+        initial={{ opacity: 0, filter: "blur(40px)" }}
+        animate={{ opacity: 1, filter: "blur(0px)" }}
+        transition={{ duration: 3, ease: "easeOut" }}
       >
         <h1 className="text-4xl font-[Caveat] text-gray-800 mb-2 tracking-wide">
           Memoria
@@ -133,16 +150,20 @@ export default function WelcomePage() {
           <br />
           思い出を地図に描こう。
         </p>
+
         <motion.button
           onClick={() => router.push("/login")}
           className="px-8 py-3 bg-gradient-to-r from-[#86c8b2] to-[#74b5a1] text-white font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
           whileTap={{ scale: 0.95 }}
+          initial={{ opacity: 0 }}
+          animate={showContent ? { opacity: 1 } : { opacity: 0 }}
+          transition={{ duration: 1.5, delay: 0, ease: "easeOut" }}
         >
           地図を作成する
         </motion.button>
       </motion.div>
 
-      <p className="absolute bottom-6 text-xs text-gray-400 z-40">
+      <p className="absolute bottom-6 text-xs text-gray-400 z-30">
         © 2025 Memoria
       </p>
     </div>
