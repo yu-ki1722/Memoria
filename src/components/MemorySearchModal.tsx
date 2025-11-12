@@ -172,7 +172,20 @@ export default function MemorySearchModal({
     setCityInput("");
     setPlaceInput("");
 
-    const { data, error } = await supabase.from("memories").select("*");
+    const { data: sessionData } = await supabase.auth.getSession();
+    const session = sessionData.session;
+
+    if (!session) {
+      console.warn("セッションが見つかりません。ユーザー未ログインの可能性。");
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("memories")
+      .select("*")
+      .eq("user_id", session.user.id)
+      .order("created_at", { ascending: false });
+
     if (error) {
       console.error("リセット時の取得エラー:", error);
       return;
