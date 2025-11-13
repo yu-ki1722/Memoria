@@ -18,44 +18,24 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import MemoryDetailModal from "@/components/MemoryDetailModal";
 import MemoriesListSearchModal from "@/components/MemoriesListSearchModal";
+import { emojiToTwemoji } from "@/lib/twemoji";
 
 const getEmotionColor = (emotion: string) => {
   switch (emotion) {
     case "😊":
-      return {
-        bg: "bg-[#FFF8E1]",
-        accent: "text-[#F59E0B]",
-      };
+      return { bg: "bg-[#FFF8E1]", accent: "text-[#F59E0B]" };
     case "😂":
-      return {
-        bg: "bg-[#FEF3C7]",
-        accent: "text-[#FB923C]",
-      };
+      return { bg: "bg-[#FEF3C7]", accent: "text-[#FB923C]" };
     case "😍":
-      return {
-        bg: "bg-[#FCE7F3]",
-        accent: "text-[#EC4899]",
-      };
+      return { bg: "bg-[#FCE7F3]", accent: "text-[#EC4899]" };
     case "😢":
-      return {
-        bg: "bg-[#DBEAFE]",
-        accent: "text-[#3B82F6]",
-      };
+      return { bg: "bg-[#DBEAFE]", accent: "text-[#3B82F6]" };
     case "😮":
-      return {
-        bg: "bg-[#D1FAE5]",
-        accent: "text-[#10B981]",
-      };
+      return { bg: "bg-[#D1FAE5]", accent: "text-[#10B981]" };
     case "🤔":
-      return {
-        bg: "bg-[#EDE9FE]",
-        accent: "text-[#8B5CF6]",
-      };
+      return { bg: "bg-[#EDE9FE]", accent: "text-[#8B5CF6]" };
     default:
-      return {
-        bg: "bg-white",
-        accent: "text-gray-600",
-      };
+      return { bg: "bg-white", accent: "text-gray-600" };
   }
 };
 
@@ -153,20 +133,15 @@ export default function MemoriesPage() {
   }, [fetchAllMemories]);
 
   useEffect(() => {
-    if (memories.length === 0) {
-      setGroupedMemories({});
-      return;
-    }
+    if (memories.length === 0) return setGroupedMemories({});
 
     const groups: GroupedMemories = {};
 
     memories.forEach((memory) => {
-      const memoryDate = new Date(memory.created_at);
-      const key = `${memoryDate.getFullYear()}年${memoryDate.getMonth() + 1}月`;
+      const d = new Date(memory.created_at);
+      const key = `${d.getFullYear()}年${d.getMonth() + 1}月`;
 
-      if (!groups[key]) {
-        groups[key] = [];
-      }
+      if (!groups[key]) groups[key] = [];
       groups[key].push(memory);
     });
 
@@ -294,8 +269,8 @@ export default function MemoriesPage() {
                     initial="hidden"
                     animate="show"
                     className={`
-                      mx-auto grid ${gridColsClass[layout]} 
-                      ${layout === 4 ? "gap-2" : "gap-4"} 
+                      mx-auto grid ${gridColsClass[layout]}
+                      ${layout === 4 ? "gap-2" : "gap-4"}
                       transition-all duration-300
                       ${layout === 1 ? "max-w-md" : "max-w-5xl"}
                     `}
@@ -383,10 +358,14 @@ export default function MemoriesPage() {
                                 <span
                                   className={`${
                                     layout === 1 ? "text-3xl" : "text-2xl"
-                                  } flex-shrink-0`}
-                                >
-                                  {memory.emotion}
-                                </span>
+                                  } flex-shrink-0 twemoji-wrapper`}
+                                  dangerouslySetInnerHTML={{
+                                    __html: `<img src="${emojiToTwemoji(
+                                      memory.emotion
+                                    )}" class="w-6 h-6" />`,
+                                  }}
+                                />
+
                                 <p
                                   className={`text-gray-800 font-semibold ${
                                     layout === 1 ? "text-lg" : "text-base"
@@ -407,14 +386,13 @@ export default function MemoriesPage() {
 
                           {isThumbnailView && (
                             <span
-                              className="absolute -top-1 -left-1 text-xl z-10"
-                              style={{
-                                textShadow:
-                                  "0px 2px 4px rgba(0, 0, 0, 0.2), 0px -1px 2px rgba(255, 255, 255, 0.1)",
+                              className="absolute -top-1 -left-1 text-xl z-10 twemoji-wrapper"
+                              dangerouslySetInnerHTML={{
+                                __html: `<img src="${emojiToTwemoji(
+                                  memory.emotion
+                                )}" class="w-6 h-6" />`,
                               }}
-                            >
-                              {memory.emotion}
-                            </span>
+                            />
                           )}
                         </motion.div>
                       );

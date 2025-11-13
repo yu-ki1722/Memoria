@@ -1,8 +1,11 @@
+"use client";
+
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { X, MapPin, Calendar, ImageOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { TbMapPinUp } from "react-icons/tb";
+import { emojiToTwemoji } from "@/lib/twemoji";
 
 type Memory = {
   id: number;
@@ -114,7 +117,15 @@ export default function MemoryDetailModal({
 
         <div className="p-6 overflow-y-auto">
           <div className="flex items-center gap-4 mb-4">
-            <span className="text-5xl flex-shrink-0">{memory.emotion}</span>
+            <span
+              className="text-5xl flex-shrink-0 twemoji-wrapper"
+              dangerouslySetInnerHTML={{
+                __html: `<img src="${emojiToTwemoji(
+                  memory.emotion
+                )}" class="w-12 h-12" />`,
+              }}
+            />
+
             <h2 className="text-2xl font-bold text-gray-800 break-words">
               {memory.text || "（タイトルなし）"}
             </h2>
@@ -150,11 +161,11 @@ export default function MemoryDetailModal({
           <button
             onClick={handleMoveToMap}
             className={`
-                w-full mt-6 py-3 px-4
-                flex items-center justify-center gap-2
-                rounded-full font-semibold shadow-md
-                hover:shadow-lg active:scale-95 transition-all duration-200
-                ${color.bg} 
+              w-full mt-6 py-3 px-4 
+              flex items-center justify-center gap-2 
+              rounded-full font-semibold shadow-md
+              hover:shadow-lg active:scale-95 transition-all duration-200
+              ${color.bg}
             `}
           >
             <TbMapPinUp size={20} className={`${color.accent}`} />

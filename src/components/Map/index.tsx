@@ -26,6 +26,7 @@ import { Search, X } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "next/navigation";
+import { emojiToTwemoji } from "@/lib/twemoji";
 
 const emotionStyles = {
   "😊": { bg: "bg-emotion-happy", shadow: "shadow-glow-happy" },
@@ -667,10 +668,10 @@ export default function MapWrapper({ session }: { session: Session }) {
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
                   className="
-                    w-10 h-10 rounded-full bg-memoria-secondary text-white 
-                    flex items-center justify-center font-bold text-lg 
-                    hover:scale-105 transition-transform
-                  "
+                  w-10 h-10 rounded-full bg-memoria-secondary text-white 
+                  flex items-center justify-center font-bold text-lg 
+                  hover:scale-105 transition-transform
+                "
                 >
                   {session?.user?.email?.[0]?.toUpperCase() ?? "?"}
                 </button>
@@ -678,9 +679,9 @@ export default function MapWrapper({ session }: { session: Session }) {
                 {isMenuOpen && (
                   <div
                     className="
-                      absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl z-30 
-                      overflow-hidden border border-gray-100
-                    "
+                    absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl z-30 
+                    overflow-hidden border border-gray-100
+                  "
                   >
                     <div className="p-3 border-b text-sm text-gray-600">
                       {session?.user?.email ?? "No email"}
@@ -767,14 +768,14 @@ export default function MapWrapper({ session }: { session: Session }) {
                   <div
                     id={`pin-${memory.id}`}
                     className={`
-      w-10 h-10 cursor-pointer transition-transform duration-300 ease-out 
-      ${
-        isMobile && selectedMemory?.id === memory.id
-          ? "scale-125"
-          : "hover:scale-110"
-      }
-      ${isNew ? "animate-pin-drop" : ""}
-    `}
+                    w-10 h-10 cursor-pointer transition-transform duration-300 ease-out 
+                    ${
+                      isMobile && selectedMemory?.id === memory.id
+                        ? "scale-125"
+                        : "hover:scale-110"
+                    }
+                    ${isNew ? "animate-pin-drop" : ""}
+                  `}
                     onClick={(e) => {
                       e.stopPropagation();
                       setClickedPoi(null);
@@ -812,14 +813,18 @@ export default function MapWrapper({ session }: { session: Session }) {
                     >
                       <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
                         <div
-                          className={`w-16 h-16 rounded-full text-4xl flex items-center justify-center 
-                            ${
-                              style
-                                ? `${style.bg} ${style.shadow}`
-                                : "bg-gray-200"
-                            }`}
+                          className={`w-16 h-16 rounded-full flex items-center justify-center overflow-hidden ${
+                            style
+                              ? `${style.bg} ${style.shadow}`
+                              : "bg-gray-200"
+                          }`}
                         >
-                          {selectedMemory.emotion}
+                          <img
+                            src={emojiToTwemoji(selectedMemory.emotion)}
+                            alt={selectedMemory.emotion}
+                            className="w-full h-full object-contain p-3"
+                            draggable={false}
+                          />
                         </div>
                       </div>
 
@@ -1002,13 +1007,8 @@ export default function MapWrapper({ session }: { session: Session }) {
                   place={clickedPoi}
                   onClose={() => setClickedPoi(null)}
                   onAddMemory={() => {
-                    if (!clickedPoi || !clickedPoi.placeId) {
-                      console.warn(
-                        "❌ placeId missing in clickedPoi:",
-                        clickedPoi
-                      );
-                      return;
-                    }
+                    if (!clickedPoi || !clickedPoi.placeId) return;
+
                     setNewMemoryLocation({
                       lng: clickedPoi.lng,
                       lat: clickedPoi.lat,
@@ -1016,6 +1016,7 @@ export default function MapWrapper({ session }: { session: Session }) {
                       placeName: clickedPoi.name,
                       placeAddress: clickedPoi.address,
                     });
+
                     setClickedPoi(null);
                   }}
                 />
