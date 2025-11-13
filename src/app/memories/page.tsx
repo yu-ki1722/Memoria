@@ -59,6 +59,15 @@ const getEmotionColor = (emotion: string) => {
   }
 };
 
+const emotionGlowColor: Record<string, string> = {
+  "😊": "rgba(255, 190, 150, 0.55)",
+  "😂": "rgba(255, 230, 170, 0.55)",
+  "😍": "rgba(255, 170, 210, 0.55)",
+  "😢": "rgba(150, 190, 255, 0.55)",
+  "😮": "rgba(170, 240, 200, 0.55)",
+  "🤔": "rgba(200, 180, 255, 0.55)",
+};
+
 type Memory = {
   id: number;
   emotion: string;
@@ -298,12 +307,24 @@ export default function MemoriesPage() {
                         memory.created_at
                       ).toLocaleDateString("ja-JP");
                       const isThumbnailView = layout === 4;
+                      const glow =
+                        emotionGlowColor[memory.emotion] ??
+                        "rgba(209, 213, 219, 0.6)";
 
                       return (
                         <motion.div
                           key={memory.id}
                           variants={cardVariants}
                           onClick={() => setSelectedMemory(memory)}
+                          whileTap={{
+                            scale: 0.96,
+                            boxShadow: `0 0 32px 10px ${glow}`,
+                          }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 260,
+                            damping: 20,
+                          }}
                           className={`cursor-pointer ${
                             !isThumbnailView
                               ? `rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 ${color.bg}`
