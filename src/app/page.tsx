@@ -1,47 +1,30 @@
 "use client";
 
-import { supabase } from "@/lib/supabaseClient";
-import { Auth } from "@supabase/auth-ui-react";
-import { ThemeSupa } from "@supabase/auth-ui-shared";
-import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
 
-export default function LoginPage() {
+export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN") {
-        router.push("/map");
-        router.refresh();
-      }
-    });
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      const session = data.session;
 
-    return () => {
-      subscription.unsubscribe();
+      if (session) {
+        router.replace("/map");
+      } else {
+        router.replace("/welcome");
+      }
     };
-  }, [supabase, router]);
+
+    checkAuth();
+  }, [router]);
 
   return (
-    <div
-      style={{
-        width: "100vw",
-        height: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <div style={{ width: "320px" }}>
-        <Auth
-          supabaseClient={supabase}
-          appearance={{ theme: ThemeSupa }}
-          theme="dark"
-          providers={["github", "google"]}
-        />
-      </div>
+    <div className="flex items-center justify-center min-h-screen bg-white text-gray-500">
+      <p>Memoria を起動中...</p>
     </div>
   );
 }

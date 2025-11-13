@@ -24,12 +24,17 @@ module.exports = {
           "0%": { transform: "translateX(100%)" },
           "100%": { transform: "translateX(0)" },
         },
+        gradientMove: {
+          "0%, 100%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+        },
       },
       animation: {
         customPulse: "customPulse 1.5s infinite",
         softAppear: "softAppear 0.5s ease-out forwards",
         slideUp: "slideUp 0.3s ease-out",
         slideInRight: "slideInRight 0.3s ease-out",
+        "gradient-slow": "gradientMove 15s ease infinite",
       },
       colors: {
         emotion: {
