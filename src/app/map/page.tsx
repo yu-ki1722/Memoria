@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import MapLoader from "@/components/MapLoader";
 import type { Session } from "@supabase/auth-helpers-nextjs";
-import { supabase } from "@/lib/supabaseClient"; // ← 共有クライアントをインポート
+import { supabase } from "@/lib/supabaseClient";
 
 export default function MapPage() {
   const router = useRouter();
