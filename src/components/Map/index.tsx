@@ -27,6 +27,7 @@ import { Toaster, toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import { emojiToTwemoji } from "@/lib/twemoji";
+import MemoriaLogo from "@/components/MemoriaLogo";
 
 const emotionStyles = {
   "😊": { bg: "bg-emotion-happy", shadow: "shadow-glow-happy" },
@@ -653,7 +654,7 @@ export default function MapWrapper({ session }: { session: Session }) {
     <>
       <Toaster richColors position="top-center" />
       <Header
-        title="Memoria"
+        title={<MemoriaLogo className="text-2xl" />}
         rightActions={
           <>
             <button

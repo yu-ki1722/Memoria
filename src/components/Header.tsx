@@ -3,7 +3,7 @@
 import { ReactNode } from "react";
 
 type HeaderProps = {
-  title: string;
+  title: React.ReactNode;
   rightActions?: ReactNode;
 };
 
