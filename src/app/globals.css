@@ -142,3 +142,10 @@
 
   animation: pin-drop 1s ease-out forwards;
 }
+
+.twemoji {
+  width: 1.4em;
+  height: 1.4em;
+  display: inline-block;
+  vertical-align: middle;
+}
