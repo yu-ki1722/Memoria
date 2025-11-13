@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { Noto_Sans_JP } from "next/font/google";
+import { M_PLUS_Rounded_1c } from "next/font/google";
 import "./globals.css";
 
-const notoSansJp = Noto_Sans_JP({
+const mPlusRounded1c = M_PLUS_Rounded_1c({
   subsets: ["latin"],
   weight: ["400", "700"],
   display: "swap",
@@ -19,9 +19,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="ja">
       <body
-        className={`${notoSansJp.className} bg-memoria-background text-memoria-text`}
+        className={`${mPlusRounded1c.className} bg-memoria-background text-memoria-text`}
       >
         {children}
       </body>
