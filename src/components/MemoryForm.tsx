@@ -7,6 +7,7 @@ import { Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabaseClient";
 import { User } from "@supabase/supabase-js";
+import { emojiToTwemoji } from "@/lib/twemoji";
 
 const emotionStyles = {
   "😊": {
@@ -319,14 +320,19 @@ export default function MemoryForm({
             <button
               key={emotion}
               type="button"
-              className={`w-11 h-11 rounded-full text-2xl flex items-center justify-center transition-all duration-200 transform ${
+              className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 transform text-[0] ${
                 isSelected
                   ? `bg-white/80 border-2 ${borderColorClass} scale-110`
                   : "bg-white/50 border-2 border-transparent hover:scale-110"
               }`}
               onClick={() => setSelectedEmotion(emotion)}
             >
-              {emotion}
+              <img
+                src={emojiToTwemoji(emotion)}
+                alt={emotion}
+                className="w-6 h-6"
+                draggable={false}
+              />
             </button>
           );
         })}

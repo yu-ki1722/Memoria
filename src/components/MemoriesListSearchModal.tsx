@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence, type PanInfo } from "framer-motion";
 import { Search, X, Star } from "lucide-react";
 import type { SupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { emojiToTwemoji } from "@/lib/twemoji";
 
 type Memory = {
   id: number;
@@ -291,13 +292,19 @@ export default function MemoriesListSearchModal({
                           key={emoji}
                           whileTap={{ scale: 0.9 }}
                           onClick={() => toggleEmotion(emoji)}
-                          className={`px-3 py-2 rounded-full text-lg border transition-all duration-200 ${
-                            isActive
-                              ? "bg-memoria-secondary/20 border-memoria-secondary/50 text-gray-800 shadow-inner"
-                              : "bg-white border-gray-300 hover:border-memoria-secondary/50"
-                          }`}
+                          className={`px-3 py-2 rounded-full text-lg border transition-all duration-200 flex items-center justify-center
+                        ${
+                          isActive
+                            ? "bg-memoria-secondary/20 border-memoria-secondary/50 text-gray-800 shadow-inner"
+                            : "bg-white border-gray-300 hover:border-memoria-secondary/50"
+                        }`}
                         >
-                          {emoji}
+                          <img
+                            src={emojiToTwemoji(emoji)}
+                            alt={emoji}
+                            className="w-6 h-6"
+                            draggable={false}
+                          />
                         </motion.button>
                       );
                     })}
