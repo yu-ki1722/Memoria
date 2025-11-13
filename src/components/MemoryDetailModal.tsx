@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { X, MapPin, Calendar, ImageOff } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { TbMapPinUp } from "react-icons/tb";
 
 type Memory = {
   id: number;
@@ -33,6 +35,8 @@ export default function MemoryDetailModal({
   onClose,
   getEmotionColor,
 }: Props) {
+  const router = useRouter();
+
   const color = getEmotionColor(memory.emotion);
   const date = new Date(memory.created_at).toLocaleDateString("ja-JP", {
     year: "numeric",
@@ -50,6 +54,10 @@ export default function MemoryDetailModal({
       document.body.style.overflow = "auto";
     };
   }, []);
+
+  const handleMoveToMap = () => {
+    router.push(`/map?memoryId=${memory.id}`);
+  };
 
   return (
     <motion.div
@@ -107,24 +115,19 @@ export default function MemoryDetailModal({
         <div className="p-6 overflow-y-auto">
           <div className="flex items-center gap-4 mb-4">
             <span className="text-5xl flex-shrink-0">{memory.emotion}</span>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800 break-words">
-                {memory.text || "（タイトルなし）"}
-              </h2>
-            </div>
+            <h2 className="text-2xl font-bold text-gray-800 break-words">
+              {memory.text || "（タイトルなし）"}
+            </h2>
           </div>
 
           <div className="flex items-center gap-2.5 text-gray-600 mb-2">
-            <Calendar size={18} className={`${color.accent} flex-shrink-0`} />
+            <Calendar size={18} className={`${color.accent}`} />
             <span className="text-md font-medium">{date}</span>
           </div>
 
           {location && (
             <div className="flex items-start gap-2.5 text-gray-600 mb-4">
-              <MapPin
-                size={18}
-                className={`${color.accent} mt-0.5 flex-shrink-0`}
-              />
+              <MapPin size={18} className={`${color.accent}`} />
               <span className="text-md font-medium break-words">
                 {location}
               </span>
@@ -143,6 +146,20 @@ export default function MemoryDetailModal({
               ))}
             </div>
           )}
+
+          <button
+            onClick={handleMoveToMap}
+            className={`
+    w-full mt-6 py-3 px-4
+    flex items-center justify-center gap-2
+    rounded-full font-semibold shadow-md
+    hover:shadow-lg active:scale-95 transition-all duration-200
+    ${color.bg} 
+  `}
+          >
+            <TbMapPinUp size={20} className={`${color.accent}`} />
+            <span className={`${color.accent}`}>マップで見る</span>
+          </button>
         </div>
       </motion.div>
     </motion.div>
