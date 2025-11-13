@@ -239,7 +239,7 @@ export default function MemoriesPage() {
       <main className="min-h-screen bg-[#fffefb] pt-16 pb-24 px-4 relative">
         <div className="absolute inset-0 bg-[url('/paper-texture.png')] opacity-20 pointer-events-none"></div>
 
-        <div className="flex justify-end gap-2 sticky top-16 z-20 py-2">
+        <div className="flex justify-end gap-2 sticky top-16 z-20 pt-3">
           {layoutOptions.map((option) => (
             <button
               key={option.value}
@@ -275,7 +275,7 @@ export default function MemoriesPage() {
                 <section key={monthYear} className="pb-4">
                   <div
                     className={`
-                      flex items-center gap-3 pb-4 pt-2
+                      flex items-center gap-3 pb-4 pt-0
                       mx-auto transition-all duration-300
                       ${layout === 1 ? "max-w-md" : "max-w-5xl"}
                     `}
