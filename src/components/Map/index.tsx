@@ -649,7 +649,7 @@ export default function MapWrapper({ session }: { session: Session }) {
                     <button
                       onClick={async () => {
                         await supabase.auth.signOut();
-                        router.push("/");
+                        router.push("/login");
                       }}
                       className="w-full px-4 py-2 text-left text-gray-700 hover:bg-memoria-secondary hover:text-white transition"
                     >
