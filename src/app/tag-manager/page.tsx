@@ -99,6 +99,8 @@ export default function TagManagerPage() {
         .eq("id", sorted[i].id);
       if (error) console.error("順序更新エラー:", error);
     }
+
+    setSortMenuOpen(false);
   };
 
   const handleDelete = async (id: number) => {
