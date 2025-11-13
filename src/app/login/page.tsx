@@ -69,8 +69,8 @@ export default function LoginPage() {
             variables: {
               default: {
                 colors: {
-                  brand: "#86c8b2",
-                  brandAccent: "#74b5a1",
+                  brand: "#FFB9AE",
+                  brandAccent: "#FFB9AE",
                 },
                 radii: {
                   borderRadiusButton: "9999px",

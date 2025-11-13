@@ -47,8 +47,8 @@ module.exports = {
         },
         memoria: {
           primary: "#F0A079",
-          secondary: "#88C7BC",
-          "secondary-dark": "#73a99f",
+          secondary: "#FFB9AE",
+          "secondary-dark": "#E77E6E",
           text: "#2D4B53",
           background: "#FCF8F0",
         },
