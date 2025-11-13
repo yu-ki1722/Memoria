@@ -25,6 +25,7 @@ import { useRouter } from "next/navigation";
 import { Search, X } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSearchParams } from "next/navigation";
 
 const emotionStyles = {
   "😊": { bg: "bg-emotion-happy", shadow: "shadow-glow-happy" },
@@ -128,6 +129,9 @@ export default function MapWrapper({ session }: { session: Session }) {
   const [newlyAddedPinId, setNewlyAddedPinId] = useState<number | null>(null);
 
   const [zoomedMediaUrl, setZoomedMediaUrl] = useState<string | null>(null);
+
+  const searchParams = useSearchParams();
+  const memoryId = searchParams.get("memoryId");
 
   useEffect(() => {
     const checkDevice = () => {
@@ -609,6 +613,41 @@ export default function MapWrapper({ session }: { session: Session }) {
     return { prefecture, city };
   };
 
+  useEffect(() => {
+    if (!memoryId) return;
+    if (!mapRef.current) return;
+    if (memories.length === 0) return;
+
+    const target = memories.find((m) => m.id === Number(memoryId));
+    if (!target) return;
+
+    mapRef.current.flyTo({
+      center: [target.longitude, target.latitude],
+      zoom: 16,
+      duration: 1200,
+      padding: {
+        top: isMobile ? 350 : 120,
+        bottom: isMobile ? 56 : 0,
+        left: 0,
+        right: 0,
+      },
+    });
+
+    const el = document.querySelector(
+      `#pin-${target.id}`
+    ) as HTMLElement | null;
+    if (el) {
+      el.style.transform = "scale(1.4)";
+      el.style.transition = "transform 0.3s ease";
+
+      setTimeout(() => {
+        el.style.transform = "scale(1)";
+      }, 800);
+    }
+
+    setSelectedMemory(target);
+  }, [memoryId, memories, isMobile]);
+
   return (
     <>
       <Toaster richColors position="top-center" />
@@ -726,15 +765,16 @@ export default function MapWrapper({ session }: { session: Session }) {
                   anchor="bottom"
                 >
                   <div
+                    id={`pin-${memory.id}`}
                     className={`
-                      w-10 h-10 cursor-pointer transition-transform duration-300 ease-out 
-                      ${
-                        isMobile && selectedMemory?.id === memory.id
-                          ? "scale-125"
-                          : "hover:scale-110"
-                      }
-                      ${isNew ? "animate-pin-drop" : ""}
-                    `}
+      w-10 h-10 cursor-pointer transition-transform duration-300 ease-out 
+      ${
+        isMobile && selectedMemory?.id === memory.id
+          ? "scale-125"
+          : "hover:scale-110"
+      }
+      ${isNew ? "animate-pin-drop" : ""}
+    `}
                     onClick={(e) => {
                       e.stopPropagation();
                       setClickedPoi(null);
