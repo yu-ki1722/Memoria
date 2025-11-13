@@ -228,7 +228,7 @@ export default function TagManagerPage() {
         }
       />
 
-      <main className="absolute top-[50px] bottom-[64px] left-0 right-0 overflow-y-auto p-6 bg-white">
+      <main className="absolute top-[50px] bottom-[64px] left-0 right-0 overflow-y-auto p-6 pb-32 bg-white">
         {isLoading ? (
           <p className="text-center text-sm text-gray-500">読み込み中...</p>
         ) : (
@@ -255,7 +255,7 @@ export default function TagManagerPage() {
           </>
         )}
 
-        <div className="mt-6">
+        <div className="fixed bottom-16 left-0 right-0 bg-white border-t border-gray-200 shadow-lg px-4 py-3 z-[1000]">
           <div className="flex items-center gap-2 max-w-lg mx-auto">
             <div className="relative flex-1 flex items-center bg-white border border-gray-200 rounded-full px-3 py-2 shadow-sm">
               <span className="text-gray-400 mr-1">#</span>
