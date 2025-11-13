@@ -61,7 +61,7 @@ export default function MemoryDetailModal({
 
   return (
     <motion.div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[1300] flex items-center justify-center p-4"
       onClick={onClose}
     >
       <motion.div
@@ -150,12 +150,12 @@ export default function MemoryDetailModal({
           <button
             onClick={handleMoveToMap}
             className={`
-    w-full mt-6 py-3 px-4
-    flex items-center justify-center gap-2
-    rounded-full font-semibold shadow-md
-    hover:shadow-lg active:scale-95 transition-all duration-200
-    ${color.bg} 
-  `}
+                w-full mt-6 py-3 px-4
+                flex items-center justify-center gap-2
+                rounded-full font-semibold shadow-md
+                hover:shadow-lg active:scale-95 transition-all duration-200
+                ${color.bg} 
+            `}
           >
             <TbMapPinUp size={20} className={`${color.accent}`} />
             <span className={`${color.accent}`}>マップで見る</span>
