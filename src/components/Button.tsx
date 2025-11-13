@@ -21,8 +21,7 @@ export default function Button({
       "bg-white text-memoria-text border border-gray-300 hover:bg-gray-50",
     danger: "bg-red-500 text-white hover:bg-red-600",
     success: "bg-memoria-secondary text-white hover:bg-memoria-secondary-dark",
-    gradient:
-      "text-white bg-gradient-to-r from-memoria-primary to-orange-400 hover:opacity-90",
+    gradient: "text-white",
   };
 
   return (

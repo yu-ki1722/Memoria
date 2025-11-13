@@ -314,7 +314,12 @@ export default function PlaceSearchModal({
                           onSelectPlace(selectedPlace);
                           onClose();
                         }}
-                        className="bg-gray-700 hover:bg-gray-800 text-white text-base font-bold px-4 py-3 rounded-lg w-full transition-colors"
+                        className="
+                          w-full py-3 px-4 rounded-full font-semibold text-white
+                          bg-gradient-to-r from-[#f9bbb6] to-[#E897A8]
+                          shadow-lg shadow-pink-200/50
+                          hover:opacity-90 active:scale-95 transition
+                        "
                       >
                         この場所に思い出を記録する
                       </button>
