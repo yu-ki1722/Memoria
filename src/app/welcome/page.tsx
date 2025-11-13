@@ -153,7 +153,7 @@ export default function WelcomePage() {
 
         <motion.button
           onClick={() => router.push("/login")}
-          className="px-8 py-3 bg-gradient-to-r from-[#86c8b2] to-[#74b5a1] text-white font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+          className="px-8 py-3 bg-memoria-secondary text-white font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
           whileTap={{ scale: 0.95 }}
           initial={{ opacity: 0 }}
           animate={showContent ? { opacity: 1 } : { opacity: 0 }}
