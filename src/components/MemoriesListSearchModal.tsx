@@ -229,7 +229,7 @@ export default function MemoriesListSearchModal({
             exit={{ opacity: 0 }}
           />
           <motion.div
-            className={`fixed z-[1004] bg-white shadow-xl rounded-t-2xl md:rounded-none md:rounded-l-2xl ${
+            className={`fixed z-[1300] bg-white shadow-xl rounded-t-2xl md:rounded-none md:rounded-l-2xl ${
               isMobile
                 ? "left-0 right-0 bottom-0 h-[70%]"
                 : "top-0 right-0 h-full w-[420px]"
