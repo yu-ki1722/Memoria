@@ -3,6 +3,13 @@
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import { Baloo_2 } from "next/font/google";
+
+const baloo = Baloo_2({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+});
 
 export default function WelcomePage() {
   const router = useRouter();
@@ -142,7 +149,17 @@ export default function WelcomePage() {
         animate={{ opacity: 1, filter: "blur(0px)" }}
         transition={{ duration: 3, ease: "easeOut" }}
       >
-        <h1 className="text-4xl font-[Caveat] text-gray-800 mb-2 tracking-wide">
+        <h1
+          className={`
+            ${baloo.className}
+            text-6xl font-extrabold tracking-wide
+            text-transparent bg-clip-text
+            bg-gradient-to-r
+            from-[#F7B8D8] via-[#AFC8FF] to-[#B8F5E0]
+            drop-shadow-[0_0_14px_rgba(255,255,255,0.65)]
+            drop-shadow-[0_0_28px_rgba(255,255,255,0.55)]
+          `}
+        >
           Memoria
         </h1>
         <p className="text-gray-600 text-base leading-relaxed max-w-sm mb-10">
