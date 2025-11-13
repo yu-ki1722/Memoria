@@ -14,7 +14,7 @@ export default function Footer() {
     "text-memoria-text/70 hover:text-memoria-secondary transition";
 
   return (
-    <footer className="fixed bottom-0 left-0 w-full h-16 bg-memoria-background/80 backdrop-blur-sm shadow-sm border-t border-gray-200 flex justify-around items-center z-50 md:hidden">
+    <footer className="fixed bottom-0 left-0 w-full h-16 bg-memoria-background/80 backdrop-blur-sm shadow-sm border-t border-gray-200 flex justify-around items-center z-[1200] md:hidden">
       <motion.button
         onClick={() => router.push("/tag-manager")}
         whileTap={{ scale: 0.9, opacity: 0.8 }}
