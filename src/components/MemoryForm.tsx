@@ -9,12 +9,42 @@ import { supabase } from "@/lib/supabaseClient";
 import { User } from "@supabase/supabase-js";
 
 const emotionStyles = {
-  "😊": { key: "happy", border: "border-emotion-border-happy" },
-  "😂": { key: "laugh", border: "border-emotion-border-laugh" },
-  "😍": { key: "love", border: "border-emotion-border-love" },
-  "😢": { key: "sad", border: "border-emotion-border-sad" },
-  "😮": { key: "surprise", border: "border-emotion-border-surprise" },
-  "🤔": { key: "thinking", border: "border-emotion-border-thinking" },
+  "😊": {
+    key: "happy",
+    border: "border-emotion-border-happy",
+    buttonBg: "bg-[#FFE6C5]",
+    buttonText: "text-[#F97316]",
+  },
+  "😂": {
+    key: "laugh",
+    border: "border-emotion-border-laugh",
+    buttonBg: "bg-[#FFE8B2]",
+    buttonText: "text-[#D97706]",
+  },
+  "😍": {
+    key: "love",
+    border: "border-emotion-border-love",
+    buttonBg: "bg-[#FFD3E9]",
+    buttonText: "text-[#DB2777]",
+  },
+  "😢": {
+    key: "sad",
+    border: "border-emotion-border-sad",
+    buttonBg: "bg-[#D7E7FF]",
+    buttonText: "text-[#2563EB]",
+  },
+  "😮": {
+    key: "surprise",
+    border: "border-emotion-border-surprise",
+    buttonBg: "bg-[#CCF6E1]",
+    buttonText: "text-[#059669]",
+  },
+  "🤔": {
+    key: "thinking",
+    border: "border-emotion-border-thinking",
+    buttonBg: "bg-[#E6DEFF]",
+    buttonText: "text-[#7C3AED]",
+  },
 } as const;
 
 type Emotion = keyof typeof emotionStyles;
@@ -478,13 +508,32 @@ export default function MemoryForm({
 
         <div className="flex justify-end items-center gap-3 pt-2 border-t border-white/30">
           {onCancel && (
-            <Button onClick={onCancel} variant="secondary" type="button">
+            <Button
+              onClick={onCancel}
+              variant="secondary"
+              type="button"
+              className="rounded-lg flex-1 text-center"
+            >
               キャンセル
             </Button>
           )}
+
           <Button
             type="submit"
             variant={buttonText === "更新" ? "success" : "primary"}
+            className={`
+              rounded-lg flex-1 text-center shadow-md transition-all
+              ${
+                selectedEmotion
+                  ? emotionStyles[selectedEmotion].buttonBg
+                  : "bg-memoria-secondary"
+              }
+              ${
+                selectedEmotion
+                  ? emotionStyles[selectedEmotion].buttonText
+                  : "text-white"
+              }
+            `}
           >
             {buttonText}
           </Button>
