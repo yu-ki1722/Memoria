@@ -128,6 +128,25 @@ export default function MemoryForm({
   }, [initialImageUrl]);
 
   useEffect(() => {
+    if (!user) return;
+
+    const ensureDefaultTags = async () => {
+      for (const tag of defaultTags) {
+        await supabase.from("tags").upsert(
+          {
+            user_id: user.id,
+            name: tag,
+            is_favorite: false,
+          },
+          { onConflict: "user_id,name" }
+        );
+      }
+    };
+
+    ensureDefaultTags();
+  }, [user]);
+
+  useEffect(() => {
     const fetchUserTags = async () => {
       if (!user) return;
 
@@ -140,35 +159,33 @@ export default function MemoryForm({
 
       const { data, error } = await supabase
         .from("tags")
-        .select("name, is_favorite, created_at, order")
-        .eq("user_id", user.id)
-        .order("order", { ascending: true });
+        .select("name, is_favorite, created_at")
+        .eq("user_id", user.id);
 
       if (error) {
         console.error("タグの読み込みに失敗:", error);
         return;
       }
 
-      const rows: TagData[] =
-        (data ?? []).map((tag) => ({
-          name: tag.name,
-          is_favorite: tag.is_favorite,
-          created_at: tag.created_at ?? null,
+      const dbTags: TagData[] =
+        data?.map((t) => ({
+          name: t.name,
+          is_favorite: t.is_favorite,
+          created_at: t.created_at ?? null,
         })) ?? [];
 
-      const defaults: TagData[] = defaultTags.map((name) => ({
+      const defaultRows: TagData[] = defaultTags.map((name) => ({
         name,
         is_favorite: false,
         created_at: null,
       }));
 
-      const combined: TagData[] = [...rows, ...defaults];
-
-      const unique: TagData[] = Array.from(
-        new Map<string, TagData>(combined.map((t) => [t.name, t])).values()
+      const merged = [...dbTags, ...defaultRows];
+      const unique = Array.from(
+        new Map(merged.map((t) => [t.name, t])).values()
       );
 
-      setAvailableTags(unique);
+      setAvailableTags(sortTags(unique, sortOption));
     };
 
     fetchUserTags();
